@@ -7,7 +7,7 @@ from zoneinfo import ZoneInfo
 from sqlalchemy.orm import Session
 
 from portfolio_tracker.db.models import HoldingsSnapshot, Instrument, Transaction
-from portfolio_tracker.modules import kite_auth
+from portfolio_tracker.modules import app_settings, kite_auth
 from portfolio_tracker.modules.csv_import import _looks_like_isin, get_or_create_instrument
 
 IST = ZoneInfo("Asia/Kolkata")
@@ -158,9 +158,9 @@ def sync_all(session: Session) -> SyncResult:
     appended = sum(_append_trade(session, trade, as_of) for trade in trades)
 
     now = datetime.now(IST).isoformat()
-    kite_auth.set_setting(session, kite_auth.LAST_SYNC_KEY, now)
+    app_settings.set_setting(session, app_settings.LAST_SYNC_KEY, now)
     if appended > 0:
-        kite_auth.set_setting(session, kite_auth.LAST_APPEND_KEY, now)
+        app_settings.set_setting(session, app_settings.LAST_APPEND_KEY, now)
     return {
         "holdings_count": len(equity_holdings) + len(mutual_fund_holdings),
         "trades_appended": appended,

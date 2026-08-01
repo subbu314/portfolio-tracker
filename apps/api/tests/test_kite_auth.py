@@ -5,7 +5,15 @@ from fastapi.testclient import TestClient
 from kiteconnect.exceptions import TokenException
 
 from portfolio_tracker.db.engine import get_session_factory
-from portfolio_tracker.modules import kite_auth
+from portfolio_tracker.modules import app_settings, kite_auth
+
+
+def test_app_settings_round_trip():
+    Session = get_session_factory()
+    with Session() as session:
+        app_settings.set_setting(session, "probe_key", "probe_value")
+        session.commit()
+        assert app_settings.get_setting(session, "probe_key") == "probe_value"
 
 
 def test_exchange_stores_token_without_exposing_secret():
@@ -47,8 +55,10 @@ def test_missing_credentials_login_url_raises():
 def test_invalidate_on_kite_auth_error_clears_token():
     Session = get_session_factory()
     with Session() as session:
-        kite_auth.set_setting(session, kite_auth.TOKEN_KEY, "secret_access_token")
-        kite_auth.set_setting(session, kite_auth.TOKEN_UPDATED_KEY, "2026-08-01T09:00:00+00:00")
+        app_settings.set_setting(session, app_settings.TOKEN_KEY, "secret_access_token")
+        app_settings.set_setting(
+            session, app_settings.TOKEN_UPDATED_KEY, "2026-08-01T09:00:00+00:00"
+        )
         session.commit()
 
         invalidated = kite_auth.invalidate_on_kite_error(
@@ -58,13 +68,13 @@ def test_invalidate_on_kite_auth_error_clears_token():
 
         assert invalidated is True
         assert kite_auth.get_access_token(session) is None
-        assert kite_auth.get_setting(session, kite_auth.TOKEN_UPDATED_KEY) is None
+        assert app_settings.get_setting(session, app_settings.TOKEN_UPDATED_KEY) is None
 
 
 def test_invalidate_on_non_auth_error_preserves_token():
     Session = get_session_factory()
     with Session() as session:
-        kite_auth.set_setting(session, kite_auth.TOKEN_KEY, "secret_access_token")
+        app_settings.set_setting(session, app_settings.TOKEN_KEY, "secret_access_token")
         session.commit()
 
         invalidated = kite_auth.invalidate_on_kite_error(session, RuntimeError("upstream timeout"))
@@ -77,8 +87,10 @@ def test_invalidate_on_non_auth_error_preserves_token():
 def test_exchange_auth_failure_preserves_existing_access_token():
     Session = get_session_factory()
     with Session() as session:
-        kite_auth.set_setting(session, kite_auth.TOKEN_KEY, "old_secret_token")
-        kite_auth.set_setting(session, kite_auth.TOKEN_UPDATED_KEY, "2026-08-01T09:00:00+00:00")
+        app_settings.set_setting(session, app_settings.TOKEN_KEY, "old_secret_token")
+        app_settings.set_setting(
+            session, app_settings.TOKEN_UPDATED_KEY, "2026-08-01T09:00:00+00:00"
+        )
         session.commit()
         fake_kite = MagicMock()
         fake_kite.generate_session.side_effect = TokenException(
@@ -92,7 +104,10 @@ def test_exchange_auth_failure_preserves_existing_access_token():
         assert "req_secret" not in str(error.value)
         assert "old_secret_token" not in str(error.value)
         assert kite_auth.get_access_token(session) == "old_secret_token"
-        assert kite_auth.get_setting(session, kite_auth.TOKEN_UPDATED_KEY) == "2026-08-01T09:00:00+00:00"
+        assert (
+            app_settings.get_setting(session, app_settings.TOKEN_UPDATED_KEY)
+            == "2026-08-01T09:00:00+00:00"
+        )
 
 
 def test_callback_does_not_expose_upstream_error_text():
@@ -121,7 +136,7 @@ def test_status_and_logout_reflect_connection_state():
 
     Session = get_session_factory()
     with Session() as session:
-        kite_auth.set_setting(session, kite_auth.TOKEN_KEY, "secret_access_token")
+        app_settings.set_setting(session, app_settings.TOKEN_KEY, "secret_access_token")
         session.commit()
 
     with TestClient(create_app()) as client:
