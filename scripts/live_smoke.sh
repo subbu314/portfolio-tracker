@@ -48,8 +48,9 @@ for row in body["files"]:
 PY
 
 echo "== re-import one EQ slice via single file= (idempotent) =="
+LAST_EQ="${EQUITY_CSVS[${#EQUITY_CSVS[@]}-1]}"
 curl -sf -X POST "$BASE/import/csv" \
-  -F "file=@${EQUITY_CSVS[-1]};type=text/csv" | tee /tmp/pt-import-eq-re.json
+  -F "file=@${LAST_EQ};type=text/csv" | tee /tmp/pt-import-eq-re.json
 
 echo "== sync =="
 curl -sf -X POST "$BASE/sync" | tee /tmp/pt-sync.json
