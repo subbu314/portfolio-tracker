@@ -1,0 +1,23 @@
+from datetime import date
+from typing import Annotated
+
+from fastapi import APIRouter, Depends
+from sqlalchemy.orm import Session
+
+from portfolio_tracker.db.session import get_db
+from portfolio_tracker.modules import portfolio
+
+router = APIRouter(prefix="/portfolio", tags=["portfolio"])
+
+
+@router.get("/overview")
+def overview(session: Annotated[Session, Depends(get_db)]) -> dict:
+    return portfolio.get_overview(session, as_of=date.today().isoformat())
+
+
+@router.get("/holdings")
+def holdings(session: Annotated[Session, Depends(get_db)]) -> dict:
+    rows = portfolio.get_holdings(session, as_of=date.today().isoformat())
+    for row in rows:
+        row.pop("_benchmark_cagr", None)
+    return {"holdings": rows}
