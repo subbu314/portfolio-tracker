@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 
 from portfolio_tracker.db.session import get_db
 from portfolio_tracker.modules import csv_import
-from portfolio_tracker.schemas.import_ import ImportBadDetail, ImportCsvResponse
+from portfolio_tracker.schemas.import_ import ImportBadErrorResponse, ImportCsvResponse
 
 router = APIRouter(prefix="/import", tags=["import"])
 
@@ -21,7 +21,7 @@ def _bad_detail(message: str, errors: list[str] | None = None) -> dict:
 @router.post(
     "/csv",
     response_model=ImportCsvResponse,
-    responses={400: {"model": ImportBadDetail}},
+    responses={400: {"model": ImportBadErrorResponse}},
 )
 async def import_csv_endpoint(
     session: Annotated[Session, Depends(get_db)],

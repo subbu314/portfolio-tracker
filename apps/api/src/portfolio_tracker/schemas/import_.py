@@ -57,4 +57,10 @@ class ImportBadDetail(BaseModel):
     action: str
 
 
+class ImportBadErrorResponse(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    detail: ImportBadDetail
+
+
 ImportCsvResponse = ImportResultResponse | BatchImportResultResponse
