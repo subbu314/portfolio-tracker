@@ -431,3 +431,74 @@ def test_portfolio_rolling_absolute_includes_in_window_capital():
         assert abs(w3["absolute_excess_pp"]) < 500, w3["absolute_excess_pp"]
         if w3.get("cagr") is not None:
             assert abs(w3["cagr"]) < 2.0, w3["cagr"]
+
+
+def test_portfolio_window_skips_unpriced_opening_instrument():
+    Session = get_session_factory()
+    with Session() as session:
+        priced = Instrument(
+            symbol="PRICED",
+            instrument_type="equity",
+            exchange="NSE",
+            yahoo_symbol="PRICED.NS",
+        )
+        bare = Instrument(
+            symbol="BARE",
+            instrument_type="equity",
+            exchange="NSE",
+            yahoo_symbol="BARE.NS",
+        )
+        session.add_all([priced, bare])
+        session.flush()
+        session.add_all(
+            [
+                Transaction(
+                    instrument_id=priced.id,
+                    trade_date="2022-01-01",
+                    side="buy",
+                    quantity=1,
+                    price=100.0,
+                    fees=0,
+                    source="csv",
+                    dedupe_key="w1-priced",
+                ),
+                Transaction(
+                    instrument_id=bare.id,
+                    trade_date="2023-01-01",
+                    side="buy",
+                    quantity=1,
+                    price=50.0,
+                    fees=0,
+                    source="csv",
+                    dedupe_key="w1-bare",
+                ),
+                HoldingsSnapshot(
+                    instrument_id=priced.id,
+                    quantity=1,
+                    avg_price=100.0,
+                    as_of="2024-06-01",
+                ),
+                HoldingsSnapshot(
+                    instrument_id=bare.id,
+                    quantity=1,
+                    avg_price=50.0,
+                    as_of="2024-06-01",
+                ),
+                Price(symbol="PRICED.NS", price_date="2023-06-01", close=100.0, source="yahoo"),
+                Price(symbol="PRICED.NS", price_date="2024-06-01", close=120.0, source="yahoo"),
+                Price(symbol="BARE.NS", price_date="2024-06-01", close=60.0, source="yahoo"),
+                BenchmarkMap(
+                    instrument_id=priced.id, benchmark_index="Nifty 500", source="default"
+                ),
+                BenchmarkMap(
+                    instrument_id=bare.id, benchmark_index="Nifty 500", source="default"
+                ),
+                BenchmarkPrice(index_symbol="Nifty 500", price_date="2023-06-01", close=10000.0),
+                BenchmarkPrice(index_symbol="Nifty 500", price_date="2024-06-01", close=11000.0),
+            ]
+        )
+        session.commit()
+
+        overview = portfolio.get_overview(session, as_of="2024-06-01")
+        assert overview["windows"]["1Y"] is not None
+        assert overview["incomplete"] is True
