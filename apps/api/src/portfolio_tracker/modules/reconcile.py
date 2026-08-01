@@ -18,17 +18,27 @@ def transaction_implied_qty(session: Session, instrument_id: int) -> float:
 
 def reconcile_holdings(session: Session) -> list[dict]:
     diffs = []
-    for snapshot in session.query(HoldingsSnapshot):
-        transaction_qty = transaction_implied_qty(session, snapshot.instrument_id)
-        delta = snapshot.quantity - transaction_qty
+    snapshots = {
+        snapshot.instrument_id: snapshot for snapshot in session.query(HoldingsSnapshot)
+    }
+    transaction_instrument_ids = {
+        instrument_id
+        for (instrument_id,) in session.query(Transaction.instrument_id).distinct()
+    }
+    instrument_ids = set(snapshots) | transaction_instrument_ids
+    for instrument_id in sorted(instrument_ids):
+        snapshot = snapshots.get(instrument_id)
+        holdings_qty = snapshot.quantity if snapshot else 0
+        transaction_qty = transaction_implied_qty(session, instrument_id)
+        delta = holdings_qty - transaction_qty
         if abs(delta) <= 1e-6:
             continue
-        instrument = session.get(Instrument, snapshot.instrument_id)
+        instrument = session.get(Instrument, instrument_id)
         diffs.append(
             {
-                "instrument_id": snapshot.instrument_id,
-                "symbol": instrument.symbol if instrument else str(snapshot.instrument_id),
-                "holdings_qty": snapshot.quantity,
+                "instrument_id": instrument_id,
+                "symbol": instrument.symbol if instrument else str(instrument_id),
+                "holdings_qty": holdings_qty,
                 "tx_qty": transaction_qty,
                 "delta": delta,
             }
@@ -58,9 +68,16 @@ def detect_gaps(session: Session, today: str) -> dict | None:
 
 def get_alerts(session: Session, today: str) -> dict:
     auth_status = kite_auth.get_auth_status(session)
+    reconciliation_diffs = reconcile_holdings(session)
     return {
         "token_connected": auth_status["connected"],
         "credentials_configured": auth_status["credentials_configured"],
-        "reconcile": reconcile_holdings(session),
+        "reconcile": reconciliation_diffs,
+        "reconcile_message": (
+            "Use Console CSV backfill or re-sync with Kite to resolve mismatches; "
+            "transactions allow no manual edits."
+            if reconciliation_diffs
+            else None
+        ),
         "gap": detect_gaps(session, today),
     }

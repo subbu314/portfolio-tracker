@@ -118,6 +118,37 @@ def test_reconcile_omits_matching_holdings():
         assert reconcile.reconcile_holdings(session) == []
 
 
+def test_reconcile_detects_transaction_only_position():
+    Session = get_session_factory()
+    with Session() as session:
+        instrument = Instrument(symbol="WIPRO", instrument_type="equity", exchange="NSE")
+        session.add(instrument)
+        session.flush()
+        session.add(
+            Transaction(
+                instrument_id=instrument.id,
+                trade_date="2024-01-01",
+                side="buy",
+                quantity=7,
+                price=100,
+                fees=0,
+                source="csv",
+                dedupe_key="transaction-only-buy",
+            )
+        )
+        session.commit()
+
+        assert reconcile.reconcile_holdings(session) == [
+            {
+                "instrument_id": instrument.id,
+                "symbol": "WIPRO",
+                "holdings_qty": 0,
+                "tx_qty": 7,
+                "delta": -7,
+            }
+        ]
+
+
 def test_detect_gaps_returns_missing_calendar_date_range():
     Session = get_session_factory()
     with Session() as session:
@@ -175,6 +206,35 @@ def test_get_alerts_combines_connection_reconcile_and_gap_status():
         assert alerts["gap"]["suggested_from"] == "2024-01-02"
 
 
+def test_get_alerts_includes_reconcile_guidance_without_gap_warning():
+    Session = get_session_factory()
+    with Session() as session:
+        instrument = Instrument(symbol="HDFCBANK", instrument_type="equity", exchange="NSE")
+        session.add(instrument)
+        session.flush()
+        session.add(
+            Transaction(
+                instrument_id=instrument.id,
+                trade_date="2024-01-01",
+                side="buy",
+                quantity=3,
+                price=100,
+                fees=0,
+                source="csv",
+                dedupe_key="reconcile-guidance-buy",
+            )
+        )
+        session.commit()
+
+        alerts = reconcile.get_alerts(session, today="2024-01-10")
+
+        assert alerts["gap"] is None
+        assert alerts["reconcile"]
+        assert "Console CSV" in alerts["reconcile_message"]
+        assert "re-sync" in alerts["reconcile_message"]
+        assert "no manual edits" in alerts["reconcile_message"]
+
+
 def test_portfolio_alerts_endpoint_exposes_alert_payload():
     response = TestClient(create_app()).get("/portfolio/alerts")
 
@@ -183,5 +243,6 @@ def test_portfolio_alerts_endpoint_exposes_alert_payload():
         "token_connected": False,
         "credentials_configured": True,
         "reconcile": [],
+        "reconcile_message": None,
         "gap": None,
     }
