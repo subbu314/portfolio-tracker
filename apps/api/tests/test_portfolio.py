@@ -84,6 +84,55 @@ def _seed_itd(session):
     return instrument
 
 
+def _seed_with_window_prices(session):
+    instrument = _seed_itd(session)
+    session.add(
+        Price(
+            symbol="RELIANCE.NS",
+            price_date="2023-06-02",
+            close=2200.0,
+            source="yahoo",
+        )
+    )
+    session.add(
+        BenchmarkPrice(
+            index_symbol="Nifty 500",
+            price_date="2023-06-02",
+            close=11000.0,
+        )
+    )
+    session.commit()
+    return instrument
+
+
+def test_overview_rolling_1y_available_3y_5y_null():
+    Session = get_session_factory()
+    with Session() as session:
+        _seed_with_window_prices(session)
+
+        overview = portfolio.get_overview(session, as_of="2024-06-01")
+
+        assert overview["windows"]["1Y"] is not None
+        assert overview["windows"]["1Y"]["absolute_pct"] is not None
+        assert overview["windows"]["1Y"]["xirr"] is not None
+        assert overview["windows"]["1Y"]["xirr_excess_pp"] is not None
+        assert overview["windows"]["3Y"] is None
+        assert overview["windows"]["5Y"] is None
+
+
+def test_holdings_include_windows():
+    Session = get_session_factory()
+    with Session() as session:
+        _seed_with_window_prices(session)
+
+        rows = portfolio.get_holdings(session, as_of="2024-06-01")
+
+        assert "windows" in rows[0]
+        assert rows[0]["windows"]["ITD"] is not None
+        assert rows[0]["windows"]["1Y"] is not None
+        assert rows[0]["windows"]["3Y"] is None
+
+
 def test_overview_itd_core_metrics():
     Session = get_session_factory()
     with Session() as session:
