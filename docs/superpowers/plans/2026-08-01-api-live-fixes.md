@@ -177,3 +177,5 @@ rm -f data/portfolio.db
 ```
 
 Update findings `Verdict:` line.
+
+**Done 2026-08-01:** Second pass on `9acddf6` — AMFI fails 0, `total_value≈22.72L`, ITD xirr ≈ 0.244. Extra fix landed: `fix: resolve AMFI scheme codes from mfapi scheme list by ISIN` (`9acddf6`) because `/mf/search` does not resolve ISINs.
