@@ -5,7 +5,14 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from portfolio_tracker.config import get_settings
 from portfolio_tracker.db.engine import init_db
-from portfolio_tracker.routers import auth, health, import_, portfolio, sync
+from portfolio_tracker.routers import (
+    auth,
+    health,
+    import_,
+    portfolio,
+    settings as settings_router,
+    sync,
+)
 
 
 @asynccontextmanager
@@ -28,6 +35,7 @@ def create_app() -> FastAPI:
     app.include_router(health.router)
     app.include_router(import_.router)
     app.include_router(portfolio.router)
+    app.include_router(settings_router.router)
     app.include_router(sync.router)
     return app
 

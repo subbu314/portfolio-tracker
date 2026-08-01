@@ -3,6 +3,7 @@ from __future__ import annotations
 from sqlalchemy.orm import Session
 
 from portfolio_tracker.db.models import BenchmarkMap, Instrument
+from portfolio_tracker.modules.prices import INDEX_TICKERS
 
 DEFAULT_BY_CATEGORY: dict[str, str] = {
     "Flexi Cap": "Nifty 500",
@@ -44,6 +45,8 @@ def ensure_benchmark_map(session: Session, instrument: Instrument) -> BenchmarkM
 
 
 def set_benchmark_override(session: Session, instrument_id: int, benchmark_index: str) -> BenchmarkMap:
+    if benchmark_index not in INDEX_TICKERS:
+        raise ValueError(f"Unknown benchmark index: {benchmark_index}")
     row = session.get(BenchmarkMap, instrument_id)
     if row is None:
         row = BenchmarkMap(instrument_id=instrument_id, benchmark_index=benchmark_index, source="user")
