@@ -12,6 +12,14 @@ from portfolio_tracker.modules.prices.yahoo import INDEX_TICKERS, YahooFinancePr
 FIXTURES = Path(__file__).parent / "fixtures"
 
 
+def test_index_tickers_single_source():
+    from portfolio_tracker.modules.index_tickers import INDEX_TICKERS as a
+    from portfolio_tracker.modules.prices.yahoo import INDEX_TICKERS as b
+
+    assert a is b
+    assert "Nifty 500" in a
+
+
 def test_yahoo_provider_maps_history():
     provider = YahooFinanceProvider(client=MagicMock())
     provider._fetch_history = MagicMock(  # type: ignore[method-assign]

@@ -10,6 +10,13 @@ from portfolio_tracker.main import create_app
 FIXTURES = Path(__file__).parent / "fixtures"
 
 
+def test_message_response_removed():
+    import importlib
+
+    mod = importlib.import_module("portfolio_tracker.schemas.common")
+    assert not hasattr(mod, "MessageResponse")
+
+
 def test_import_then_overview(monkeypatch):
     monkeypatch.setattr(
         "portfolio_tracker.modules.kite_auth.authenticated_kite",

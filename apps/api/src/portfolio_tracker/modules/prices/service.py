@@ -24,51 +24,63 @@ def _latest_price_date(
     return session.query(func.max(date_column)).filter(symbol_field == symbol).scalar()
 
 
-def _upsert_price(
-    session: Session, symbol: str, price_date: str, close: float, source: str
+def _upsert_close_row(
+    session: Session,
+    *,
+    model: type[Price] | type[BenchmarkPrice],
+    symbol_field_name: str,
+    symbol: str,
+    price_date: str,
+    close: float,
+    source: str | None = None,
 ) -> None:
+    symbol_field = getattr(model, symbol_field_name)
     row = (
-        session.query(Price)
-        .filter(Price.symbol == symbol, Price.price_date == price_date)
+        session.query(model)
+        .filter(symbol_field == symbol, model.price_date == price_date)
         .first()
     )
     if row is None:
-        session.add(
-            Price(
-                symbol=symbol,
-                price_date=price_date,
-                close=close,
-                source=source,
-            )
-        )
+        values = {
+            symbol_field_name: symbol,
+            "price_date": price_date,
+            "close": close,
+        }
+        if source is not None:
+            values["source"] = source
+        session.add(model(**values))
         session.flush()
         return
     row.close = close
-    row.source = source
+    if source is not None:
+        row.source = source
+
+
+def _upsert_price(
+    session: Session, symbol: str, price_date: str, close: float, source: str
+) -> None:
+    _upsert_close_row(
+        session,
+        model=Price,
+        symbol_field_name="symbol",
+        symbol=symbol,
+        price_date=price_date,
+        close=close,
+        source=source,
+    )
 
 
 def _upsert_benchmark(
     session: Session, index_symbol: str, price_date: str, close: float
 ) -> None:
-    row = (
-        session.query(BenchmarkPrice)
-        .filter(
-            BenchmarkPrice.index_symbol == index_symbol,
-            BenchmarkPrice.price_date == price_date,
-        )
-        .first()
+    _upsert_close_row(
+        session,
+        model=BenchmarkPrice,
+        symbol_field_name="index_symbol",
+        symbol=index_symbol,
+        price_date=price_date,
+        close=close,
     )
-    if row is None:
-        session.add(
-            BenchmarkPrice(
-                index_symbol=index_symbol,
-                price_date=price_date,
-                close=close,
-            )
-        )
-        session.flush()
-        return
-    row.close = close
 
 
 def _history_start_for_price(
