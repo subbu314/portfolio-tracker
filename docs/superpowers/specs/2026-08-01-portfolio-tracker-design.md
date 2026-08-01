@@ -16,14 +16,14 @@ Anyone who clones the repo runs their own local instance against their own Zerod
 
 - Local monorepo: **Next.js (web) + FastAPI (api) + SQLite**
 - **Kite Connect Personal (free)** for holdings sync and same-day trade append
-- **One-time Console tradebook CSV** import for full history; re-import for gap backfill
+- **Console CSV import** for full history (equity tradebook **and** Coin/MF tradebook); re-import for gap backfill
 - Asset types: **equity delivery, ETFs, Coin mutual funds**
-- Metrics (portfolio + per instrument):
+- Metrics (portfolio + per instrument), **inception-to-date only** in v1:
   - Absolute return (₹ and %)
-  - CAGR (when period allows)
-  - XIRR (cashflow-based)
+  - CAGR when span ≥ 365 days (else N/A)
+  - XIRR (cashflow-based; buys/sells/SIPs + terminal MV; **no dividends**)
   - Benchmark return and **excess / outperformance** (percentage points)
-- Benchmark mapping by MF category (e.g. flexi cap → Nifty 500, mid cap → Nifty Midcap 150, small cap → Nifty Smallcap 250); stocks/ETFs default to **Nifty 500** (overridable)
+- Benchmark mapping by MF category (auto from AMFI/scheme metadata when possible; e.g. flexi cap → Nifty 500, mid cap → Nifty Midcap 150, small cap → Nifty Smallcap 250); stocks/ETFs default to **Nifty 500**; all overridable in Settings
 - Portfolio-level outperformance: **value-weighted blend** of each holding’s benchmark
 - Gap detection and holdings-vs-transactions reconcile with CSV backfill prompts
 - Market data via **Yahoo Finance** (stocks/ETFs/indices) + **AMFI** (mutual fund NAVs); Kite Personal has no market data
@@ -32,8 +32,10 @@ Anyone who clones the repo runs their own local instance against their own Zerod
 ### Out of scope (v1)
 
 - Hosted multi-user SaaS
-- EPF, FD, RD, PASA / other brokers (later)
+- EPF, FD, RD, PAASA, Bank Accounts, Cash / other brokers (later)
 - F&O / intraday as first-class long-term portfolio metrics
+- YTD / custom date-range returns (inception-to-date only in v1)
+- Dividend cashflows in XIRR / absolute return; corporate-action reconstruction beyond relying on Zerodha qty/avg
 - Projections, expected corpus, churn / rebalancing analysis (**v1.1**)
 - Console scraping / unofficial automation of CSV download
 - Paid Kite Connect market-data dependency (optional later enhancement)
@@ -45,6 +47,7 @@ Anyone who clones the repo runs their own local instance against their own Zerod
 - Churn / reallocation analysis
 - Non-Zerodha instruments and additional broker adapters
 - Optional paid Kite Connect for native live/historical candles
+- Optional YTD / custom return windows; optional dividend-aware XIRR
 
 ## 3. Architecture
 
@@ -79,7 +82,7 @@ Auth clarification: the app does **not** store Zerodha passwords. Flow is Kite O
 | ------------ | ------------------------------------------------------------------------ |
 | `kite_auth`  | Login URL, token exchange, local token persistence, expiry handling      |
 | `kite_sync`  | Holdings (equity + MF), append today’s trades                            |
-| `csv_import` | Parse Console tradebook; idempotent upserts                              |
+| `csv_import` | Parse Console equity + Coin/MF tradebooks (detect by headers); idempotent upserts |
 | `portfolio`  | Allocation, value, unrealized P&L                                        |
 | `metrics`    | Absolute, CAGR, XIRR, benchmark excess (instrument + portfolio)          |
 | `benchmarks` | Category → index defaults, overrides, value-weighted portfolio benchmark |
@@ -92,9 +95,9 @@ Auth clarification: the app does **not** store Zerodha passwords. Flow is Kite O
 | ----------- | ---------------------------------------------------------------------------------------- |
 | Overview    | Total value, P&L, allocation, portfolio absolute/XIRR/CAGR/excess, gap/reconcile banners |
 | Holdings    | Per-row qty, avg, LTP, value, absolute %, XIRR, vs benchmark (Δ pp)                      |
-| Performance | Portfolio vs blend; contributor table for excess; charts                                 |
-| Import      | CSV upload; last import/sync status; suggested gap date range                            |
-| Settings    | Connect Zerodha, Sync now, benchmark overrides, setup hints (no secrets displayed)       |
+| Performance | Inception-to-date portfolio vs blend; contributor table for excess; charts               |
+| Import      | Equity and/or Coin CSV upload; last import/sync status; suggested gap date range         |
+| Settings    | Connect Zerodha, Sync now, MF category + benchmark overrides, setup hints (no secrets)   |
 
 ## 5. Data model (SQLite)
 
@@ -109,17 +112,33 @@ Auth clarification: the app does **not** store Zerodha passwords. Flow is Kite O
 | `benchmark_prices`  | Index series for excess calculation                              |
 | `metrics_cache`     | Computed metrics by scope + as_of                                |
 
+### Returns window (v1)
+
+All absolute, CAGR, XIRR, and excess metrics are **inception-to-date** (first cashflow / first trade in scope → as-of). No YTD or custom range picker in v1.
+
 ### XIRR cashflow rule
 
 - Buys / SIPs → negative cashflows on trade dates
 - Sells → positive cashflows on trade dates
 - Current market value → terminal positive cashflow on as-of date
+- **Dividends ignored** in v1 (not modeled as cashflows). Stock splits / corporate actions: rely on Zerodha holdings qty/avg and Console trade history as recorded; no separate corporate-action engine.
+
+### CAGR rule
+
+- Compute CAGR only when the span from first cashflow (or first trade) to as-of is **≥ 365 days**.
+- Shorter spans → show N/A (avoid noisy annualization).
 
 ### Absolute return
 
-- **Invested cost** = net cash deployed for that scope: sum of buy notional (− fees if present in CSV) minus cost removed on sells (proportional avg-cost). Portfolio invested cost = sum across instruments (or equivalent portfolio cashflows excluding the terminal MV cashflow).
+- **Invested cost** = net cash deployed for that scope: sum of buy notional (include fees in cost when present in CSV) minus cost removed on sells (proportional avg-cost). Portfolio invested cost = sum across instruments (or equivalent portfolio cashflows excluding the terminal MV cashflow).
 - ₹ gain: `current_value − invested_cost`
 - %: `(current_value − invested_cost) / invested_cost` when invested_cost > 0; otherwise N/A
+
+### MF category resolution
+
+1. On instrument create/update: resolve category from **AMFI / scheme metadata** (ISIN or scheme code) when available.
+2. If unknown → default category mapping uses Nifty 500 and UI shows **set-category** flag.
+3. User override in Settings wins for both category and benchmark index.
 
 ### Benchmark defaults
 
@@ -137,17 +156,17 @@ All mappings overridable in Settings.
 
 ### Portfolio excess
 
-Value-weighted blend: each holding’s benchmark return weighted by current market value weight; portfolio excess = portfolio return − blended benchmark return (same window). Instrument excess shown separately for every stock and MF.
+Value-weighted blend: each holding’s benchmark return weighted by current market value weight; portfolio excess = portfolio return − blended benchmark return over the **same inception-to-date window**. Instrument excess shown separately for every stock and MF.
 
 ### Market data providers (v1)
 
 Kite Connect Personal does **not** provide LTP or historical candles. All marks-to-market and benchmark series come from:
 
-| Asset | Provider | Notes |
-| ----- | -------- | ----- |
-| Stocks / ETFs | **Yahoo Finance** (e.g. `yfinance`, symbols like `RELIANCE.NS`) | LTP + history; cached in `prices` |
-| Benchmark indices (Nifty 500, Midcap 150, Smallcap 250, …) | **Yahoo Finance** (mapped index tickers) | Cached in `benchmark_prices`; if a ticker is missing, document fallback mapping |
-| Mutual funds | **AMFI** daily NAV (direct files and/or a thin AMFI-compatible API such as mfapi.in) | Match by ISIN / scheme code from Coin; NAV usually T+1 |
+| Asset                                                      | Provider                                                                             | Notes                                                                           |
+| ---------------------------------------------------------- | ------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------- |
+| Stocks / ETFs                                              | **Yahoo Finance** (e.g. `yfinance`, symbols like `RELIANCE.NS`)                      | LTP + history; cached in `prices`                                               |
+| Benchmark indices (Nifty 500, Midcap 150, Smallcap 250, …) | **Yahoo Finance** (mapped index tickers)                                             | Cached in `benchmark_prices`; if a ticker is missing, document fallback mapping |
+| Mutual funds                                               | **AMFI** daily NAV (direct files and/or a thin AMFI-compatible API such as mfapi.in) | Match by ISIN / scheme code from Coin; NAV usually T+1                          |
 
 Refresh on sync / app open. Failures leave holdings visible without LTP and mark metrics incomplete (see §7). Google Finance is **not** used (no suitable backend API). Optional v1.1+: paid Kite Connect as an alternate equity/index provider behind the same `PriceProvider` interface; MF NAVs remain AMFI.
 
@@ -158,7 +177,7 @@ Refresh on sync / app open. Failures leave holdings visible without LTP and mark
 1. Clone → `.env.example` → `.env` (Kite keys + local redirect URL)
 2. Start api + web
 3. Settings → Connect Zerodha → OAuth → store access token
-4. Import full Console tradebook CSV → `transactions`
+4. Import Console equity tradebook and/or Coin MF tradebook CSV(s) → `transactions` (importer detects format by headers)
 5. Sync → holdings snapshot + today’s trades (if any)
 6. Price job → Yahoo Finance for equity/ETF/index marks; AMFI for MF NAVs
 7. Metrics job → cache absolute / CAGR / XIRR / excess
@@ -173,16 +192,16 @@ Refresh on sync / app open. Failures leave holdings visible without LTP and mark
 
 ### Source of truth
 
-| Data              | Source                                                    |
-| ----------------- | --------------------------------------------------------- |
-| Historical trades | Console CSV (+ API only for days the app actually synced) |
-| Current qty / avg | Kite holdings snapshot                                    |
-| Equity/ETF/index prices | Yahoo Finance (cached)                              |
-| MF NAVs           | AMFI (cached)                                             |
-| Returns           | Transactions + prices/NAVs + terminal MV                  |
-| Benchmarks        | Category map + Yahoo index history                        |
+| Data                    | Source                                                    |
+| ----------------------- | --------------------------------------------------------- |
+| Historical trades       | Console CSV (+ API only for days the app actually synced) |
+| Current qty / avg       | Kite holdings snapshot                                    |
+| Equity/ETF/index prices | Yahoo Finance (cached)                                    |
+| MF NAVs                 | AMFI (cached)                                             |
+| Returns                 | Transactions + prices/NAVs + terminal MV                  |
+| Benchmarks              | Category map + Yahoo index history                        |
 
-**CSV automation:** No official full-history download API. v1 does **not** scrape Console. Pattern is manual full history once, API append when the app runs, CSV backfill for gaps.
+**CSV import:** Support both Console **equity tradebook** and **Coin/MF tradebook** exports on one Import page. Detect format from headers/columns; reject unknown shapes with a clear error. No official full-history download API; v1 does **not** scrape Console. Pattern is manual full history once (one or both CSVs), API append when the app runs, CSV backfill for gaps.
 
 ## 7. Error handling
 
@@ -239,13 +258,23 @@ Exact package manager / tooling chosen at implementation-plan time; design assum
 
 ## 10. Success criteria (v1)
 
-- New user can clone, configure Kite Personal keys, connect, import tradebook, and see equity + MF portfolio locally
-- Overview shows total value, absolute returns, XIRR, CAGR, and portfolio outperformance vs value-weighted benchmarks
+- New user can clone, configure Kite Personal keys, connect, import equity and/or Coin tradebook CSVs, and see equity + MF portfolio locally
+- Overview shows inception-to-date total value, absolute returns, XIRR, CAGR (≥ 365 days), and portfolio outperformance vs value-weighted benchmarks
 - Equity/ETF marks from Yahoo Finance; MF marks from AMFI NAVs
-- Each stock and MF shows its own returns and excess vs its mapped index
+- Each stock and MF shows its own returns and excess vs its mapped index (category from AMFI when possible, overridable)
 - Missing days without app use are detected; CSV backfill restores history without duplicates
 - No credentials or portfolio data committed to git
 
-## 11. Non-goals reminder
+## 11. Locked v1 product decisions
+
+| Topic | Decision |
+| ----- | -------- |
+| Returns window | Inception-to-date only; no YTD / custom ranges |
+| Dividends / corporate actions | Dividends excluded from XIRR; no corporate-action engine; trust Zerodha qty/avg + trade CSVs |
+| CAGR eligibility | Span ≥ 365 days, else N/A |
+| CSV shapes | Both Console equity tradebook and Coin/MF tradebook; header-based detection; one Import page |
+| MF category | Auto from AMFI/scheme metadata when possible; Settings override; unknown → Nifty 500 + flag |
+
+## 12. Non-goals reminder
 
 Hosting, multi-user accounts, non-Zerodha assets, F&O-first analytics, projections, and churn analysis are deferred. Architecture should not block adding broker adapters or Python-heavy projection modules in v1.1.
