@@ -162,18 +162,18 @@ def test_get_performance_has_no_nested_overview():
     assert result["default_window"] == "ITD"
 
 
-def test_get_performance_calls_get_holdings_once(monkeypatch):
+def test_get_performance_computes_holdings_once(monkeypatch):
     from portfolio_tracker.modules import portfolio as portfolio_mod
 
     Session = get_session_factory()
     calls = {"n": 0}
-    real = portfolio_mod.get_holdings
+    real = portfolio_mod._get_holdings_computed
 
     def counting(session, as_of):
         calls["n"] += 1
         return real(session, as_of)
 
-    monkeypatch.setattr(portfolio_mod, "get_holdings", counting)
+    monkeypatch.setattr(portfolio_mod, "_get_holdings_computed", counting)
     with Session() as session:
         _seed_itd(session)
         portfolio_mod.get_performance(session, as_of="2024-06-01")
@@ -295,6 +295,17 @@ def test_overview_itd_core_metrics():
         assert overview["xirr_excess_pp"] is not None
         assert overview["cagr_excess_pp"] is not None
         assert overview["windows"]["ITD"] is not None
+
+
+def test_overview_itd_cagr_excess_uses_internal_benchmark_cagr():
+    Session = get_session_factory()
+    with Session() as session:
+        _seed_itd(session)
+
+        holding = portfolio.get_holdings(session, as_of="2024-06-01")[0]
+        overview = portfolio.get_overview(session, as_of="2024-06-01")
+
+        assert overview["cagr_excess_pp"] == holding["cagr_excess_pp"]
 
 
 def test_holdings_itd_xirr_excess_uses_benchmark_xirr():

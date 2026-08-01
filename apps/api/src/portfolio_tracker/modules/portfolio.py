@@ -482,20 +482,6 @@ def _portfolio_benchmark_metrics(
     )
 
 
-def _computed_from_public(holding: HoldingPublic) -> HoldingComputed:
-    cagr = holding["cagr"]
-    cagr_excess = holding["cagr_excess_pp"]
-    benchmark_cagr = (
-        cagr - cagr_excess
-        if cagr is not None and cagr_excess is not None
-        else None
-    )
-    return {
-        "public": holding,
-        "benchmark_cagr": benchmark_cagr,
-    }
-
-
 def _blended_benchmark(
     weighted_values: list[tuple[float, float]],
 ) -> float | None:
@@ -757,17 +743,12 @@ def _build_portfolio_windows(
     return windows, any_skipped
 
 
-def get_overview(
+def _get_overview_from_computed(
     session: Session,
     as_of: str,
-    *,
-    holdings: list[HoldingPublic] | None = None,
+    computed_holdings: list[HoldingComputed],
 ) -> dict:
-    if holdings is None:
-        holdings = get_holdings(session, as_of)
-    computed_holdings = [
-        _computed_from_public(holding) for holding in holdings
-    ]
+    holdings = [computed["public"] for computed in computed_holdings]
     total_value = sum(holding["value"] or 0.0 for holding in holdings)
     all_transactions = (
         session.query(Transaction)
@@ -861,9 +842,18 @@ def get_overview(
     }
 
 
+def get_overview(session: Session, as_of: str) -> dict:
+    return _get_overview_from_computed(
+        session,
+        as_of,
+        _get_holdings_computed(session, as_of),
+    )
+
+
 def get_performance(session: Session, as_of: str) -> dict:
-    holdings = get_holdings(session, as_of)
-    overview = get_overview(session, as_of, holdings=holdings)
+    computed_holdings = _get_holdings_computed(session, as_of)
+    holdings = [computed["public"] for computed in computed_holdings]
+    overview = _get_overview_from_computed(session, as_of, computed_holdings)
     contributors = sorted(
         [
             {

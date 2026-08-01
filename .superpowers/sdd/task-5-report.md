@@ -1,67 +1,78 @@
-# Task 5 Report: Price providers and cache
+# Task 5 Report: Kill `_benchmark_cagr` leak
 
 ## Status
 
-Implemented Yahoo Finance and AMFI price providers plus database-backed price
-refresh for instruments and benchmarks.
+DONE
 
-## Delivered
+## Implementation
 
-- Added `PriceProvider` protocol and injectable Yahoo/AMFI provider implementations.
-- Locked benchmark names to required Yahoo tickers.
-- Added equity symbol resolution with `.NS` then `.BO` fallback on empty history
-  or missing LTP, persisting successful symbol.
-- Added AMFI ISIN resolution, NAV date/value mapping, scheme-code persistence,
-  and mutual-fund category normalization.
-- Added `Price` and `BenchmarkPrice` upsert caching.
-- Added incremental refresh starting from latest cached date.
-- Kept all unit tests offline with injected mocks and AMFI fixture data.
+- Added `HoldingPublic` and `HoldingComputed` typed dictionaries in
+  `apps/api/src/portfolio_tracker/modules/portfolio_types.py`.
+- Added internal computed holding assembly with public fields isolated under
+  `HoldingComputed.public`.
+- Changed `get_holdings` to return only `HoldingPublic` rows.
+- Changed overview benchmark blending to consume
+  `HoldingComputed.benchmark_cagr`.
+- Removed `_benchmark_cagr` cleanup from portfolio router and
+  `get_performance`; private key is no longer created on public rows.
+- Preserved one holding computation in `get_performance`.
 
-## TDD evidence
+## TDD Evidence
 
-1. Added provider/cache tests before production modules.
-2. Confirmed RED with `ModuleNotFoundError` for
-   `portfolio_tracker.modules.prices`.
-3. Added minimal production implementation.
-4. Confirmed focused suite: `8 passed`.
+1. Added `test_holdings_rows_never_contain_private_benchmark_cagr_key`.
+2. RED: focused test failed because module-level holding contained
+   `_benchmark_cagr`.
+3. GREEN: focused leak, single-call, and HTTP tests passed: 3 passed.
 
 ## Verification
 
-- `cd apps/api && uv run pytest -v`: 35 passed.
-- IDE lint diagnostics: no errors in changed Python files.
-- Existing Starlette deprecation warning remains in full suite.
+- Required targeted command:
+  `uv run pytest tests/test_portfolio.py tests/test_api_integration.py -q`
+  — 18 passed.
+- Full API suite:
+  `uv run pytest -q`
+  — 111 passed.
+- IDE lint diagnostics: no errors.
+- `git show --check`: no whitespace errors.
+
+One pre-existing Starlette/httpx deprecation warning remains in test output.
 
 ## Self-review
 
-- Confirmed required ticker mapping exactly matches task brief.
-- Confirmed no Kite market-data integration was added.
-- Confirmed existing user-selected MF category is not overwritten.
-- Confirmed empty `benchmark_names` disables benchmark refresh for callers/tests.
-- No known functional concerns within Task 5 scope.
+- Public holding rows contain neither `_benchmark_cagr` nor
+  `benchmark_cagr`.
+- `windows` remains part of each public holding row.
+- Benchmark CAGR remains available only through typed internal computed rows.
+- Router and performance code no longer perform boundary cleanup.
+- No Task 7 package split or unrelated refactor was introduced.
+- Existing untracked plan documents were left untouched.
 
-## Important findings follow-up
+## Commit
 
-- Same-day incremental refresh now fetches and upserts LTP when Yahoo history is
-  empty, without marking the refresh incomplete.
-- A stored `.NS` Yahoo symbol now retains `.BO` fallback when `.NS` misses.
-- A stored AMFI `scheme_code` is used directly for NAV history and category
-  lookup, avoiding an ISIN search; newly discovered codes remain persisted.
-- Index ticker mappings and the `PriceProvider` protocol are unchanged.
+`58d27e9 refactor: stop leaking private benchmark_cagr on holding rows`
 
-### Covering tests
+## Concerns
 
-- `test_refresh_prices_updates_ltp_when_same_day_history_is_empty`
-- `test_refresh_prices_tries_bse_after_stored_nse_symbol_fails`
-- `test_refresh_prices_reuses_stored_amfi_scheme_code`
+None task-related.
 
-### Commands and output
+## Critical Review Fix
 
-- RED: `uv run pytest -v tests/test_prices.py -k 'same_day_history or stored_nse_symbol or stored_amfi_scheme_code'`
-  → `3 failed`.
-- Focused GREEN: `uv run pytest -v tests/test_prices.py`
-  → `11 passed`.
-- Full API regression: `uv run pytest -v`
-  → `38 passed, 1 warning in 1.43s`.
-- IDE lint diagnostics: no errors in changed Python files.
-- Warning is the pre-existing Starlette `httpx` deprecation from
-  `fastapi.testclient`.
+- Removed public-field reconstruction of `benchmark_cagr`.
+- Added one internal `HoldingComputed` path shared by overview and performance
+  assembly; public `get_holdings` still returns only `HoldingPublic`.
+- Updated the single-computation regression to cover
+  `_get_holdings_computed`.
+- Covering tests:
+  `test_holdings_rows_never_contain_private_benchmark_cagr_key` and
+  `test_overview_itd_cagr_excess_uses_internal_benchmark_cagr` in
+  `apps/api/tests/test_portfolio.py`.
+- RED: numerical regression failed with `364.0854444662689` instead of
+  `3.640854444662689`.
+- Focused regressions: 3 passed, 1 pre-existing warning.
+- Required command:
+  `cd apps/api && uv run pytest tests/test_portfolio.py tests/test_api_integration.py -q`
+  — 19 passed, 1 pre-existing warning.
+- Full suite:
+  `cd apps/api && uv run pytest -q`
+  — 112 passed, 1 pre-existing warning.
+- IDE lint diagnostics: no errors.
