@@ -5,7 +5,7 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
 from portfolio_tracker.db.session import get_db
-from portfolio_tracker.modules import portfolio
+from portfolio_tracker.modules import portfolio, reconcile
 
 router = APIRouter(prefix="/portfolio", tags=["portfolio"])
 
@@ -21,3 +21,8 @@ def holdings(session: Annotated[Session, Depends(get_db)]) -> dict:
     for row in rows:
         row.pop("_benchmark_cagr", None)
     return {"holdings": rows}
+
+
+@router.get("/alerts")
+def alerts(session: Annotated[Session, Depends(get_db)]) -> dict:
+    return reconcile.get_alerts(session, today=date.today().isoformat())
