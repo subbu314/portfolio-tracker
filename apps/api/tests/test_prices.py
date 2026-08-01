@@ -37,6 +37,29 @@ def test_amfi_provider_resolves_isin_and_filters_history():
     ]
 
 
+def test_amfi_provider_resolves_isin_via_scheme_list_when_search_empty():
+    sample = json.loads((FIXTURES / "amfi_sample.json").read_text())
+    scheme_list = [
+        {
+            "schemeCode": 120828,
+            "schemeName": "quant Small Cap Fund - Growth Option - Direct Plan",
+            "isinGrowth": "INF966L01689",
+            "isinDivReinvestment": None,
+        }
+    ]
+    http_get = MagicMock(side_effect=[[], scheme_list, sample])
+    provider = AmfiNavProvider(http_get=http_get)
+
+    rows = provider.get_history_by_isin("INF966L01689", "2024-03-01", "2024-03-01")
+
+    assert rows == [("2024-03-01", 99.50)]
+    assert http_get.call_args_list == [
+        call("https://api.mfapi.in/mf/search?q=INF966L01689"),
+        call("https://api.mfapi.in/mf"),
+        call("https://api.mfapi.in/mf/120828"),
+    ]
+
+
 def test_amfi_provider_resolves_flexi_cap_category():
     sample = json.loads((FIXTURES / "amfi_sample.json").read_text())
     provider = AmfiNavProvider(
