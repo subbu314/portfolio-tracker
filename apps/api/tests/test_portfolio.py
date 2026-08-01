@@ -163,7 +163,7 @@ def test_get_performance_has_no_nested_overview():
 
 
 def test_get_performance_computes_holdings_once(monkeypatch):
-    from portfolio_tracker.modules import portfolio as portfolio_mod
+    from portfolio_tracker.modules.portfolio import service as portfolio_mod
 
     Session = get_session_factory()
     calls = {"n": 0}
@@ -239,6 +239,7 @@ def test_get_overview_reuses_loaded_transaction_map():
 
     from portfolio_tracker.db.engine import get_engine
     from portfolio_tracker.modules import portfolio as portfolio_mod
+    from portfolio_tracker.modules.portfolio.data import load_portfolio_inputs
 
     engine = get_engine()
     statements: list[str] = []
@@ -252,9 +253,7 @@ def test_get_overview_reuses_loaded_transaction_map():
         Session = get_session_factory()
         with Session() as session:
             _seed_itd(session)
-            inputs = portfolio_mod.load_portfolio_inputs(
-                session, as_of="2024-06-15"
-            )
+            inputs = load_portfolio_inputs(session, as_of="2024-06-15")
 
             portfolio_mod.get_overview(
                 session,
