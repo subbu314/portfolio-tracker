@@ -598,13 +598,37 @@ def _build_portfolio_window(
         if start < transaction.trade_date <= as_of
     ]
     trades = _trade_tuples(in_window)
-    absolute = metrics.rolling_absolute(
-        opening_mv=opening_mv,
-        terminal_mv=total_value,
-        trades_in_window=[
-            (tx.side, tx.quantity, tx.price, tx.fees) for tx in in_window
-        ],
-    )
+    in_window_sides = [
+        (tx.side, tx.quantity, tx.price, tx.fees) for tx in in_window
+    ]
+    # Portfolio terminal MV includes capital added after window start. Naive
+    # opening_mv→total_value point-to-point inflates absolute/CAGR; use invested
+    # capital (opening MV + in-window net cost) vs terminal instead.
+    if opening_mv > 0:
+        invested = opening_mv + metrics.invested_cost_from_transactions(
+            in_window_sides
+        )
+        absolute = metrics.absolute_return(
+            invested_cost=invested,
+            current_value=total_value,
+        )
+        cagr_value = (
+            metrics.rolling_cagr(
+                opening_mv=opening_mv,
+                terminal_mv=total_value,
+                window_start=start,
+                as_of=as_of,
+            )
+            if not in_window_sides
+            else None
+        )
+    else:
+        absolute = metrics.rolling_absolute(
+            opening_mv=0.0,
+            terminal_mv=total_value,
+            trades_in_window=in_window_sides,
+        )
+        cagr_value = None
     xirr_value = metrics.xirr(
         metrics.build_rolling_xirr_cashflows(
             opening_mv=opening_mv,
@@ -613,12 +637,6 @@ def _build_portfolio_window(
             terminal_mv=total_value,
             as_of=as_of,
         )
-    )
-    cagr_value = metrics.rolling_cagr(
-        opening_mv=opening_mv,
-        terminal_mv=total_value,
-        window_start=start,
-        as_of=as_of,
     )
     benchmark_xirr = (
         metrics.xirr(
