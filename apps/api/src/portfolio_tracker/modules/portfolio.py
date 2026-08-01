@@ -130,8 +130,12 @@ def _position(
         .first()
     )
     if snapshot:
-        return snapshot.quantity, snapshot.avg_price
-    return _position_from_transactions(transactions)
+        quantity = 0.0 if abs(snapshot.quantity) < 1e-8 else snapshot.quantity
+        return quantity, snapshot.avg_price
+    quantity, avg = _position_from_transactions(transactions)
+    if abs(quantity) < 1e-8:
+        return 0.0, avg
+    return quantity, avg
 
 
 def _instrument_metrics(
