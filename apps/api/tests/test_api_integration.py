@@ -132,3 +132,41 @@ def test_settings_reject_unknown_benchmark_name():
 
     assert response.status_code == 400
     assert response.json()["detail"] == "Unknown benchmark index: Imaginary Index"
+
+
+def test_portfolio_performance_route_returns_contributors(monkeypatch):
+    monkeypatch.setattr(
+        "portfolio_tracker.modules.kite_auth.authenticated_kite",
+        lambda *_args, **_kwargs: (_ for _ in ()).throw(
+            AssertionError("Kite must not be called")
+        ),
+    )
+    client = TestClient(create_app())
+    csv_text = (FIXTURES / "equity_tradebook.csv").read_text()
+    client.post(
+        "/import/csv",
+        files={"file": ("equity.csv", csv_text, "text/csv")},
+    )
+    as_of = date.today().isoformat()
+    Session = get_session_factory()
+    with Session() as session:
+        session.add_all(
+            [
+                Price(symbol="RELIANCE.NS", price_date="2024-01-15", close=2500.0, source="yahoo"),
+                Price(symbol="RELIANCE.NS", price_date=as_of, close=3000.0, source="yahoo"),
+                Price(symbol="INFY.NS", price_date="2024-02-01", close=1500.0, source="yahoo"),
+                Price(symbol="INFY.NS", price_date=as_of, close=1800.0, source="yahoo"),
+                BenchmarkPrice(index_symbol="Nifty 500", price_date="2024-01-15", close=10000.0),
+                BenchmarkPrice(index_symbol="Nifty 500", price_date=as_of, close=12000.0),
+            ]
+        )
+        session.commit()
+
+    response = client.get("/portfolio/performance")
+    assert response.status_code == 200
+    body = response.json()
+    assert body["default_window"] == "ITD"
+    assert "overview" in body
+    assert "contributors" in body
+    assert "holdings" in body
+    assert "windows_available" in body

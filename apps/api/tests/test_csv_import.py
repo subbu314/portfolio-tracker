@@ -180,3 +180,84 @@ def test_csv_endpoint_imports_multipart_file():
 
     assert response.status_code == 200
     assert response.json()["new"] == 2
+
+
+def test_financial_year_label_uses_indian_fy():
+    assert csv_import.financial_year_label("2024-03-31") == "FY2023-24"
+    assert csv_import.financial_year_label("2024-04-01") == "FY2024-25"
+    assert csv_import.financial_years_spanned("2024-01-04", "2024-03-28") == ["FY2023-24"]
+    assert csv_import.financial_years_spanned("2024-04-02", "2025-03-11") == ["FY2024-25"]
+
+
+def test_batch_import_accepts_multiple_files_and_skips_duplicates():
+    eq = (FIXTURES / "equity_tradebook.csv").read_text()
+    mf = (FIXTURES / "mf_tradebook.csv").read_text()
+    Session = get_session_factory()
+    with Session() as session:
+        result = csv_import.import_csv_batch(
+            session,
+            [
+                ("equity.csv", eq),
+                ("mf.csv", mf),
+                ("equity-again.csv", eq),
+            ],
+        )
+        session.commit()
+        assert result["summary"]["accepted"] == 3
+        assert result["summary"]["rejected"] == 0
+        assert result["summary"]["new"] == 3  # 2 equity + 1 mf; third file all existing
+        assert result["summary"]["existing"] == 2
+        assert result["files"][0]["ok"] is True
+        assert result["files"][0]["financial_years"]
+        assert session.query(Transaction).count() == 3
+
+
+def test_batch_import_rejects_bad_file_keeps_good_files():
+    eq = (FIXTURES / "equity_tradebook.csv").read_text()
+    Session = get_session_factory()
+    with Session() as session:
+        result = csv_import.import_csv_batch(
+            session,
+            [
+                ("equity.csv", eq),
+                ("bad.csv", "not,a,tradebook\n1,2,3\n"),
+            ],
+        )
+        session.commit()
+        assert result["summary"]["accepted"] == 1
+        assert result["summary"]["rejected"] == 1
+        bad = result["files"][1]
+        assert bad["ok"] is False
+        assert bad["code"] == "csv_format"
+        assert bad["action"] == csv_import.REIMPORT_ACTION
+        assert "import this file again" in bad["action"].lower()
+        assert session.query(Transaction).count() == 2
+
+
+def test_import_route_multi_file_and_wrong_input_action():
+    from portfolio_tracker.main import create_app
+
+    client = TestClient(create_app())
+    eq = (FIXTURES / "equity_tradebook.csv").read_bytes()
+    bad = b"foo,bar\n1,2\n"
+    response = client.post(
+        "/import/csv",
+        files=[
+            ("files", ("equity.csv", eq, "text/csv")),
+            ("files", ("bad.csv", bad, "text/csv")),
+        ],
+    )
+    assert response.status_code == 200
+    body = response.json()
+    assert body["summary"]["accepted"] == 1
+    assert body["summary"]["rejected"] == 1
+    assert body["files"][1]["action"] == csv_import.REIMPORT_ACTION
+
+    single_bad = client.post(
+        "/import/csv",
+        files={"file": ("bad.csv", bad, "text/csv")},
+    )
+    assert single_bad.status_code == 400
+    detail = single_bad.json()["detail"]
+    assert isinstance(detail, dict)
+    assert detail["action"] == csv_import.REIMPORT_ACTION

@@ -94,6 +94,8 @@ def _refresh_mutual_fund(
     else:
         history = amfi.get_history_by_isin(isin, start, as_of)
         category, scheme_code = amfi.resolve_category(isin)
+    if not history:
+        raise RuntimeError(f"no AMFI NAV for {isin}")
     for price_date, close in history:
         _upsert_price(session, isin, price_date, close, "amfi")
 
@@ -108,13 +110,30 @@ def _refresh_mutual_fund(
     return len(history)
 
 
+# NSE renames / ticker moves observed in live smoke (symbol → Yahoo ticker).
+YAHOO_SYMBOL_ALIASES: dict[str, str] = {
+    "ZOMATO": "ETERNAL.NS",
+    "HBLPOWER": "HBLENGINE.NS",
+    "SWANENERGY": "SWANCORP.NS",
+}
+
+
 def _equity_candidates(instrument: Instrument) -> list[str]:
+    candidates: list[str] = []
     if instrument.yahoo_symbol:
-        candidates = [instrument.yahoo_symbol]
+        candidates.append(instrument.yahoo_symbol)
         if instrument.yahoo_symbol.endswith(".NS"):
             candidates.append(f"{instrument.yahoo_symbol[:-3]}.BO")
-        return candidates
-    return [f"{instrument.symbol}.NS", f"{instrument.symbol}.BO"]
+    else:
+        candidates.extend([f"{instrument.symbol}.NS", f"{instrument.symbol}.BO"])
+    alias = YAHOO_SYMBOL_ALIASES.get(instrument.symbol.upper())
+    if alias and alias not in candidates:
+        candidates.append(alias)
+        if alias.endswith(".NS"):
+            bo = f"{alias[:-3]}.BO"
+            if bo not in candidates:
+                candidates.append(bo)
+    return candidates
 
 
 def _fetch_equity_prices(

@@ -32,9 +32,12 @@ def _normalize_category(category: str | None) -> str | None:
 class AmfiNavProvider:
     def __init__(self, http_get: HttpGet | None = None):
         self._http_get = http_get or self._default_get
+        self._isin_scheme_codes: dict[str, str] | None = None
 
     def _default_get(self, url: str) -> Any:
-        response = httpx.get(url, timeout=30.0)
+        # Scheme list (/mf) is multi-MB; allow a longer timeout.
+        timeout = 120.0 if url.rstrip("/").endswith("/mf") else 30.0
+        response = httpx.get(url, timeout=timeout, follow_redirects=True)
         response.raise_for_status()
         return response.json()
 
@@ -42,12 +45,35 @@ class AmfiNavProvider:
         payload = self._http_get(f"https://api.mfapi.in/mf/{scheme_code}")
         return payload if isinstance(payload, dict) else {}
 
+    def _isin_index(self) -> dict[str, str]:
+        if self._isin_scheme_codes is not None:
+            return self._isin_scheme_codes
+        # mfapi /mf/search does not resolve ISINs; /mf list includes isinGrowth fields.
+        data = self._http_get("https://api.mfapi.in/mf")
+        index: dict[str, str] = {}
+        if isinstance(data, list):
+            for row in data:
+                if not isinstance(row, dict):
+                    continue
+                scheme_code = row.get("schemeCode") or row.get("scheme_code")
+                if scheme_code is None:
+                    continue
+                code = str(scheme_code)
+                for key in ("isinGrowth", "isinDivReinvestment", "isin_growth"):
+                    isin = row.get(key)
+                    if isinstance(isin, str) and isin.strip():
+                        index.setdefault(isin.strip().upper(), code)
+        self._isin_scheme_codes = index
+        return index
+
     def find_scheme_code_by_isin(self, isin: str) -> str | None:
-        data = self._http_get(f"https://api.mfapi.in/mf/search?q={isin}")
-        if not isinstance(data, list) or not data:
-            return None
-        scheme_code = data[0].get("schemeCode") or data[0].get("scheme_code")
-        return str(scheme_code) if scheme_code is not None else None
+        normalized = isin.strip().upper()
+        data = self._http_get(f"https://api.mfapi.in/mf/search?q={normalized}")
+        if isinstance(data, list) and data:
+            scheme_code = data[0].get("schemeCode") or data[0].get("scheme_code")
+            if scheme_code is not None:
+                return str(scheme_code)
+        return self._isin_index().get(normalized)
 
     def get_history(
         self, symbol: str, start: str, end: str

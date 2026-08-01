@@ -23,6 +23,41 @@ class ImportResult(TypedDict):
     flagged_rows: list[str]
     date_min: str | None
     date_max: str | None
+    financial_years: list[str]
+
+
+class FileImportOk(TypedDict):
+    filename: str
+    ok: Literal[True]
+    format: FormatName
+    new: int
+    existing: int
+    segment_counts: dict[str, int]
+    flagged_rows: list[str]
+    date_min: str | None
+    date_max: str | None
+    financial_years: list[str]
+
+
+class FileImportErr(TypedDict):
+    filename: str
+    ok: Literal[False]
+    code: Literal["encoding", "csv_format", "csv_parse", "empty"]
+    message: str
+    errors: list[str]
+    action: str
+
+
+class BatchImportResult(TypedDict):
+    files: list[FileImportOk | FileImportErr]
+    summary: dict[str, int]
+
+
+REIMPORT_ACTION = (
+    "This file was not imported. Export again from Zerodha Console → Reports → "
+    "Tradebook (Equity or Mutual Funds), use a ≤365-day or financial-year window, "
+    "UTF-8 CSV, then import this file again. Other files in the same upload are unaffected."
+)
 
 
 class CsvFormatError(Exception):
@@ -168,6 +203,13 @@ def _parse_console_row(row: dict[str, str]) -> tuple[ParsedRow, str | None]:
     )
 
 
+def _looks_like_isin(value: str | None) -> bool:
+    if not value:
+        return False
+    candidate = value.strip().upper()
+    return len(candidate) == 12 and candidate.isalnum() and candidate[:2].isalpha()
+
+
 def get_or_create_instrument(
     session: Session,
     *,
@@ -176,18 +218,39 @@ def get_or_create_instrument(
     instrument_type: str,
     exchange: str | None,
 ) -> Instrument:
+    normalized_symbol = (symbol or "").strip()
+    normalized_isin = (isin or "").strip().upper() or None
+    if normalized_isin is None and _looks_like_isin(normalized_symbol):
+        normalized_isin = normalized_symbol.upper()
+
     instrument = None
-    if isin:
-        instrument = session.query(Instrument).filter(Instrument.isin == isin).first()
+    if normalized_isin:
+        instrument = (
+            session.query(Instrument).filter(Instrument.isin == normalized_isin).first()
+        )
+    if instrument is None and _looks_like_isin(normalized_symbol):
+        instrument = (
+            session.query(Instrument)
+            .filter(Instrument.isin == normalized_symbol.upper())
+            .first()
+        )
     if instrument is None:
-        instrument = session.query(Instrument).filter(Instrument.symbol == symbol).first()
+        instrument = (
+            session.query(Instrument)
+            .filter(Instrument.symbol == normalized_symbol)
+            .first()
+        )
     if instrument is not None:
+        if normalized_isin and not instrument.isin:
+            instrument.isin = normalized_isin
         return instrument
 
-    yahoo_symbol = f"{symbol}.NS" if instrument_type in {"equity", "etf"} else None
+    yahoo_symbol = (
+        f"{normalized_symbol}.NS" if instrument_type in {"equity", "etf"} else None
+    )
     instrument = Instrument(
-        symbol=symbol,
-        isin=isin,
+        symbol=normalized_symbol,
+        isin=normalized_isin,
         instrument_type=instrument_type,
         exchange=exchange,
         yahoo_symbol=yahoo_symbol,
@@ -222,6 +285,32 @@ def _parse_console_rows(
     if errors:
         raise CsvParseError("Console tradebook parse failed", errors)
     return parsed_rows, segment_counts, flagged_rows
+
+
+def financial_year_label(iso_date: str) -> str:
+    d = date.fromisoformat(iso_date[:10])
+    start_year = d.year if d.month >= 4 else d.year - 1
+    return f"FY{start_year}-{str(start_year + 1)[-2:]}"
+
+
+def financial_years_spanned(date_min: str | None, date_max: str | None) -> list[str]:
+    if not date_min or not date_max:
+        return []
+    start = date.fromisoformat(date_min[:10])
+    end = date.fromisoformat(date_max[:10])
+    labels: list[str] = []
+    year = start.year if start.month >= 4 else start.year - 1
+    while True:
+        fy_start = date(year, 4, 1)
+        fy_end = date(year + 1, 3, 31)
+        if fy_end < start:
+            year += 1
+            continue
+        if fy_start > end:
+            break
+        labels.append(f"FY{year}-{str(year + 1)[-2:]}")
+        year += 1
+    return labels
 
 
 def import_csv(session: Session, text: str) -> ImportResult:
@@ -279,12 +368,82 @@ def import_csv(session: Session, text: str) -> ImportResult:
         new += 1
 
     dates = [row.trade_date for row in parsed_rows]
+    date_min = min(dates) if dates else None
+    date_max = max(dates) if dates else None
     return {
         "format": format_name,
         "new": new,
         "existing": existing,
         "segment_counts": segment_counts,
         "flagged_rows": flagged_rows,
-        "date_min": min(dates) if dates else None,
-        "date_max": max(dates) if dates else None,
+        "date_min": date_min,
+        "date_max": date_max,
+        "financial_years": financial_years_spanned(date_min, date_max),
+    }
+
+
+def import_csv_batch(
+    session: Session, files: list[tuple[str, str]]
+) -> BatchImportResult:
+    out: list[FileImportOk | FileImportErr] = []
+    total_new = 0
+    total_existing = 0
+    accepted = 0
+    rejected = 0
+    for filename, text in files:
+        if not text.strip():
+            rejected += 1
+            out.append(
+                {
+                    "filename": filename,
+                    "ok": False,
+                    "code": "empty",
+                    "message": "CSV file is empty",
+                    "errors": [],
+                    "action": REIMPORT_ACTION,
+                }
+            )
+            continue
+        nested = session.begin_nested()
+        try:
+            result = import_csv(session, text)
+            nested.commit()
+            accepted += 1
+            total_new += result["new"]
+            total_existing += result["existing"]
+            out.append({"filename": filename, "ok": True, **result})
+        except CsvFormatError as exc:
+            nested.rollback()
+            rejected += 1
+            out.append(
+                {
+                    "filename": filename,
+                    "ok": False,
+                    "code": "csv_format",
+                    "message": str(exc),
+                    "errors": [],
+                    "action": REIMPORT_ACTION,
+                }
+            )
+        except CsvParseError as exc:
+            nested.rollback()
+            rejected += 1
+            out.append(
+                {
+                    "filename": filename,
+                    "ok": False,
+                    "code": "csv_parse",
+                    "message": str(exc),
+                    "errors": exc.errors,
+                    "action": REIMPORT_ACTION,
+                }
+            )
+    return {
+        "files": out,
+        "summary": {
+            "accepted": accepted,
+            "rejected": rejected,
+            "new": total_new,
+            "existing": total_existing,
+        },
     }

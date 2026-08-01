@@ -26,6 +26,22 @@ def callback(body: RequestTokenBody, session: Session = Depends(get_db)) -> dict
         raise HTTPException(status_code=401, detail="Token exchange failed") from exc
 
 
+@router.get("/callback")
+def callback_get(
+    request_token: str,
+    session: Session = Depends(get_db),
+    status: str | None = None,
+) -> dict[str, bool]:
+    if status and status.lower() not in {"success", "ok"}:
+        raise HTTPException(status_code=401, detail="Token exchange failed")
+    try:
+        return kite_auth.exchange_request_token(session, request_token)
+    except kite_auth.KiteConfigError as exc:
+        raise HTTPException(status_code=400, detail="Kite API credentials are not configured") from exc
+    except kite_auth.KiteAuthError as exc:
+        raise HTTPException(status_code=401, detail="Token exchange failed") from exc
+
+
 @router.get("/status")
 def status(session: Session = Depends(get_db)) -> dict:
     return kite_auth.get_auth_status(session)

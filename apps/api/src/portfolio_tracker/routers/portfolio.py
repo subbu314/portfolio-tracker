@@ -26,3 +26,8 @@ def holdings(session: Annotated[Session, Depends(get_db)]) -> dict:
 @router.get("/alerts")
 def alerts(session: Annotated[Session, Depends(get_db)]) -> dict:
     return reconcile.get_alerts(session, today=date.today().isoformat())
+
+
+@router.get("/performance")
+def performance(session: Annotated[Session, Depends(get_db)]) -> dict:
+    return portfolio.get_performance(session, as_of=date.today().isoformat())

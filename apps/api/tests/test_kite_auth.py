@@ -132,3 +132,26 @@ def test_status_and_logout_reflect_connection_state():
     assert logout_response.status_code == 200
     assert logout_response.json() == {"connected": False}
     assert disconnected_response.json()["connected"] is False
+
+
+def test_auth_callback_get_exchanges_request_token(monkeypatch):
+    from portfolio_tracker.main import create_app
+    from fastapi.testclient import TestClient
+
+    monkeypatch.setenv("KITE_API_KEY", "test_key")
+    monkeypatch.setenv("KITE_API_SECRET", "test_secret")
+    from portfolio_tracker.config import get_settings
+    get_settings.cache_clear()
+
+    def fake_exchange(session, request_token: str):
+        assert request_token == "req_abc"
+        return {"connected": True}
+
+    monkeypatch.setattr(
+        "portfolio_tracker.modules.kite_auth.exchange_request_token",
+        fake_exchange,
+    )
+    client = TestClient(create_app())
+    response = client.get("/auth/callback", params={"request_token": "req_abc", "status": "success"})
+    assert response.status_code == 200
+    assert response.json() == {"connected": True}
