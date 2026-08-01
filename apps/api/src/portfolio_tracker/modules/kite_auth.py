@@ -60,8 +60,7 @@ def exchange_request_token(session: Session, request_token: str) -> dict[str, bo
     try:
         data = kite.generate_session(request_token, api_secret=settings.kite_api_secret)
     except Exception as exc:  # kiteconnect raises varied errors
-        if invalidate_on_kite_error(session, exc):
-            session.commit()
+        # Failed login exchange must not wipe an existing access_token.
         raise KiteAuthError("Token exchange failed") from exc
     access_token = data["access_token"]
     set_setting(session, TOKEN_KEY, access_token)

@@ -74,10 +74,11 @@ def test_invalidate_on_non_auth_error_preserves_token():
         assert kite_auth.get_access_token(session) == "secret_access_token"
 
 
-def test_exchange_auth_failure_invalidates_token_without_leaking_error():
+def test_exchange_auth_failure_preserves_existing_access_token():
     Session = get_session_factory()
     with Session() as session:
         kite_auth.set_setting(session, kite_auth.TOKEN_KEY, "old_secret_token")
+        kite_auth.set_setting(session, kite_auth.TOKEN_UPDATED_KEY, "2026-08-01T09:00:00+00:00")
         session.commit()
         fake_kite = MagicMock()
         fake_kite.generate_session.side_effect = TokenException(
@@ -90,7 +91,8 @@ def test_exchange_auth_failure_invalidates_token_without_leaking_error():
 
         assert "req_secret" not in str(error.value)
         assert "old_secret_token" not in str(error.value)
-        assert kite_auth.get_access_token(session) is None
+        assert kite_auth.get_access_token(session) == "old_secret_token"
+        assert kite_auth.get_setting(session, kite_auth.TOKEN_UPDATED_KEY) == "2026-08-01T09:00:00+00:00"
 
 
 def test_callback_does_not_expose_upstream_error_text():
