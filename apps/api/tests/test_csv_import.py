@@ -43,6 +43,29 @@ def test_reimport_is_idempotent():
         assert session.query(Transaction).count() == 2
 
 
+def test_overlapping_reordered_imports_without_trade_ids_are_idempotent():
+    first_file = """symbol,isin,trade_date,exchange,segment,trade_type,quantity,price,fees,order_execution_time
+RELIANCE,INE002A01018,2024-01-15,NSE,EQ,buy,10,2500,12.5,2024-01-15 10:00:00
+INFY,INE009A01021,2024-02-01,NSE,EQ,buy,5,1500,8,2024-02-01 11:00:00
+"""
+    overlapping_file = """symbol,isin,trade_date,exchange,segment,trade_type,quantity,price,fees,order_execution_time
+TCS,INE467B01029,2024-03-05,NSE,EQ,buy,3,4000,7,2024-03-05 12:00:00
+INFY,INE009A01021,2024-02-01,NSE,EQ,buy,5,1500,8,2024-02-01 11:00:00
+RELIANCE,INE002A01018,2024-01-15,NSE,EQ,buy,10,2500,12.5,2024-01-15 10:00:00
+"""
+    Session = get_session_factory()
+
+    with Session() as session:
+        csv_import.import_csv(session, first_file)
+        session.commit()
+        result = csv_import.import_csv(session, overlapping_file)
+        session.commit()
+
+        assert result["new"] == 1
+        assert result["existing"] == 2
+        assert session.query(Transaction).count() == 3
+
+
 def test_unknown_format_rejected():
     with pytest.raises(csv_import.CsvFormatError):
         csv_import.detect_format(["foo", "bar"])
@@ -96,6 +119,38 @@ INFY,2024-02-01,EQ,buy,not-a-number,1500,O2
             csv_import.import_csv(session, text)
 
         assert error.value.errors == ["row 3: invalid quantity 'not-a-number'"]
+        assert session.query(Instrument).count() == 0
+        assert session.query(Transaction).count() == 0
+
+
+@pytest.mark.parametrize(
+    ("field", "value"),
+    [
+        ("quantity", "0"),
+        ("quantity", "-1"),
+        ("price", "0"),
+        ("price", "-1"),
+        ("fees", "-0.01"),
+    ],
+)
+def test_non_positive_trade_values_are_rejected_without_writes(field, value):
+    row = {
+        "quantity": "10",
+        "price": "2500",
+        "fees": "12.5",
+    }
+    row[field] = value
+    text = f"""symbol,trade_date,segment,trade_type,quantity,price,fees,order_id
+RELIANCE,2024-01-15,EQ,buy,{row["quantity"]},{row["price"]},{row["fees"]},O1
+"""
+    Session = get_session_factory()
+
+    with Session() as session:
+        with pytest.raises(csv_import.CsvParseError) as error:
+            csv_import.import_csv(session, text)
+
+        expected_rule = "must be non-negative" if field == "fees" else "must be positive"
+        assert error.value.errors == [f"row 2: {field} {expected_rule}"]
         assert session.query(Instrument).count() == 0
         assert session.query(Transaction).count() == 0
 

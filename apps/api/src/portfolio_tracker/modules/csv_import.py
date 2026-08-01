@@ -84,6 +84,20 @@ def _parse_number(value: str, field: str) -> float:
     return parsed
 
 
+def _parse_positive_number(value: str, field: str) -> float:
+    parsed = _parse_number(value, field)
+    if parsed <= 0:
+        raise ValueError(f"{field} must be positive")
+    return parsed
+
+
+def _parse_non_negative_number(value: str, field: str) -> float:
+    parsed = _parse_number(value, field)
+    if parsed < 0:
+        raise ValueError(f"{field} must be non-negative")
+    return parsed
+
+
 def _parse_trade_date(value: str) -> str:
     raw = value.strip()
     try:
@@ -107,32 +121,40 @@ def _instrument_type(segment: str, symbol: str, series: str) -> tuple[str, str |
     return "equity", f"unexpected segment {segment}"
 
 
-def _parse_console_row(
-    row: dict[str, str], row_number: int
-) -> tuple[ParsedRow, str | None]:
+def _parse_console_row(row: dict[str, str]) -> tuple[ParsedRow, str | None]:
     symbol = row["symbol"].strip().upper()
     if not symbol:
         raise ValueError("symbol is required")
     trade_date = _parse_trade_date(row["trade_date"])
     side = _parse_side(row["trade_type"])
-    quantity = _parse_number(row["quantity"], "quantity")
-    price = _parse_number(row["price"], "price")
-    fees = _parse_number(row.get("fees") or "0", "fees")
+    quantity = _parse_positive_number(row["quantity"], "quantity")
+    price = _parse_positive_number(row["price"], "price")
+    fees = _parse_non_negative_number(row.get("fees") or "0", "fees")
     segment = (row.get("segment") or "EQ").strip().upper() or "EQ"
     order_id = (row.get("order_id") or row.get("trade_id") or "").strip() or None
+    isin = (row.get("isin") or "").strip().upper() or None
+    exchange = (row.get("exchange") or "").strip().upper() or None
     instrument_type, flag_reason = _instrument_type(
         segment, symbol, row.get("series") or ""
     )
+    stable_fallback = "|".join(
+        (
+            exchange or "",
+            format(fees, ".15g"),
+            (row.get("order_execution_time") or "").strip().upper(),
+            isin or "",
+        )
+    )
     dedupe_key = (
         f"csv:{segment}:{symbol}:{trade_date}:{side}:"
-        f"{quantity}:{price}:{order_id or row_number}"
+        f"{quantity}:{price}:{order_id or stable_fallback}"
     )
     return (
         ParsedRow(
             symbol=symbol,
-            isin=(row.get("isin") or "").strip() or None,
+            isin=isin,
             instrument_type=instrument_type,
-            exchange=(row.get("exchange") or "").strip() or None,
+            exchange=exchange,
             segment=segment,
             trade_date=trade_date,
             side=side,
@@ -185,7 +207,7 @@ def _parse_console_rows(
 
     for row_number, row in enumerate(rows, start=2):
         try:
-            parsed_row, flag_reason = _parse_console_row(row, row_number)
+            parsed_row, flag_reason = _parse_console_row(row)
             segment_counts[parsed_row.segment] = (
                 segment_counts.get(parsed_row.segment, 0) + 1
             )
