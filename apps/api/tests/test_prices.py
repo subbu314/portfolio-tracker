@@ -198,6 +198,118 @@ def test_refresh_prices_uses_latest_cached_date_for_incremental_history():
         assert session.query(Price).count() == 2
 
 
+def test_refresh_prices_updates_ltp_when_same_day_history_is_empty():
+    Session = get_session_factory()
+    with Session() as session:
+        instrument = Instrument(
+            symbol="RELIANCE",
+            isin="INE002A01018",
+            instrument_type="equity",
+            exchange="NSE",
+            yahoo_symbol="RELIANCE.NS",
+        )
+        session.add(instrument)
+        session.add(
+            Price(
+                symbol="RELIANCE.NS",
+                price_date="2024-06-01",
+                close=2550.0,
+                source="yahoo",
+            )
+        )
+        session.commit()
+        yahoo = MagicMock(spec=YahooFinanceProvider)
+        yahoo.get_history.return_value = []
+        yahoo.get_ltp.return_value = 2600.0
+
+        result = price_service.refresh_prices(
+            session,
+            as_of="2024-06-01",
+            yahoo=yahoo,
+            amfi=MagicMock(spec=AmfiNavProvider),
+            history_start="2018-01-01",
+            benchmark_names=[],
+        )
+
+        assert result == {"updated": 1, "failed": [], "incomplete": False}
+        yahoo.get_history.assert_called_once_with(
+            "RELIANCE.NS", "2024-06-01", "2024-06-01"
+        )
+        yahoo.get_ltp.assert_called_once_with("RELIANCE.NS")
+        price = session.query(Price).one()
+        assert price.close == 2600.0
+
+
+def test_refresh_prices_tries_bse_after_stored_nse_symbol_fails():
+    Session = get_session_factory()
+    with Session() as session:
+        instrument = Instrument(
+            symbol="RELIANCE",
+            isin="INE002A01018",
+            instrument_type="equity",
+            exchange="NSE",
+            yahoo_symbol="RELIANCE.NS",
+        )
+        session.add(instrument)
+        session.commit()
+        yahoo = MagicMock(spec=YahooFinanceProvider)
+        yahoo.get_history.side_effect = [[], [("2024-01-15", 2490.0)]]
+        yahoo.get_ltp.side_effect = [None, 2500.0]
+
+        result = price_service.refresh_prices(
+            session,
+            as_of="2024-01-16",
+            yahoo=yahoo,
+            amfi=MagicMock(spec=AmfiNavProvider),
+            history_start="2024-01-01",
+            benchmark_names=[],
+        )
+
+        assert result["incomplete"] is False
+        assert yahoo.get_history.call_args_list == [
+            call("RELIANCE.NS", "2024-01-01", "2024-01-16"),
+            call("RELIANCE.BO", "2024-01-01", "2024-01-16"),
+        ]
+        assert yahoo.get_ltp.call_args_list == [
+            call("RELIANCE.NS"),
+            call("RELIANCE.BO"),
+        ]
+        assert instrument.yahoo_symbol == "RELIANCE.BO"
+
+
+def test_refresh_prices_reuses_stored_amfi_scheme_code():
+    Session = get_session_factory()
+    with Session() as session:
+        instrument = Instrument(
+            symbol="INF090I01239",
+            isin="INF090I01239",
+            instrument_type="mf",
+            exchange=None,
+            scheme_code="123",
+        )
+        session.add(instrument)
+        session.commit()
+        amfi = MagicMock(spec=AmfiNavProvider)
+        amfi.get_history.return_value = [("2024-03-01", 99.5)]
+        amfi.resolve_category.return_value = ("Flexi Cap", "123")
+
+        result = price_service.refresh_prices(
+            session,
+            as_of="2024-03-01",
+            yahoo=MagicMock(spec=YahooFinanceProvider),
+            amfi=amfi,
+            history_start="2024-01-01",
+            benchmark_names=[],
+        )
+
+        assert result == {"updated": 1, "failed": [], "incomplete": False}
+        amfi.get_history.assert_called_once_with("123", "2024-01-01", "2024-03-01")
+        amfi.find_scheme_code_by_isin.assert_not_called()
+        amfi.resolve_category.assert_called_once_with("INF090I01239", "123")
+        assert instrument.scheme_code == "123"
+        assert instrument.mf_category == "Flexi Cap"
+
+
 def test_refresh_prices_caches_locked_benchmark_ticker():
     Session = get_session_factory()
     with Session() as session:

@@ -88,11 +88,15 @@ def _refresh_mutual_fund(
 ) -> int:
     isin = instrument.isin or instrument.symbol
     start = _history_start_for_price(session, isin, history_start)
-    history = amfi.get_history_by_isin(isin, start, as_of)
+    if instrument.scheme_code:
+        history = amfi.get_history(instrument.scheme_code, start, as_of)
+        category, scheme_code = amfi.resolve_category(isin, instrument.scheme_code)
+    else:
+        history = amfi.get_history_by_isin(isin, start, as_of)
+        category, scheme_code = amfi.resolve_category(isin)
     for price_date, close in history:
         _upsert_price(session, isin, price_date, close, "amfi")
 
-    category, scheme_code = amfi.resolve_category(isin)
     if scheme_code:
         instrument.scheme_code = scheme_code
     if category and instrument.mf_category_source != "user":
@@ -106,7 +110,10 @@ def _refresh_mutual_fund(
 
 def _equity_candidates(instrument: Instrument) -> list[str]:
     if instrument.yahoo_symbol:
-        return [instrument.yahoo_symbol]
+        candidates = [instrument.yahoo_symbol]
+        if instrument.yahoo_symbol.endswith(".NS"):
+            candidates.append(f"{instrument.yahoo_symbol[:-3]}.BO")
+        return candidates
     return [f"{instrument.symbol}.NS", f"{instrument.symbol}.BO"]
 
 
@@ -120,10 +127,8 @@ def _fetch_equity_prices(
     for candidate in _equity_candidates(instrument):
         start = _history_start_for_price(session, candidate, history_start)
         history = yahoo.get_history(candidate, start, as_of)
-        if not history:
-            continue
         ltp = yahoo.get_ltp(candidate)
-        if ltp is not None:
+        if ltp is not None and (history or start >= as_of):
             return candidate, history, ltp
     raise RuntimeError("no Yahoo history and LTP for available symbol")
 

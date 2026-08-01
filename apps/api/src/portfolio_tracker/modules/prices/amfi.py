@@ -75,8 +75,10 @@ class AmfiNavProvider:
         scheme_code = self.find_scheme_code_by_isin(isin)
         return self.get_ltp(scheme_code) if scheme_code else None
 
-    def resolve_category(self, isin: str) -> tuple[str | None, str | None]:
-        scheme_code = self.find_scheme_code_by_isin(isin)
+    def resolve_category(
+        self, isin: str, scheme_code: str | None = None
+    ) -> tuple[str | None, str | None]:
+        scheme_code = scheme_code or self.find_scheme_code_by_isin(isin)
         if scheme_code is None:
             return None, None
         meta = self._scheme_payload(scheme_code).get("meta") or {}
