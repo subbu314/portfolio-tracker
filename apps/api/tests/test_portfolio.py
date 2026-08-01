@@ -115,6 +115,65 @@ def test_holdings_itd_xirr_excess_uses_benchmark_xirr():
         assert abs(holding["xirr_excess_pp"]) < 50.0
 
 
+def test_benchmark_price_fallback_respects_as_of_cap():
+    """Regression: on_or_after fallback must not use prices after as_of."""
+    Session = get_session_factory()
+    with Session() as session:
+        instrument = Instrument(
+            symbol="RELIANCE",
+            isin="INE002A01018",
+            instrument_type="equity",
+            exchange="NSE",
+            yahoo_symbol="RELIANCE.NS",
+        )
+        session.add(instrument)
+        session.flush()
+        session.add(
+            Transaction(
+                instrument_id=instrument.id,
+                trade_date="2024-03-10",
+                side="buy",
+                quantity=10,
+                price=2000.0,
+                fees=0,
+                source="csv",
+                dedupe_key="future-bench-t1",
+            )
+        )
+        session.add(
+            Price(
+                symbol="RELIANCE.NS",
+                price_date="2024-03-12",
+                close=2100.0,
+                source="yahoo",
+            )
+        )
+        session.add(
+            BenchmarkMap(
+                instrument_id=instrument.id,
+                benchmark_index="Nifty 500",
+                source="default",
+            )
+        )
+        session.add(
+            BenchmarkPrice(
+                index_symbol="Nifty 500",
+                price_date="2024-03-20",
+                close=12000.0,
+            )
+        )
+        session.commit()
+
+        rows = portfolio.get_holdings(session, as_of="2024-03-12")
+
+        assert len(rows) == 1
+        holding = rows[0]
+        assert holding["incomplete"] is True
+        assert holding["benchmark_return"] is None
+        assert holding["windows"]["ITD"]["benchmark_return"] is None
+        assert holding["xirr_excess_pp"] is None
+
+
 def test_portfolio_http_endpoints_expose_itd_data():
     Session = get_session_factory()
     with Session() as session:

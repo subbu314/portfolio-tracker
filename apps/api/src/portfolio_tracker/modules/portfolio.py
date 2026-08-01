@@ -32,6 +32,7 @@ def _benchmark_price(
     day: str,
     *,
     on_or_after: bool = False,
+    as_of: str | None = None,
 ) -> float | None:
     date_filter = (
         BenchmarkPrice.price_date >= day
@@ -43,12 +44,13 @@ def _benchmark_price(
         if on_or_after
         else BenchmarkPrice.price_date.desc()
     )
-    row = (
-        session.query(BenchmarkPrice)
-        .filter(BenchmarkPrice.index_symbol == index_name, date_filter)
-        .order_by(order)
-        .first()
+    query = session.query(BenchmarkPrice).filter(
+        BenchmarkPrice.index_symbol == index_name,
+        date_filter,
     )
+    if as_of is not None:
+        query = query.filter(BenchmarkPrice.price_date <= as_of)
+    row = query.order_by(order).first()
     return row.close if row else None
 
 
@@ -61,12 +63,15 @@ def _instrument_price_symbol(instrument: Instrument) -> str:
 def _benchmark_price_fn(
     session: Session,
     index_name: str,
+    as_of: str,
 ) -> Callable[[str], float | None]:
     def price_on(day: str) -> float | None:
-        price = _benchmark_price(session, index_name, day)
+        price = _benchmark_price(session, index_name, day, as_of=as_of)
         if price is not None:
             return price
-        return _benchmark_price(session, index_name, day, on_or_after=True)
+        return _benchmark_price(
+            session, index_name, day, on_or_after=True, as_of=as_of
+        )
 
     return price_on
 
@@ -153,9 +158,9 @@ def _instrument_metrics(
     benchmark_map = benchmarks.ensure_benchmark_map(session, instrument)
     benchmark_name = benchmark_map.benchmark_index
     benchmark_start = _benchmark_price(
-        session, benchmark_name, first_date, on_or_after=True
+        session, benchmark_name, first_date, on_or_after=True, as_of=as_of
     )
-    benchmark_end = _benchmark_price(session, benchmark_name, as_of)
+    benchmark_end = _benchmark_price(session, benchmark_name, as_of, as_of=as_of)
     benchmark_return = (
         metrics.benchmark_return(benchmark_start, benchmark_end)
         if benchmark_start is not None and benchmark_end is not None
@@ -168,7 +173,7 @@ def _instrument_metrics(
     )
     benchmark_xirr = metrics.benchmark_xirr_from_trades(
         trades,
-        _benchmark_price_fn(session, benchmark_name),
+        _benchmark_price_fn(session, benchmark_name, as_of),
         as_of,
     )
     bundle = metrics.window_metric_bundle(
@@ -252,7 +257,7 @@ def _holding_benchmark_terminal(
     benchmark_map = benchmarks.ensure_benchmark_map(session, instrument)
     return metrics.index_units_terminal_mv(
         _trade_tuples(transactions),
-        _benchmark_price_fn(session, benchmark_map.benchmark_index),
+        _benchmark_price_fn(session, benchmark_map.benchmark_index, as_of),
         as_of,
     )
 
