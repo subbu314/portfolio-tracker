@@ -43,11 +43,22 @@
 | F1 | P0 | `POST /sync` prices / AMFI | After live sync, `prices` table has **0** AMFI rows; all MF holdings `ltp/value=null`, `incomplete=true`. Portfolio `total_value` collapses to priced equities/ETFs only (~85k). `prices.failed` lists only Yahoo equity/SGB misses — MF NAV miss is silent. | MF NAVs refreshed via AMFI for holdings (and needed history); failures listed in `prices.failed`; valued MFs contribute to overview | Fresh DB → OAuth → import MF CSVs → `POST /sync` → check MF `ltp` / `SELECT count(*) FROM prices WHERE source='amfi'` |
 | F2 | P0 | Kite holdings sync / instrument identity | Kite MF snapshot stores `symbol=ISIN` with `isin=NULL`, creating **separate** instruments from Console CSV rows that already have name + ISIN (e.g. named fund `INF966L01689` vs instrument symbol `INF966L01689`). Snapshot qty lands on ISIN-symbol rows; CSV tx on named rows → double instruments, broken reconcile, AMFI lookup by ISIN fails on kite rows. | Merge by ISIN (or map Kite MF tradingsymbol ISIN → existing instrument); one instrument per fund | Import MF CSV then `/sync`; inspect `instruments` for name row with ISIN + second row with `symbol=ISIN` and null isin |
 | F3 | P1 | Yahoo symbol mapping / `POST /sync` | Failed: `ZOMATO`, `TATAMOTORS`, `TATAMTRDVR`, `SWANENERGY`, `HBLPOWER`, `TRIL`, `IDFC`, plus SGB symbols. Liquid renames/delists not resolved; SGB unsupported. | Best-effort Yahoo/BSE map + clear failed reasons; SGB may be P3 unsupported asset | `/sync` after equity CSV import; inspect `prices.failed` |
-| F4 | P1 | `GET /portfolio/performance` contributors | Contributor list not sorted by weight (e.g. weight 0.05 before 0.94). Weights still sum ≈ 1 for valued rows. | Sorted by weight descending (spec/design) | Import + price a multi-holding book → `GET /portfolio/performance` |
+| F4 | — | `GET /portfolio/performance` contributors | Not sorted by weight (weight 0.05 before 0.94). | **Not a bug** — sorted by `absolute_excess_pp` (design: contributor excess). Weights still sum ≈ 1 for valued rows. | n/a |
 | F5 | P2 | Holdings / metrics with incomplete prices | Overview ITD XIRR ≈ -90% and absolute loss ≈ -1.5M when most open MF qty unpriced but invested cost still counted from full tx history. | Either exclude unpriced open qty from portfolio totals with explicit incomplete breakdown, or block misleading headline metrics when material value missing | Same as F1 after sync |
 | F6 | P2 | MF dust quantity | `UTI NIFTY 50 INDEX FUND` showed qty ≈ `5.68e-14` (float residue). | Treat near-zero qty as flat zero | Import MF history with full redeem; inspect holdings |
 | F7 | P3 | `scripts/live_smoke.sh` | macOS `/bin/bash` 3.2: `EQUITY_CSVS[-1]` → `bad array subscript`; smoke stopped before sync. | **Fixed** in `268fb1c` (`LAST_EQ` index) | Run script under bash 3.2 |
 | F8 | P3 | History coverage / reconcile | 32 reconcile diffs; EQ CSV ends 2026-01-22, MF 2026-03-05; weekend `trades_appended=0`. Amplifies F2 false splits. | Expected until fresh ≤365-day export + F2 fix | N/A — product/data gap |
+
+## Triage
+- Fix plan: `docs/superpowers/plans/2026-08-01-api-live-fixes.md`
+- P0: F2 (instrument identity), F1 (silent AMFI miss)
+- P1: F3 (Yahoo aliases)
+- P2: F5 (misleading metrics — re-check after F1/F2), F6 (dust qty)
+- P3 / done: F7 (script), F8 (CSV coverage gap)
+- F4: not a bug
+
+## Verdict
+- Pending Fix 1–3 + second live pass. **Not** ready for Task 12 frontend until F1+F2 cleared.
 
 ## Notes
 - Console max export window: 365 days; EQ and MF exported separately; users typically import by Indian FY
