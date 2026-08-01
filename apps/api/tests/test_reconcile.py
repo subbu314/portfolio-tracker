@@ -226,13 +226,40 @@ def test_get_alerts_includes_reconcile_guidance_without_gap_warning():
         )
         session.commit()
 
-        alerts = reconcile.get_alerts(session, today="2024-01-10")
+        # today within 1 day of max trade date → no gap; reconcile still present
+        alerts = reconcile.get_alerts(session, today="2024-01-02")
 
         assert alerts["gap"] is None
         assert alerts["reconcile"]
         assert "Console CSV" in alerts["reconcile_message"]
         assert "re-sync" in alerts["reconcile_message"]
         assert "no manual edits" in alerts["reconcile_message"]
+
+
+def test_detect_gaps_uses_max_transaction_date_when_append_watermark_is_today():
+    Session = get_session_factory()
+    with Session() as session:
+        inst = Instrument(symbol="GAPEQ", instrument_type="equity", exchange="NSE")
+        session.add(inst)
+        session.flush()
+        session.add(
+            Transaction(
+                instrument_id=inst.id,
+                trade_date="2026-01-22",
+                side="buy",
+                quantity=1,
+                price=10.0,
+                fees=0,
+                source="csv",
+                dedupe_key="g1-old",
+            )
+        )
+        kite_auth.set_setting(session, kite_auth.LAST_APPEND_KEY, "2026-08-01T10:00:00+05:30")
+        session.commit()
+        gap = reconcile.detect_gaps(session, today="2026-08-01")
+        assert gap is not None
+        assert gap["suggested_from"] == "2026-01-23"
+        assert gap["suggested_to"] == "2026-08-01"
 
 
 def test_portfolio_alerts_endpoint_exposes_alert_payload():

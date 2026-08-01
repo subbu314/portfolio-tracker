@@ -351,3 +351,154 @@ def test_portfolio_http_endpoints_expose_itd_data():
     holding = holdings_response.json()["holdings"][0]
     assert holding["windows"]["ITD"] is not None
     assert "_benchmark_cagr" not in holding
+
+
+def test_portfolio_rolling_absolute_includes_in_window_capital():
+    """Opening book is small; most terminal value funded by in-window buys.
+
+    absolute_pct / cagr must not be opening→full-portfolio point-to-point.
+    """
+    Session = get_session_factory()
+    with Session() as session:
+        old = Instrument(
+            symbol="OLD",
+            instrument_type="equity",
+            exchange="NSE",
+            yahoo_symbol="OLD.NS",
+        )
+        neu = Instrument(
+            symbol="NEW",
+            instrument_type="equity",
+            exchange="NSE",
+            yahoo_symbol="NEW.NS",
+        )
+        session.add_all([old, neu])
+        session.flush()
+        session.add_all(
+            [
+                Transaction(
+                    instrument_id=old.id,
+                    trade_date="2021-01-01",
+                    side="buy",
+                    quantity=1,
+                    price=100.0,
+                    fees=0,
+                    source="csv",
+                    dedupe_key="m1-old-buy",
+                ),
+                Transaction(
+                    instrument_id=neu.id,
+                    trade_date="2023-06-01",
+                    side="buy",
+                    quantity=10,
+                    price=100.0,
+                    fees=0,
+                    source="csv",
+                    dedupe_key="m1-new-buy",
+                ),
+                HoldingsSnapshot(
+                    instrument_id=old.id,
+                    quantity=1,
+                    avg_price=100.0,
+                    as_of="2024-06-01",
+                ),
+                HoldingsSnapshot(
+                    instrument_id=neu.id,
+                    quantity=10,
+                    avg_price=100.0,
+                    as_of="2024-06-01",
+                ),
+                Price(symbol="OLD.NS", price_date="2021-06-02", close=100.0, source="yahoo"),
+                Price(symbol="OLD.NS", price_date="2024-06-01", close=110.0, source="yahoo"),
+                Price(symbol="NEW.NS", price_date="2023-06-01", close=100.0, source="yahoo"),
+                Price(symbol="NEW.NS", price_date="2024-06-01", close=110.0, source="yahoo"),
+                BenchmarkMap(instrument_id=old.id, benchmark_index="Nifty 500", source="default"),
+                BenchmarkMap(instrument_id=neu.id, benchmark_index="Nifty 500", source="default"),
+                BenchmarkPrice(index_symbol="Nifty 500", price_date="2021-06-02", close=10000.0),
+                BenchmarkPrice(index_symbol="Nifty 500", price_date="2023-06-01", close=11000.0),
+                BenchmarkPrice(index_symbol="Nifty 500", price_date="2024-06-01", close=12000.0),
+            ]
+        )
+        session.commit()
+
+        overview = portfolio.get_overview(session, as_of="2024-06-01")
+        w3 = overview["windows"]["3Y"]
+        assert w3 is not None
+        # Naive p2p opening(~100)→total(1210) ≈ 11.1; invested-cost path ≈ 0.1
+        assert w3["absolute_pct"] is not None
+        assert w3["absolute_pct"] < 2.0, w3["absolute_pct"]
+        assert w3["absolute_excess_pp"] is not None
+        assert abs(w3["absolute_excess_pp"]) < 500, w3["absolute_excess_pp"]
+        if w3.get("cagr") is not None:
+            assert abs(w3["cagr"]) < 2.0, w3["cagr"]
+
+
+def test_portfolio_window_skips_unpriced_opening_instrument():
+    Session = get_session_factory()
+    with Session() as session:
+        priced = Instrument(
+            symbol="PRICED",
+            instrument_type="equity",
+            exchange="NSE",
+            yahoo_symbol="PRICED.NS",
+        )
+        bare = Instrument(
+            symbol="BARE",
+            instrument_type="equity",
+            exchange="NSE",
+            yahoo_symbol="BARE.NS",
+        )
+        session.add_all([priced, bare])
+        session.flush()
+        session.add_all(
+            [
+                Transaction(
+                    instrument_id=priced.id,
+                    trade_date="2022-01-01",
+                    side="buy",
+                    quantity=1,
+                    price=100.0,
+                    fees=0,
+                    source="csv",
+                    dedupe_key="w1-priced",
+                ),
+                Transaction(
+                    instrument_id=bare.id,
+                    trade_date="2023-01-01",
+                    side="buy",
+                    quantity=1,
+                    price=50.0,
+                    fees=0,
+                    source="csv",
+                    dedupe_key="w1-bare",
+                ),
+                HoldingsSnapshot(
+                    instrument_id=priced.id,
+                    quantity=1,
+                    avg_price=100.0,
+                    as_of="2024-06-01",
+                ),
+                HoldingsSnapshot(
+                    instrument_id=bare.id,
+                    quantity=1,
+                    avg_price=50.0,
+                    as_of="2024-06-01",
+                ),
+                Price(symbol="PRICED.NS", price_date="2023-06-01", close=100.0, source="yahoo"),
+                Price(symbol="PRICED.NS", price_date="2024-06-01", close=120.0, source="yahoo"),
+                Price(symbol="BARE.NS", price_date="2024-06-01", close=60.0, source="yahoo"),
+                BenchmarkMap(
+                    instrument_id=priced.id, benchmark_index="Nifty 500", source="default"
+                ),
+                BenchmarkMap(
+                    instrument_id=bare.id, benchmark_index="Nifty 500", source="default"
+                ),
+                BenchmarkPrice(index_symbol="Nifty 500", price_date="2023-06-01", close=10000.0),
+                BenchmarkPrice(index_symbol="Nifty 500", price_date="2024-06-01", close=11000.0),
+            ]
+        )
+        session.commit()
+
+        overview = portfolio.get_overview(session, as_of="2024-06-01")
+        assert overview["windows"]["1Y"] is not None
+        assert overview["incomplete"] is True

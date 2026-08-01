@@ -527,12 +527,14 @@ def _portfolio_window_benchmark_inputs(
     holding_values: dict[int, float],
     start: str,
     as_of: str,
-) -> tuple[float | None, float | None, float | None, float | None]:
+) -> tuple[float | None, float | None, float | None, float | None, set[int]]:
     opening_mv = 0.0
     weighted_returns: list[tuple[float, float]] = []
     weighted_cagrs: list[tuple[float, float]] = []
     benchmark_terminal = 0.0
     terminal_is_complete = True
+    skipped: set[int] = set()
+    included = 0
 
     for instrument_id, transactions in transactions_by_instrument.items():
         instrument = session.get(Instrument, instrument_id)
@@ -552,7 +554,10 @@ def _portfolio_window_benchmark_inputs(
             as_of,
         )
         if instrument_opening_mv is None:
-            return None, None, None, None
+            # Missing opening price — skip this name; do not null the whole window.
+            skipped.add(instrument_id)
+            continue
+        included += 1
         opening_mv += instrument_opening_mv
         current_value = holding_values.get(instrument_id, 0.0)
         if benchmark_return is not None:
@@ -564,11 +569,14 @@ def _portfolio_window_benchmark_inputs(
         else:
             benchmark_terminal += terminal
 
+    if included == 0 and skipped:
+        return None, None, None, None, skipped
     return (
         opening_mv,
         _blended_benchmark(weighted_returns),
         _blended_benchmark(weighted_cagrs),
         benchmark_terminal if terminal_is_complete else None,
+        skipped,
     )
 
 
@@ -580,8 +588,8 @@ def _build_portfolio_window(
     start: str,
     as_of: str,
     total_value: float,
-) -> dict | None:
-    opening_mv, benchmark_return, benchmark_cagr, benchmark_terminal = (
+) -> tuple[dict | None, bool]:
+    opening_mv, benchmark_return, benchmark_cagr, benchmark_terminal, skipped = (
         _portfolio_window_benchmark_inputs(
             session,
             transactions_by_instrument,
@@ -591,34 +599,58 @@ def _build_portfolio_window(
         )
     )
     if opening_mv is None:
-        return None
+        return None, bool(skipped)
+    effective_total = sum(
+        value
+        for instrument_id, value in holding_values.items()
+        if instrument_id not in skipped
+    )
     in_window = [
         transaction
         for transaction in all_transactions
         if start < transaction.trade_date <= as_of
+        and transaction.instrument_id not in skipped
     ]
     trades = _trade_tuples(in_window)
-    absolute = metrics.rolling_absolute(
-        opening_mv=opening_mv,
-        terminal_mv=total_value,
-        trades_in_window=[
-            (tx.side, tx.quantity, tx.price, tx.fees) for tx in in_window
-        ],
-    )
+    in_window_sides = [
+        (tx.side, tx.quantity, tx.price, tx.fees) for tx in in_window
+    ]
+    # Portfolio terminal MV includes capital added after window start. Naive
+    # opening_mv→total_value point-to-point inflates absolute/CAGR; use invested
+    # capital (opening MV + in-window net cost) vs terminal instead.
+    if opening_mv > 0:
+        invested = opening_mv + metrics.invested_cost_from_transactions(
+            in_window_sides
+        )
+        absolute = metrics.absolute_return(
+            invested_cost=invested,
+            current_value=effective_total,
+        )
+        cagr_value = (
+            metrics.rolling_cagr(
+                opening_mv=opening_mv,
+                terminal_mv=effective_total,
+                window_start=start,
+                as_of=as_of,
+            )
+            if not in_window_sides
+            else None
+        )
+    else:
+        absolute = metrics.rolling_absolute(
+            opening_mv=0.0,
+            terminal_mv=effective_total,
+            trades_in_window=in_window_sides,
+        )
+        cagr_value = None
     xirr_value = metrics.xirr(
         metrics.build_rolling_xirr_cashflows(
             opening_mv=opening_mv,
             window_start=start,
             trades_in_window=trades,
-            terminal_mv=total_value,
+            terminal_mv=effective_total,
             as_of=as_of,
         )
-    )
-    cagr_value = metrics.rolling_cagr(
-        opening_mv=opening_mv,
-        terminal_mv=total_value,
-        window_start=start,
-        as_of=as_of,
     )
     benchmark_xirr = (
         metrics.xirr(
@@ -633,15 +665,18 @@ def _build_portfolio_window(
         if benchmark_terminal is not None
         else None
     )
-    return _flatten_window_bundle(
-        metrics.window_metric_bundle(
-            absolute=absolute,
-            xirr_value=xirr_value,
-            cagr_value=cagr_value,
-            bench_return=benchmark_return,
-            bench_cagr=benchmark_cagr,
-            bench_xirr=benchmark_xirr,
-        )
+    return (
+        _flatten_window_bundle(
+            metrics.window_metric_bundle(
+                absolute=absolute,
+                xirr_value=xirr_value,
+                cagr_value=cagr_value,
+                bench_return=benchmark_return,
+                bench_cagr=benchmark_cagr,
+                bench_xirr=benchmark_xirr,
+            )
+        ),
+        bool(skipped),
     )
 
 
@@ -654,7 +689,7 @@ def _build_portfolio_windows(
     total_value: float,
     itd_bundle: dict,
     holdings: list[dict],
-) -> dict:
+) -> tuple[dict, bool]:
     transactions_by_instrument: dict[int, list[Transaction]] = {}
     for transaction in all_transactions:
         transactions_by_instrument.setdefault(
@@ -665,22 +700,24 @@ def _build_portfolio_windows(
         for holding in holdings
     }
     windows: dict = {"ITD": _flatten_window_bundle(itd_bundle)}
+    any_skipped = False
     for window in ("1Y", "3Y", "5Y"):
         start = metrics.window_start(as_of, window, first_date)
-        windows[window] = (
-            _build_portfolio_window(
-                session,
-                all_transactions,
-                transactions_by_instrument,
-                holding_values,
-                start,
-                as_of,
-                total_value,
-            )
-            if start is not None
-            else None
+        if start is None:
+            windows[window] = None
+            continue
+        body, skipped = _build_portfolio_window(
+            session,
+            all_transactions,
+            transactions_by_instrument,
+            holding_values,
+            start,
+            as_of,
+            total_value,
         )
-    return windows
+        windows[window] = body
+        any_skipped = any_skipped or skipped
+    return windows, any_skipped
 
 
 def get_overview(session: Session, as_of: str) -> dict:
@@ -742,6 +779,15 @@ def get_overview(session: Session, as_of: str) -> dict:
         bench_cagr=benchmark_cagr,
         bench_xirr=benchmark_xirr,
     )
+    windows, window_skipped = _build_portfolio_windows(
+        session,
+        all_transactions=all_transactions,
+        first_date=first_date,
+        as_of=as_of,
+        total_value=total_value,
+        itd_bundle=bundle,
+        holdings=holdings,
+    )
     return {
         "as_of": as_of,
         "total_value": total_value,
@@ -763,16 +809,9 @@ def get_overview(session: Session, as_of: str) -> dict:
             }
             for holding in holdings
         ],
-        "incomplete": any(holding["incomplete"] for holding in holdings),
-        "windows": _build_portfolio_windows(
-            session,
-            all_transactions=all_transactions,
-            first_date=first_date,
-            as_of=as_of,
-            total_value=total_value,
-            itd_bundle=bundle,
-            holdings=holdings,
-        ),
+        "incomplete": any(holding["incomplete"] for holding in holdings)
+        or window_skipped,
+        "windows": windows,
     }
 
 
