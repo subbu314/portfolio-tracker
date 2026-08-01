@@ -770,3 +770,46 @@ def get_overview(session: Session, as_of: str) -> dict:
             holdings=holdings,
         ),
     }
+
+
+def get_performance(session: Session, as_of: str) -> dict:
+    overview = get_overview(session, as_of)
+    holdings = get_holdings(session, as_of)
+    for holding in holdings:
+        holding.pop("_benchmark_cagr", None)
+    contributors = sorted(
+        [
+            {
+                "symbol": holding["symbol"],
+                "absolute_excess_pp": holding["absolute_excess_pp"],
+                "xirr_excess_pp": holding["xirr_excess_pp"],
+                "cagr_excess_pp": holding["cagr_excess_pp"],
+                "value": holding["value"],
+                "weight": (
+                    holding["value"] / overview["total_value"]
+                    if holding["value"] and overview["total_value"]
+                    else 0.0
+                ),
+                "windows": holding["windows"],
+            }
+            for holding in holdings
+            if holding["absolute_excess_pp"] is not None
+            or holding["xirr_excess_pp"] is not None
+        ],
+        key=lambda row: (
+            row["absolute_excess_pp"] is not None,
+            row["absolute_excess_pp"] or 0.0,
+        ),
+        reverse=True,
+    )
+    return {
+        "overview": overview,
+        "contributors": contributors,
+        "holdings": holdings,
+        "windows_available": [
+            window
+            for window, value in overview["windows"].items()
+            if value is not None
+        ],
+        "default_window": "ITD",
+    }

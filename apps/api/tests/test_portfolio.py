@@ -134,6 +134,18 @@ def test_holdings_include_windows():
         assert rows[0]["windows"]["3Y"] is None
 
 
+def test_performance_has_contributors_and_windows():
+    Session = get_session_factory()
+    with Session() as session:
+        _seed_with_window_prices(session)
+        perf = portfolio.get_performance(session, as_of="2024-06-01")
+        assert perf["default_window"] == "ITD"
+        assert "1Y" in perf["windows_available"]
+        assert len(perf["contributors"]) >= 1
+        assert "windows" in perf["holdings"][0]
+        assert perf["overview"]["windows"]["1Y"] is not None
+
+
 def test_rolling_windows_are_null_when_opening_position_price_is_missing():
     Session = get_session_factory()
     with Session() as session:
