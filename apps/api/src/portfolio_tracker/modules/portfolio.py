@@ -852,7 +852,7 @@ def get_performance(session: Session, as_of: str) -> dict:
         reverse=True,
     )
     return {
-        "overview": overview,
+        **overview,
         "contributors": contributors,
         "holdings": holdings,
         "windows_available": [

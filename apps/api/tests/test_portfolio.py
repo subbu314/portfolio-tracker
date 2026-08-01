@@ -143,7 +143,23 @@ def test_performance_has_contributors_and_windows():
         assert "1Y" in perf["windows_available"]
         assert len(perf["contributors"]) >= 1
         assert "windows" in perf["holdings"][0]
-        assert perf["overview"]["windows"]["1Y"] is not None
+        assert perf["windows"]["1Y"] is not None
+
+
+def test_get_performance_has_no_nested_overview():
+    Session = __import__(
+        "portfolio_tracker.db.engine", fromlist=["get_session_factory"]
+    ).get_session_factory()
+    from portfolio_tracker.modules import portfolio as portfolio_mod
+
+    with Session() as session:
+        _seed_itd(session)
+        result = portfolio_mod.get_performance(session, as_of="2024-06-15")
+    assert "overview" not in result
+    assert "total_value" in result
+    assert "windows" in result
+    assert "contributors" in result
+    assert result["default_window"] == "ITD"
 
 
 def test_get_performance_calls_get_holdings_once(monkeypatch):

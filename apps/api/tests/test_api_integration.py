@@ -166,7 +166,8 @@ def test_portfolio_performance_route_returns_contributors(monkeypatch):
     assert response.status_code == 200
     body = response.json()
     assert body["default_window"] == "ITD"
-    assert "overview" in body
+    assert "total_value" in body
+    assert "windows" in body
     assert "contributors" in body
     assert "holdings" in body
     assert "windows_available" in body
