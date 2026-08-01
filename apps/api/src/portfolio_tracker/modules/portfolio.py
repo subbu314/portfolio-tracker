@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from collections.abc import Callable
+from dataclasses import dataclass
 
 from sqlalchemy.orm import Session
 
@@ -18,6 +19,53 @@ from portfolio_tracker.modules.portfolio_types import (
 )
 
 TradeTuple = tuple[str, str, float, float, float]
+
+
+@dataclass
+class PortfolioInputs:
+    instruments: list[Instrument]
+    snapshots: dict[int, HoldingsSnapshot]
+    transactions_by_instrument: dict[int, list[Transaction]]
+
+
+def _load_transactions_by_instrument(
+    session: Session, as_of: str
+) -> dict[int, list[Transaction]]:
+    rows = (
+        session.query(Transaction)
+        .filter(Transaction.trade_date <= as_of)
+        .order_by(Transaction.trade_date.asc())
+        .all()
+    )
+    transactions_by_instrument: dict[int, list[Transaction]] = {}
+    for transaction in rows:
+        transactions_by_instrument.setdefault(
+            transaction.instrument_id, []
+        ).append(transaction)
+    return transactions_by_instrument
+
+
+def _load_snapshots(
+    session: Session, as_of: str
+) -> dict[int, HoldingsSnapshot]:
+    rows = (
+        session.query(HoldingsSnapshot)
+        .filter(HoldingsSnapshot.as_of <= as_of)
+        .order_by(HoldingsSnapshot.as_of.asc())
+        .all()
+    )
+    return {snapshot.instrument_id: snapshot for snapshot in rows}
+
+
+def load_portfolio_inputs(session: Session, as_of: str) -> PortfolioInputs:
+    """Load instruments, snapshots, and transactions once per portfolio read."""
+    return PortfolioInputs(
+        instruments=session.query(Instrument).all(),
+        snapshots=_load_snapshots(session, as_of),
+        transactions_by_instrument=_load_transactions_by_instrument(
+            session, as_of
+        ),
+    )
 
 
 def _latest_price(session: Session, symbol: str, as_of: str) -> float | None:
@@ -80,22 +128,6 @@ def _benchmark_price_fn(
     return price_on
 
 
-def _transactions(
-    session: Session,
-    instrument_id: int,
-    as_of: str,
-) -> list[Transaction]:
-    return (
-        session.query(Transaction)
-        .filter(
-            Transaction.instrument_id == instrument_id,
-            Transaction.trade_date <= as_of,
-        )
-        .order_by(Transaction.trade_date.asc())
-        .all()
-    )
-
-
 def _trade_tuples(transactions: list[Transaction]) -> list[TradeTuple]:
     return [
         (tx.trade_date, tx.side, tx.quantity, tx.price, tx.fees)
@@ -120,19 +152,9 @@ def _position_from_transactions(
 
 
 def _position(
-    session: Session,
-    instrument_id: int,
-    as_of: str,
     transactions: list[Transaction],
+    snapshot: HoldingsSnapshot | None,
 ) -> tuple[float, float]:
-    snapshot = (
-        session.query(HoldingsSnapshot)
-        .filter(
-            HoldingsSnapshot.instrument_id == instrument_id,
-            HoldingsSnapshot.as_of <= as_of,
-        )
-        .first()
-    )
     if snapshot:
         quantity = 0.0 if abs(snapshot.quantity) < 1e-8 else snapshot.quantity
         return quantity, snapshot.avg_price
@@ -337,13 +359,18 @@ def _build_instrument_windows(
 
 
 def _get_holdings_computed(
-    session: Session, as_of: str
+    session: Session,
+    as_of: str,
+    *,
+    inputs: PortfolioInputs | None = None,
 ) -> list[HoldingComputed]:
+    inputs = inputs or load_portfolio_inputs(session, as_of)
     holdings: list[HoldingComputed] = []
-    for instrument in session.query(Instrument).all():
-        transactions = _transactions(session, instrument.id, as_of)
+    for instrument in inputs.instruments:
+        transactions = inputs.transactions_by_instrument.get(instrument.id, [])
         quantity, average_price = _position(
-            session, instrument.id, as_of, transactions
+            transactions,
+            inputs.snapshots.get(instrument.id),
         )
         if quantity <= 0 and not transactions:
             continue
@@ -395,10 +422,19 @@ def _get_holdings_computed(
     return holdings
 
 
-def get_holdings(session: Session, as_of: str) -> list[HoldingPublic]:
+def get_holdings(
+    session: Session,
+    as_of: str,
+    *,
+    inputs: PortfolioInputs | None = None,
+) -> list[HoldingPublic]:
     return [
         computed["public"]
-        for computed in _get_holdings_computed(session, as_of)
+        for computed in _get_holdings_computed(
+            session,
+            as_of,
+            inputs=inputs,
+        )
     ]
 
 
@@ -747,20 +783,19 @@ def _get_overview_from_computed(
     session: Session,
     as_of: str,
     computed_holdings: list[HoldingComputed],
+    inputs: PortfolioInputs,
 ) -> dict:
     holdings = [computed["public"] for computed in computed_holdings]
     total_value = sum(holding["value"] or 0.0 for holding in holdings)
-    all_transactions = (
-        session.query(Transaction)
-        .filter(Transaction.trade_date <= as_of)
-        .order_by(Transaction.trade_date.asc())
-        .all()
+    transactions_by_instrument = inputs.transactions_by_instrument
+    all_transactions = sorted(
+        (
+            transaction
+            for transactions in transactions_by_instrument.values()
+            for transaction in transactions
+        ),
+        key=lambda transaction: transaction.trade_date,
     )
-    transactions_by_instrument: dict[int, list[Transaction]] = {}
-    for transaction in all_transactions:
-        transactions_by_instrument.setdefault(
-            transaction.instrument_id, []
-        ).append(transaction)
     invested = sum(
         metrics.invested_cost_from_transactions(
             [(tx.side, tx.quantity, tx.price, tx.fees) for tx in transactions]
@@ -842,18 +877,42 @@ def _get_overview_from_computed(
     }
 
 
-def get_overview(session: Session, as_of: str) -> dict:
+def get_overview(
+    session: Session,
+    as_of: str,
+    *,
+    holdings: list[HoldingComputed] | None = None,
+    inputs: PortfolioInputs | None = None,
+) -> dict:
+    inputs = inputs or load_portfolio_inputs(session, as_of)
+    if holdings is None:
+        holdings = _get_holdings_computed(
+            session,
+            as_of,
+            inputs=inputs,
+        )
     return _get_overview_from_computed(
         session,
         as_of,
-        _get_holdings_computed(session, as_of),
+        holdings,
+        inputs,
     )
 
 
 def get_performance(session: Session, as_of: str) -> dict:
-    computed_holdings = _get_holdings_computed(session, as_of)
+    inputs = load_portfolio_inputs(session, as_of)
+    computed_holdings = _get_holdings_computed(
+        session,
+        as_of,
+        inputs=inputs,
+    )
     holdings = [computed["public"] for computed in computed_holdings]
-    overview = _get_overview_from_computed(session, as_of, computed_holdings)
+    overview = _get_overview_from_computed(
+        session,
+        as_of,
+        computed_holdings,
+        inputs,
+    )
     contributors = sorted(
         [
             {
