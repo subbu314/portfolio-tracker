@@ -2,10 +2,16 @@ data/
 .env
 .DS_Store
 **/__pycache__/
+*.pyc
+.pytest_cache/
+.mypy_cache/
 node_modules/
 .next/
 .venv/
 *.db
+apps/api/.venv/
+dist/
+*.egg-info/
 
 .worktrees/
 .superpowers/
