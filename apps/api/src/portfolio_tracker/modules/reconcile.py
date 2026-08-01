@@ -4,7 +4,7 @@ from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from portfolio_tracker.db.models import HoldingsSnapshot, Instrument, Transaction
-from portfolio_tracker.modules import kite_auth
+from portfolio_tracker.modules import app_settings, kite_auth
 
 
 def transaction_implied_qty(session: Session, instrument_id: int) -> float:
@@ -50,7 +50,7 @@ def reconcile_holdings(session: Session) -> list[dict]:
 def detect_gaps(session: Session, today: str) -> dict | None:
     today_date = date.fromisoformat(today)
     max_tx = session.query(func.max(Transaction.trade_date)).scalar()
-    last_append_at = kite_auth.get_setting(session, kite_auth.LAST_APPEND_KEY)
+    last_append_at = app_settings.get_setting(session, app_settings.LAST_APPEND_KEY)
 
     # Prefer CSV/API trade coverage end over sync append watermark — watermark can
     # advance on empty syncs and hide Console history holes.

@@ -4,7 +4,7 @@ from fastapi.testclient import TestClient
 from portfolio_tracker.db.engine import get_session_factory
 from portfolio_tracker.db.models import HoldingsSnapshot, Instrument, Setting, Transaction
 from portfolio_tracker.main import create_app
-from portfolio_tracker.modules import kite_auth, reconcile
+from portfolio_tracker.modules import app_settings, reconcile
 
 
 def test_transaction_implied_qty_nets_buys_and_sells():
@@ -154,7 +154,7 @@ def test_detect_gaps_returns_missing_calendar_date_range():
     with Session() as session:
         session.add(
             Setting(
-                key=kite_auth.LAST_APPEND_KEY,
+                key=app_settings.LAST_APPEND_KEY,
                 value="2024-01-01T10:00:00+05:30",
             )
         )
@@ -181,7 +181,9 @@ def test_detect_gaps_ignores_complete_or_untracked_ranges(last_append_at, today)
     Session = get_session_factory()
     with Session() as session:
         if last_append_at:
-            kite_auth.set_setting(session, kite_auth.LAST_APPEND_KEY, last_append_at)
+            app_settings.set_setting(
+                session, app_settings.LAST_APPEND_KEY, last_append_at
+            )
             session.commit()
 
         assert reconcile.detect_gaps(session, today=today) is None
@@ -190,10 +192,10 @@ def test_detect_gaps_ignores_complete_or_untracked_ranges(last_append_at, today)
 def test_get_alerts_combines_connection_reconcile_and_gap_status():
     Session = get_session_factory()
     with Session() as session:
-        kite_auth.set_setting(session, kite_auth.TOKEN_KEY, "token")
-        kite_auth.set_setting(
+        app_settings.set_setting(session, app_settings.TOKEN_KEY, "token")
+        app_settings.set_setting(
             session,
-            kite_auth.LAST_APPEND_KEY,
+            app_settings.LAST_APPEND_KEY,
             "2024-01-01T10:00:00+05:30",
         )
         session.commit()
@@ -254,7 +256,9 @@ def test_detect_gaps_uses_max_transaction_date_when_append_watermark_is_today():
                 dedupe_key="g1-old",
             )
         )
-        kite_auth.set_setting(session, kite_auth.LAST_APPEND_KEY, "2026-08-01T10:00:00+05:30")
+        app_settings.set_setting(
+            session, app_settings.LAST_APPEND_KEY, "2026-08-01T10:00:00+05:30"
+        )
         session.commit()
         gap = reconcile.detect_gaps(session, today="2026-08-01")
         assert gap is not None

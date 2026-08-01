@@ -6,13 +6,13 @@ from kiteconnect.exceptions import TokenException
 
 from portfolio_tracker.db.engine import get_session_factory
 from portfolio_tracker.db.models import HoldingsSnapshot, Instrument, Setting, Transaction
-from portfolio_tracker.modules import kite_auth, kite_sync
+from portfolio_tracker.modules import app_settings, kite_auth, kite_sync
 
 
 def test_sync_upserts_holdings_and_appends_todays_trades():
     Session = get_session_factory()
     with Session() as session:
-        session.add(Setting(key=kite_auth.TOKEN_KEY, value="token"))
+        session.add(Setting(key=app_settings.TOKEN_KEY, value="token"))
         session.commit()
         kite = MagicMock()
         kite.holdings.return_value = [
@@ -63,14 +63,20 @@ def test_sync_upserts_holdings_and_appends_todays_trades():
         assert (
             session.query(Transaction).filter(Transaction.source == "api").count() == 1
         )
-        assert kite_auth.get_setting(session, kite_auth.LAST_SYNC_KEY) == result["last_sync_at"]
-        assert kite_auth.get_setting(session, kite_auth.LAST_APPEND_KEY) == result["last_sync_at"]
+        assert (
+            app_settings.get_setting(session, app_settings.LAST_SYNC_KEY)
+            == result["last_sync_at"]
+        )
+        assert (
+            app_settings.get_setting(session, app_settings.LAST_APPEND_KEY)
+            == result["last_sync_at"]
+        )
 
 
 def test_sync_removes_stale_snapshot_for_sold_symbol():
     Session = get_session_factory()
     with Session() as session:
-        session.add(Setting(key=kite_auth.TOKEN_KEY, value="token"))
+        session.add(Setting(key=app_settings.TOKEN_KEY, value="token"))
         sold = Instrument(symbol="SOLD", isin="INE000000001", instrument_type="equity")
         session.add(sold)
         session.flush()
@@ -119,7 +125,7 @@ def test_sync_removes_stale_snapshot_for_sold_symbol():
 def test_sync_is_idempotent_and_updates_existing_holdings_snapshot():
     Session = get_session_factory()
     with Session() as session:
-        session.add(Setting(key=kite_auth.TOKEN_KEY, value="token"))
+        session.add(Setting(key=app_settings.TOKEN_KEY, value="token"))
         session.commit()
         kite = MagicMock()
         holding = {
@@ -161,7 +167,7 @@ def test_sync_is_idempotent_and_updates_existing_holdings_snapshot():
 def test_sync_invalidates_expired_kite_token_without_exposing_upstream_error():
     Session = get_session_factory()
     with Session() as session:
-        session.add(Setting(key=kite_auth.TOKEN_KEY, value="secret_access_token"))
+        session.add(Setting(key=app_settings.TOKEN_KEY, value="secret_access_token"))
         session.commit()
         kite = MagicMock()
         kite.holdings.side_effect = TokenException(
@@ -198,7 +204,7 @@ def test_sync_endpoint_refreshes_non_kite_prices():
 
     Session = get_session_factory()
     with Session() as session:
-        kite_auth.set_setting(session, kite_auth.TOKEN_KEY, "token")
+        app_settings.set_setting(session, app_settings.TOKEN_KEY, "token")
         session.commit()
     sync_result = {
         "holdings_count": 2,
@@ -221,7 +227,7 @@ def test_sync_endpoint_refreshes_non_kite_prices():
 def test_mf_sync_merges_kite_isin_tradingsymbol_onto_csv_instrument():
     Session = get_session_factory()
     with Session() as session:
-        session.add(Setting(key=kite_auth.TOKEN_KEY, value="token"))
+        session.add(Setting(key=app_settings.TOKEN_KEY, value="token"))
         named = Instrument(
             symbol="QUANT SMALL CAP FUND - DIRECT PLAN",
             isin="INF966L01689",
@@ -265,9 +271,9 @@ def test_mf_sync_merges_kite_isin_tradingsymbol_onto_csv_instrument():
 def test_sync_does_not_advance_append_watermark_when_no_trades_appended():
     Session = get_session_factory()
     with Session() as session:
-        session.add(Setting(key=kite_auth.TOKEN_KEY, value="token"))
-        kite_auth.set_setting(
-            session, kite_auth.LAST_APPEND_KEY, "2026-01-22T10:00:00+05:30"
+        session.add(Setting(key=app_settings.TOKEN_KEY, value="token"))
+        app_settings.set_setting(
+            session, app_settings.LAST_APPEND_KEY, "2026-01-22T10:00:00+05:30"
         )
         session.commit()
         kite = MagicMock()
@@ -292,7 +298,10 @@ def test_sync_does_not_advance_append_watermark_when_no_trades_appended():
 
         assert result["trades_appended"] == 0
         assert (
-            kite_auth.get_setting(session, kite_auth.LAST_APPEND_KEY)
+            app_settings.get_setting(session, app_settings.LAST_APPEND_KEY)
             == "2026-01-22T10:00:00+05:30"
         )
-        assert kite_auth.get_setting(session, kite_auth.LAST_SYNC_KEY) == result["last_sync_at"]
+        assert (
+            app_settings.get_setting(session, app_settings.LAST_SYNC_KEY)
+            == result["last_sync_at"]
+        )

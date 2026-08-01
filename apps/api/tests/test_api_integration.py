@@ -4,10 +4,18 @@ from pathlib import Path
 from fastapi.testclient import TestClient
 
 from portfolio_tracker.db.engine import get_session_factory
-from portfolio_tracker.db.models import BenchmarkPrice, Price
 from portfolio_tracker.main import create_app
 
+from helpers import seed_equity_fixture_prices
+
 FIXTURES = Path(__file__).parent / "fixtures"
+
+
+def test_message_response_removed():
+    import importlib
+
+    mod = importlib.import_module("portfolio_tracker.schemas.common")
+    assert not hasattr(mod, "MessageResponse")
 
 
 def test_import_then_overview(monkeypatch):
@@ -31,45 +39,7 @@ def test_import_then_overview(monkeypatch):
     as_of = date.today().isoformat()
     Session = get_session_factory()
     with Session() as session:
-        session.add_all(
-            [
-                Price(
-                    symbol="RELIANCE.NS",
-                    price_date="2024-01-15",
-                    close=2500.0,
-                    source="yahoo",
-                ),
-                Price(
-                    symbol="RELIANCE.NS",
-                    price_date=as_of,
-                    close=3000.0,
-                    source="yahoo",
-                ),
-                Price(
-                    symbol="INFY.NS",
-                    price_date="2024-02-01",
-                    close=1500.0,
-                    source="yahoo",
-                ),
-                Price(
-                    symbol="INFY.NS",
-                    price_date=as_of,
-                    close=1800.0,
-                    source="yahoo",
-                ),
-                BenchmarkPrice(
-                    index_symbol="Nifty 500",
-                    price_date="2024-01-15",
-                    close=10000.0,
-                ),
-                BenchmarkPrice(
-                    index_symbol="Nifty 500",
-                    price_date=as_of,
-                    close=12000.0,
-                ),
-            ]
-        )
-        session.commit()
+        seed_equity_fixture_prices(session, as_of)
 
     overview = client.get("/portfolio/overview")
 
@@ -150,23 +120,14 @@ def test_portfolio_performance_route_returns_contributors(monkeypatch):
     as_of = date.today().isoformat()
     Session = get_session_factory()
     with Session() as session:
-        session.add_all(
-            [
-                Price(symbol="RELIANCE.NS", price_date="2024-01-15", close=2500.0, source="yahoo"),
-                Price(symbol="RELIANCE.NS", price_date=as_of, close=3000.0, source="yahoo"),
-                Price(symbol="INFY.NS", price_date="2024-02-01", close=1500.0, source="yahoo"),
-                Price(symbol="INFY.NS", price_date=as_of, close=1800.0, source="yahoo"),
-                BenchmarkPrice(index_symbol="Nifty 500", price_date="2024-01-15", close=10000.0),
-                BenchmarkPrice(index_symbol="Nifty 500", price_date=as_of, close=12000.0),
-            ]
-        )
-        session.commit()
+        seed_equity_fixture_prices(session, as_of)
 
     response = client.get("/portfolio/performance")
     assert response.status_code == 200
     body = response.json()
     assert body["default_window"] == "ITD"
-    assert "overview" in body
+    assert "total_value" in body
+    assert "windows" in body
     assert "contributors" in body
     assert "holdings" in body
     assert "windows_available" in body

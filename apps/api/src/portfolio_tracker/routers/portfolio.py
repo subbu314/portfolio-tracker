@@ -18,8 +18,6 @@ def overview(session: Annotated[Session, Depends(get_db)]) -> dict:
 @router.get("/holdings")
 def holdings(session: Annotated[Session, Depends(get_db)]) -> dict:
     rows = portfolio.get_holdings(session, as_of=date.today().isoformat())
-    for row in rows:
-        row.pop("_benchmark_cagr", None)
     return {"holdings": rows}
 
 

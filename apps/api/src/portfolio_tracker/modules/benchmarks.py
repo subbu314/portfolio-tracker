@@ -3,7 +3,7 @@ from __future__ import annotations
 from sqlalchemy.orm import Session
 
 from portfolio_tracker.db.models import BenchmarkMap, Instrument
-from portfolio_tracker.modules.prices import INDEX_TICKERS
+from portfolio_tracker.modules.index_tickers import INDEX_TICKERS
 
 DEFAULT_BY_CATEGORY: dict[str, str] = {
     "Flexi Cap": "Nifty 500",

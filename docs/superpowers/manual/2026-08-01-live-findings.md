@@ -51,7 +51,7 @@
 | F8 | P3 | CSV coverage / reconcile | 24 reconcile diffs; EQ/MF end before today | Expected data gap | n/a | Document only |
 
 ## Triage
-- Fix plan: `docs/superpowers/plans/2026-08-01-api-live-fixes.md`
+- Fix plan: `docs/superpowers/plans/archive/2026-08-01-api-live-fixes.md`
 - Residual open (non-blocking for frontend): Yahoo gaps for delisted/DVR/demerger + SGB unsupported; kite-only MF display names; optional fresh CSV slices for tighter reconcile
 
 ## Verdict

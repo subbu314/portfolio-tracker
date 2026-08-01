@@ -3532,6 +3532,17 @@ git commit -m "feat: add settings API and end-to-end import-to-overview test"
 
 ---
 
+## Lean UI constraints (post fat-trim — binding for Tasks 12–16)
+
+1. **One metrics hero on Overview:** ITD cards + window chips (1Y/3Y/5Y). No second full metric grid.
+2. **Holdings default = ITD columns:** qty, avg, LTP, value, absolute %, XIRR, CAGR, one excess (`absolute_excess_pp`). No all-excesses × all-windows column matrix.
+3. **Performance = window switcher + contributors** via flattened `/portfolio/performance`. Charts stay minimal SVG.
+4. **No extra pages** beyond Overview / Holdings / Performance / Import / Settings.
+5. **Banners only for actionable states** (token, gap, reconcile, incomplete prices).
+6. **No client-side XIRR/CAGR/excess** — display API fields only.
+
+If a Task 12–16 sample contradicts this block, follow this block.
+
 ### Task 12: Next.js web scaffold + API client
 
 **Files:**
@@ -3669,8 +3680,7 @@ export type Holding = {
   windows: Record<WindowKey, WindowMetrics | null>;
 };
 
-export type Performance = {
-  overview: Overview;
+export type Performance = Overview & {
   contributors: {
     symbol: string;
     absolute_excess_pp: number | null;
@@ -4506,7 +4516,7 @@ export default function PerformancePage() {
       .catch((e) => setError(String(e)));
   }, []);
 
-  const metrics = data?.overview.windows[windowKey] ?? null;
+  const metrics = data?.windows[windowKey] ?? null;
 
   const chartRows = useMemo(() => {
     if (!data) return [];
@@ -4528,7 +4538,7 @@ export default function PerformancePage() {
       </p>
       <div className="window-switcher" role="group" aria-label="Return window">
         {ALL.map((key) => {
-          const available = data.overview.windows[key] != null;
+          const available = data.windows[key] != null;
           return (
             <button
               key={key}
