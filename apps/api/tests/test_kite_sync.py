@@ -67,6 +67,55 @@ def test_sync_upserts_holdings_and_appends_todays_trades():
         assert kite_auth.get_setting(session, kite_auth.LAST_APPEND_KEY) == result["last_sync_at"]
 
 
+def test_sync_removes_stale_snapshot_for_sold_symbol():
+    Session = get_session_factory()
+    with Session() as session:
+        session.add(Setting(key=kite_auth.TOKEN_KEY, value="token"))
+        sold = Instrument(symbol="SOLD", isin="INE000000001", instrument_type="equity")
+        session.add(sold)
+        session.flush()
+        session.add(
+            HoldingsSnapshot(
+                instrument_id=sold.id,
+                quantity=5,
+                avg_price=100.0,
+                as_of="2026-07-15",
+            )
+        )
+        session.commit()
+
+        kite = MagicMock()
+        kite.holdings.return_value = [
+            {
+                "tradingsymbol": "RELIANCE",
+                "isin": "INE002A01018",
+                "exchange": "NSE",
+                "quantity": 10,
+                "average_price": 2000.0,
+            }
+        ]
+        kite.mf_holdings.return_value = []
+        kite.trades.return_value = []
+
+        with (
+            patch.object(kite_auth, "authenticated_kite", return_value=kite),
+            patch.object(kite_sync, "_today_ist", return_value="2026-08-01"),
+        ):
+            result = kite_sync.sync_all(session)
+        session.commit()
+
+        snapshots = session.query(HoldingsSnapshot).all()
+        assert result["holdings_count"] == 1
+        assert len(snapshots) == 1
+        assert snapshots[0].instrument_id != sold.id
+        assert (
+            session.query(HoldingsSnapshot)
+            .filter(HoldingsSnapshot.instrument_id == sold.id)
+            .first()
+            is None
+        )
+
+
 def test_sync_is_idempotent_and_updates_existing_holdings_snapshot():
     Session = get_session_factory()
     with Session() as session:

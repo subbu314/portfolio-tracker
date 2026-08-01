@@ -46,7 +46,9 @@ def _upsert_holding(
     snapshot.as_of = as_of
 
 
-def _sync_holding(session: Session, holding: dict, as_of: str, instrument_type: str) -> None:
+def _sync_holding(
+    session: Session, holding: dict, as_of: str, instrument_type: str
+) -> int:
     symbol = holding.get("tradingsymbol") or holding.get("isin")
     instrument = get_or_create_instrument(
         session,
@@ -60,6 +62,14 @@ def _sync_holding(session: Session, holding: dict, as_of: str, instrument_type: 
         holding.get("average_price") or holding.get("last_price") or 0
     )
     _upsert_holding(session, instrument, quantity, average_price, as_of)
+    return instrument.id
+
+
+def _remove_stale_holdings(session: Session, synced_instrument_ids: set[int]) -> None:
+    query = session.query(HoldingsSnapshot)
+    if synced_instrument_ids:
+        query = query.filter(~HoldingsSnapshot.instrument_id.in_(synced_instrument_ids))
+    query.delete(synchronize_session=False)
 
 
 def _append_trade(session: Session, trade: dict, as_of: str) -> bool:
@@ -118,12 +128,14 @@ def sync_all(session: Session) -> SyncResult:
     as_of = _today_ist()
     equity_holdings, mutual_fund_holdings, trades = _fetch_kite_data(session, kite)
 
+    synced_instrument_ids: set[int] = set()
     for holding in equity_holdings:
         symbol = str(holding["tradingsymbol"])
         instrument_type = "etf" if "ETF" in symbol.upper() else "equity"
-        _sync_holding(session, holding, as_of, instrument_type)
+        synced_instrument_ids.add(_sync_holding(session, holding, as_of, instrument_type))
     for holding in mutual_fund_holdings:
-        _sync_holding(session, holding, as_of, "mf")
+        synced_instrument_ids.add(_sync_holding(session, holding, as_of, "mf"))
+    _remove_stale_holdings(session, synced_instrument_ids)
     appended = sum(_append_trade(session, trade, as_of) for trade in trades)
 
     now = datetime.now(IST).isoformat()
