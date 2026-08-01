@@ -12,6 +12,10 @@ from portfolio_tracker.db.models import (
     Transaction,
 )
 from portfolio_tracker.modules import benchmarks, metrics
+from portfolio_tracker.modules.portfolio_types import (
+    HoldingComputed,
+    HoldingPublic,
+)
 
 TradeTuple = tuple[str, str, float, float, float]
 
@@ -332,8 +336,10 @@ def _build_instrument_windows(
     return windows
 
 
-def get_holdings(session: Session, as_of: str) -> list[dict]:
-    holdings: list[dict] = []
+def _get_holdings_computed(
+    session: Session, as_of: str
+) -> list[HoldingComputed]:
+    holdings: list[HoldingComputed] = []
     for instrument in session.query(Instrument).all():
         transactions = _transactions(session, instrument.id, as_of)
         quantity, average_price = _position(
@@ -347,7 +353,7 @@ def get_holdings(session: Session, as_of: str) -> list[dict]:
             session, instrument, transactions, value, as_of
         )
         absolute = bundle["absolute"]
-        row = {
+        public_without_windows = {
             "instrument_id": instrument.id,
             "symbol": instrument.symbol,
             "instrument_type": instrument.instrument_type,
@@ -366,35 +372,51 @@ def get_holdings(session: Session, as_of: str) -> list[dict]:
             "cagr_excess_pp": bundle["cagr_excess_pp"],
             "incomplete": ltp is None or bundle["benchmark_return"] is None,
             "needs_category": bool(instrument.needs_category),
-            "_benchmark_cagr": benchmark_cagr,
         }
         first_date = transactions[0].trade_date if transactions else as_of
-        row["windows"] = _build_instrument_windows(
+        windows = _build_instrument_windows(
             session,
             instrument,
             transactions,
             first_date,
             as_of,
-            row,
+            public_without_windows,
         )
-        holdings.append(row)
+        public: HoldingPublic = {
+            **public_without_windows,
+            "windows": windows,
+        }
+        holdings.append(
+            {
+                "public": public,
+                "benchmark_cagr": benchmark_cagr,
+            }
+        )
     return holdings
 
 
+def get_holdings(session: Session, as_of: str) -> list[HoldingPublic]:
+    return [
+        computed["public"]
+        for computed in _get_holdings_computed(session, as_of)
+    ]
+
+
 def _append_weighted_benchmarks(
-    holding: dict,
+    computed: HoldingComputed,
     total_value: float,
     weighted_returns: list[tuple[float, float]],
     weighted_cagrs: list[tuple[float, float]],
 ) -> None:
+    holding = computed["public"]
     value = holding["value"]
     if value is None or total_value <= 0:
         return
     weight = value / total_value
     if holding["benchmark_return"] is not None:
         weighted_returns.append((weight, holding["benchmark_return"]))
-    if holding["_benchmark_cagr"] is not None:
-        weighted_cagrs.append((weight, holding["_benchmark_cagr"]))
+    if computed["benchmark_cagr"] is not None:
+        weighted_cagrs.append((weight, computed["benchmark_cagr"]))
 
 
 def _holding_benchmark_terminal(
@@ -416,7 +438,7 @@ def _holding_benchmark_terminal(
 
 def _portfolio_benchmark_metrics(
     session: Session,
-    holdings: list[dict],
+    holdings: list[HoldingComputed],
     transactions_by_instrument: dict[int, list[Transaction]],
     total_value: float,
     as_of: str,
@@ -425,9 +447,10 @@ def _portfolio_benchmark_metrics(
     weighted_cagrs: list[tuple[float, float]] = []
     benchmark_terminal = 0.0
     terminal_is_complete = True
-    for holding in holdings:
+    for computed in holdings:
+        holding = computed["public"]
         _append_weighted_benchmarks(
-            holding,
+            computed,
             total_value,
             weighted_returns,
             weighted_cagrs,
@@ -457,6 +480,20 @@ def _portfolio_benchmark_metrics(
         blended_cagr,
         benchmark_terminal if terminal_is_complete else None,
     )
+
+
+def _computed_from_public(holding: HoldingPublic) -> HoldingComputed:
+    cagr = holding["cagr"]
+    cagr_excess = holding["cagr_excess_pp"]
+    benchmark_cagr = (
+        cagr - cagr_excess
+        if cagr is not None and cagr_excess is not None
+        else None
+    )
+    return {
+        "public": holding,
+        "benchmark_cagr": benchmark_cagr,
+    }
 
 
 def _blended_benchmark(
@@ -724,10 +761,13 @@ def get_overview(
     session: Session,
     as_of: str,
     *,
-    holdings: list[dict] | None = None,
+    holdings: list[HoldingPublic] | None = None,
 ) -> dict:
     if holdings is None:
         holdings = get_holdings(session, as_of)
+    computed_holdings = [
+        _computed_from_public(holding) for holding in holdings
+    ]
     total_value = sum(holding["value"] or 0.0 for holding in holdings)
     all_transactions = (
         session.query(Transaction)
@@ -760,7 +800,7 @@ def get_overview(
     benchmark_return, benchmark_cagr, benchmark_terminal = (
         _portfolio_benchmark_metrics(
             session,
-            holdings,
+            computed_holdings,
             transactions_by_instrument,
             total_value,
             as_of,
@@ -824,8 +864,6 @@ def get_overview(
 def get_performance(session: Session, as_of: str) -> dict:
     holdings = get_holdings(session, as_of)
     overview = get_overview(session, as_of, holdings=holdings)
-    for holding in holdings:
-        holding.pop("_benchmark_cagr", None)
     contributors = sorted(
         [
             {

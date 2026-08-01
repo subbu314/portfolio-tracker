@@ -387,6 +387,20 @@ def test_portfolio_http_endpoints_expose_itd_data():
     assert "_benchmark_cagr" not in holding
 
 
+def test_holdings_rows_never_contain_private_benchmark_cagr_key():
+    Session = __import__(
+        "portfolio_tracker.db.engine", fromlist=["get_session_factory"]
+    ).get_session_factory()
+    from portfolio_tracker.modules import portfolio as portfolio_mod
+
+    with Session() as session:
+        _seed_itd(session)
+        rows = portfolio_mod.get_holdings(session, as_of="2024-06-15")
+    for row in rows:
+        assert "_benchmark_cagr" not in row
+        assert "benchmark_cagr" not in row
+
+
 def test_portfolio_rolling_absolute_includes_in_window_capital():
     """Opening book is small; most terminal value funded by in-window buys.
 
