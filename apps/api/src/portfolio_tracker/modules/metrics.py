@@ -82,38 +82,43 @@ def xirr(cashflows: list[CashFlow]) -> float | None:
     numpy_financial has no xirr (only evenly-spaced irr), so this is a bisection
     solver on the XNPV function: sum(cf_i / (1+r)^(days_i/365)) == 0.
     """
-    if len(cashflows) < 2:
-        return None
-    amounts = [c[1] for c in cashflows]
-    if all(a <= 0 for a in amounts) or all(a >= 0 for a in amounts):
-        return None
-    dates = [_parse_date(c[0]) for c in cashflows]
-    t0 = min(dates)
-    day_offsets = [(d - t0).days for d in dates]
+    try:
+        if len(cashflows) < 2:
+            return None
+        amounts = [c[1] for c in cashflows]
+        if all(a <= 0 for a in amounts) or all(a >= 0 for a in amounts):
+            return None
+        dates = [_parse_date(c[0]) for c in cashflows]
+        t0 = min(dates)
+        day_offsets = [(d - t0).days for d in dates]
+        if max(day_offsets) == 0:
+            return None
 
-    low, high = -0.999999, 10.0
-    f_low = _xnpv(low, amounts, day_offsets)
-    f_high = _xnpv(high, amounts, day_offsets)
-    expansions = 0
-    while f_low * f_high > 0 and high < 1e6 and expansions < 60:
-        high *= 2
+        low, high = -0.999999, 10.0
+        f_low = _xnpv(low, amounts, day_offsets)
         f_high = _xnpv(high, amounts, day_offsets)
-        expansions += 1
-    if f_low * f_high > 0:
-        return None
+        expansions = 0
+        while f_low * f_high > 0 and high < 1e6 and expansions < 60:
+            high *= 2
+            f_high = _xnpv(high, amounts, day_offsets)
+            expansions += 1
+        if f_low * f_high > 0:
+            return None
 
-    mid = 0.0
-    for _ in range(200):
-        mid = (low + high) / 2
-        f_mid = _xnpv(mid, amounts, day_offsets)
-        if abs(f_mid) < 1e-9 or (high - low) < 1e-12:
-            break
-        if f_low * f_mid < 0:
-            high = mid
-        else:
-            low = mid
-            f_low = f_mid
-    return mid
+        mid = 0.0
+        for _ in range(200):
+            mid = (low + high) / 2
+            f_mid = _xnpv(mid, amounts, day_offsets)
+            if abs(f_mid) < 1e-9 or (high - low) < 1e-12:
+                break
+            if f_low * f_mid < 0:
+                high = mid
+            else:
+                low = mid
+                f_low = f_mid
+        return mid
+    except (ZeroDivisionError, OverflowError, ValueError):
+        return None
 
 
 def benchmark_return(start_price: float, end_price: float) -> float | None:

@@ -119,6 +119,16 @@ def test_xirr_none_for_all_same_sign():
     )
 
 
+def test_xirr_none_for_same_day_zero_sum_cashflows():
+    assert (
+        metrics.xirr([("2024-01-01", -1000.0), ("2024-01-01", 1000.0)]) is None
+    )
+
+
+def test_xirr_none_when_cashflow_range_overflows_solver():
+    assert metrics.xirr([("0001-01-01", -1.0), ("9999-12-31", 1.0)]) is None
+
+
 def test_point_to_point_return():
     assert abs(metrics.point_to_point_return(100.0, 125.0) - 0.25) < 1e-9
     assert metrics.point_to_point_return(0.0, 125.0) is None
