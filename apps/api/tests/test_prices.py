@@ -331,3 +331,80 @@ def test_refresh_prices_caches_locked_benchmark_ticker():
         benchmark = session.query(BenchmarkPrice).one()
         assert result["updated"] == 1
         assert (benchmark.index_symbol, benchmark.close) == ("Nifty 50", 21000.0)
+
+
+def test_refresh_prices_reports_missing_amfi_nav_as_failed():
+    Session = get_session_factory()
+    with Session() as session:
+        session.add(
+            Instrument(
+                symbol="SOME MF",
+                isin="INF000000001",
+                instrument_type="mf",
+            )
+        )
+        session.commit()
+
+        amfi = MagicMock(spec=AmfiNavProvider)
+        amfi.get_history_by_isin.return_value = []
+        amfi.resolve_category.return_value = (None, None)
+        yahoo = MagicMock(spec=YahooFinanceProvider)
+
+        result = price_service.refresh_prices(
+            session,
+            as_of="2026-08-01",
+            yahoo=yahoo,
+            amfi=amfi,
+            benchmark_names=[],
+        )
+
+        assert result["updated"] == 0
+        assert result["incomplete"] is True
+        assert any("INF000000001" in row or "SOME MF" in row for row in result["failed"])
+        assert any(
+            "AMFI" in row or "amfi" in row.lower() or "NAV" in row
+            for row in result["failed"]
+        )
+
+
+def test_refresh_prices_uses_yahoo_alias_for_renamed_equity():
+    Session = get_session_factory()
+    with Session() as session:
+        session.add(
+            Instrument(
+                symbol="ZOMATO",
+                isin="INE758T01015",
+                instrument_type="equity",
+                exchange="NSE",
+            )
+        )
+        session.commit()
+
+        yahoo = MagicMock(spec=YahooFinanceProvider)
+
+        def history(symbol, start, end):
+            if symbol == "ETERNAL.NS":
+                return [("2026-08-01", 250.0)]
+            return []
+
+        def ltp(symbol):
+            return 255.0 if symbol == "ETERNAL.NS" else None
+
+        yahoo.get_history.side_effect = history
+        yahoo.get_ltp.side_effect = ltp
+        amfi = MagicMock(spec=AmfiNavProvider)
+
+        result = price_service.refresh_prices(
+            session,
+            as_of="2026-08-01",
+            yahoo=yahoo,
+            amfi=amfi,
+            history_start="2026-01-01",
+            benchmark_names=[],
+        )
+
+        instrument = session.query(Instrument).one()
+        assert result["incomplete"] is False
+        assert result["failed"] == []
+        assert instrument.yahoo_symbol == "ETERNAL.NS"
+        assert session.query(Price).filter(Price.symbol == "ETERNAL.NS").count() >= 1
