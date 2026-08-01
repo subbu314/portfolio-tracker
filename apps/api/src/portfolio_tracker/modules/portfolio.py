@@ -251,10 +251,11 @@ def _build_instrument_windows(
 
         quantity_at_start = _qty_at(transactions, start)
         opening_price = _latest_price(session, price_symbol, start)
+        if quantity_at_start > 0 and opening_price is None:
+            windows[window] = None
+            continue
         opening_mv = (
-            quantity_at_start * opening_price
-            if quantity_at_start > 0 and opening_price is not None
-            else 0.0
+            quantity_at_start * opening_price if quantity_at_start > 0 else 0.0
         )
         in_window = [
             transaction
@@ -472,14 +473,14 @@ def _instrument_window_benchmark_inputs(
     current_value: float,
     start: str,
     as_of: str,
-) -> tuple[float, float | None, float | None, float | None]:
+) -> tuple[float | None, float | None, float | None, float | None]:
     quantity = _qty_at(transactions, start)
     price = _latest_price(
         session, _instrument_price_symbol(instrument), start
     )
-    opening_mv = (
-        quantity * price if quantity > 0 and price is not None else 0.0
-    )
+    if quantity > 0 and price is None:
+        return None, None, None, None
+    opening_mv = quantity * price if quantity > 0 else 0.0
     benchmark_name = benchmarks.ensure_benchmark_map(
         session, instrument
     ).benchmark_index
@@ -522,7 +523,7 @@ def _portfolio_window_benchmark_inputs(
     holding_values: dict[int, float],
     start: str,
     as_of: str,
-) -> tuple[float, float | None, float | None, float | None]:
+) -> tuple[float | None, float | None, float | None, float | None]:
     opening_mv = 0.0
     weighted_returns: list[tuple[float, float]] = []
     weighted_cagrs: list[tuple[float, float]] = []
@@ -546,6 +547,8 @@ def _portfolio_window_benchmark_inputs(
             start,
             as_of,
         )
+        if instrument_opening_mv is None:
+            return None, None, None, None
         opening_mv += instrument_opening_mv
         current_value = holding_values.get(instrument_id, 0.0)
         if benchmark_return is not None:
@@ -573,7 +576,7 @@ def _build_portfolio_window(
     start: str,
     as_of: str,
     total_value: float,
-) -> dict:
+) -> dict | None:
     opening_mv, benchmark_return, benchmark_cagr, benchmark_terminal = (
         _portfolio_window_benchmark_inputs(
             session,
@@ -583,6 +586,8 @@ def _build_portfolio_window(
             as_of,
         )
     )
+    if opening_mv is None:
+        return None
     in_window = [
         transaction
         for transaction in all_transactions

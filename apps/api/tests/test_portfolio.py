@@ -113,7 +113,8 @@ def test_overview_rolling_1y_available_3y_5y_null():
         overview = portfolio.get_overview(session, as_of="2024-06-01")
 
         assert overview["windows"]["1Y"] is not None
-        assert overview["windows"]["1Y"]["absolute_pct"] is not None
+        assert abs(overview["windows"]["1Y"]["absolute_pct"] - (2 / 11)) < 1e-9
+        assert abs(overview["windows"]["1Y"]["absolute_excess_pp"] - (100 / 11)) < 1e-9
         assert overview["windows"]["1Y"]["xirr"] is not None
         assert overview["windows"]["1Y"]["xirr_excess_pp"] is not None
         assert overview["windows"]["3Y"] is None
@@ -131,6 +132,106 @@ def test_holdings_include_windows():
         assert rows[0]["windows"]["ITD"] is not None
         assert rows[0]["windows"]["1Y"] is not None
         assert rows[0]["windows"]["3Y"] is None
+
+
+def test_rolling_windows_are_null_when_opening_position_price_is_missing():
+    Session = get_session_factory()
+    with Session() as session:
+        instrument = _seed_itd(session)
+        session.query(Price).filter(Price.price_date < "2024-06-01").delete()
+        session.query(HoldingsSnapshot).delete()
+        session.add(
+            Transaction(
+                instrument_id=instrument.id,
+                trade_date="2023-09-01",
+                side="buy",
+                quantity=1,
+                price=2300.0,
+                fees=0,
+                source="csv",
+                dedupe_key="missing-opening-price-buy",
+            )
+        )
+        session.commit()
+
+        holdings = portfolio.get_holdings(session, as_of="2024-06-01")
+        overview = portfolio.get_overview(session, as_of="2024-06-01")
+
+        assert holdings[0]["qty"] == 11
+        assert holdings[0]["windows"]["1Y"] is None
+        assert overview["windows"]["1Y"] is None
+
+
+def test_rolling_windows_use_in_window_cost_when_opening_quantity_is_zero():
+    Session = get_session_factory()
+    with Session() as session:
+        instrument = Instrument(
+            symbol="NEW",
+            isin="INE000000001",
+            instrument_type="equity",
+            exchange="NSE",
+            yahoo_symbol="NEW.NS",
+        )
+        session.add(instrument)
+        session.flush()
+        for trade_date, side, quantity, price, dedupe_key in (
+            ("2022-01-01", "buy", 1, 500.0, "zero-opening-old-buy"),
+            ("2022-02-01", "sell", 1, 500.0, "zero-opening-old-sell"),
+            ("2024-01-01", "buy", 10, 100.0, "zero-opening-current-buy"),
+        ):
+            session.add(
+                Transaction(
+                    instrument_id=instrument.id,
+                    trade_date=trade_date,
+                    side=side,
+                    quantity=quantity,
+                    price=price,
+                    fees=0,
+                    source="csv",
+                    dedupe_key=dedupe_key,
+                )
+            )
+        session.add(
+            Price(
+                symbol="NEW.NS",
+                price_date="2024-06-01",
+                close=120.0,
+                source="yahoo",
+            )
+        )
+        session.add(
+            BenchmarkMap(
+                instrument_id=instrument.id,
+                benchmark_index="Nifty 500",
+                source="default",
+            )
+        )
+        session.add_all(
+            [
+                BenchmarkPrice(
+                    index_symbol="Nifty 500",
+                    price_date="2023-06-02",
+                    close=100.0,
+                ),
+                BenchmarkPrice(
+                    index_symbol="Nifty 500",
+                    price_date="2024-01-01",
+                    close=100.0,
+                ),
+                BenchmarkPrice(
+                    index_symbol="Nifty 500",
+                    price_date="2024-06-01",
+                    close=110.0,
+                ),
+            ]
+        )
+        session.commit()
+
+        holdings = portfolio.get_holdings(session, as_of="2024-06-01")
+        overview = portfolio.get_overview(session, as_of="2024-06-01")
+
+        assert abs(holdings[0]["windows"]["1Y"]["absolute_pct"] - 0.2) < 1e-9
+        assert abs(overview["windows"]["1Y"]["absolute_pct"] - 0.2) < 1e-9
 
 
 def test_overview_itd_core_metrics():
