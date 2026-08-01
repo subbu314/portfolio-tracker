@@ -339,16 +339,14 @@ def get_overview(
     session: Session,
     as_of: str,
     *,
-    holdings: list[HoldingComputed] | None = None,
     inputs: PortfolioInputs | None = None,
 ) -> dict:
     inputs = inputs or load_portfolio_inputs(session, as_of)
-    if holdings is None:
-        holdings = _get_holdings_computed(
-            session,
-            as_of,
-            inputs=inputs,
-        )
+    holdings = _get_holdings_computed(
+        session,
+        as_of,
+        inputs=inputs,
+    )
     return _get_overview_from_computed(
         session,
         as_of,

@@ -16,6 +16,10 @@ def test_app_settings_round_trip():
         assert app_settings.get_setting(session, "probe_key") == "probe_value"
 
 
+def test_token_updated_key_preserves_existing_setting_name():
+    assert app_settings.TOKEN_UPDATED_KEY == "kite_token_updated_at"
+
+
 def test_exchange_stores_token_without_exposing_secret():
     Session = get_session_factory()
     with Session() as session:

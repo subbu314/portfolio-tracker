@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from portfolio_tracker.db.models import Setting
 
 TOKEN_KEY = "kite_access_token"
-TOKEN_UPDATED_KEY = "kite_access_token_updated_at"
+TOKEN_UPDATED_KEY = "kite_token_updated_at"
 LAST_SYNC_KEY = "last_sync_at"
 LAST_APPEND_KEY = "last_trade_append_at"
 

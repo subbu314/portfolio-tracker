@@ -3680,8 +3680,7 @@ export type Holding = {
   windows: Record<WindowKey, WindowMetrics | null>;
 };
 
-export type Performance = {
-  overview: Overview;
+export type Performance = Overview & {
   contributors: {
     symbol: string;
     absolute_excess_pp: number | null;
@@ -4517,7 +4516,7 @@ export default function PerformancePage() {
       .catch((e) => setError(String(e)));
   }, []);
 
-  const metrics = data?.overview.windows[windowKey] ?? null;
+  const metrics = data?.windows[windowKey] ?? null;
 
   const chartRows = useMemo(() => {
     if (!data) return [];
@@ -4539,7 +4538,7 @@ export default function PerformancePage() {
       </p>
       <div className="window-switcher" role="group" aria-label="Return window">
         {ALL.map((key) => {
-          const available = data.overview.windows[key] != null;
+          const available = data.windows[key] != null;
           return (
             <button
               key={key}
