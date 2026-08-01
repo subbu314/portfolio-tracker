@@ -146,6 +146,24 @@ def test_performance_has_contributors_and_windows():
         assert perf["overview"]["windows"]["1Y"] is not None
 
 
+def test_get_performance_calls_get_holdings_once(monkeypatch):
+    from portfolio_tracker.modules import portfolio as portfolio_mod
+
+    Session = get_session_factory()
+    calls = {"n": 0}
+    real = portfolio_mod.get_holdings
+
+    def counting(session, as_of):
+        calls["n"] += 1
+        return real(session, as_of)
+
+    monkeypatch.setattr(portfolio_mod, "get_holdings", counting)
+    with Session() as session:
+        _seed_itd(session)
+        portfolio_mod.get_performance(session, as_of="2024-06-01")
+    assert calls["n"] == 1
+
+
 def test_rolling_windows_are_null_when_opening_position_price_is_missing():
     Session = get_session_factory()
     with Session() as session:

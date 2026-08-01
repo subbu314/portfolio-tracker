@@ -720,8 +720,14 @@ def _build_portfolio_windows(
     return windows, any_skipped
 
 
-def get_overview(session: Session, as_of: str) -> dict:
-    holdings = get_holdings(session, as_of)
+def get_overview(
+    session: Session,
+    as_of: str,
+    *,
+    holdings: list[dict] | None = None,
+) -> dict:
+    if holdings is None:
+        holdings = get_holdings(session, as_of)
     total_value = sum(holding["value"] or 0.0 for holding in holdings)
     all_transactions = (
         session.query(Transaction)
@@ -816,8 +822,8 @@ def get_overview(session: Session, as_of: str) -> dict:
 
 
 def get_performance(session: Session, as_of: str) -> dict:
-    overview = get_overview(session, as_of)
     holdings = get_holdings(session, as_of)
+    overview = get_overview(session, as_of, holdings=holdings)
     for holding in holdings:
         holding.pop("_benchmark_cagr", None)
     contributors = sorted(
