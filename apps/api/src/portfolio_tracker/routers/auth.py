@@ -3,12 +3,17 @@ from sqlalchemy.orm import Session
 
 from portfolio_tracker.db.session import get_db
 from portfolio_tracker.modules import kite_auth
+from portfolio_tracker.schemas.auth import (
+    AuthStatusResponse,
+    ConnectedResponse,
+    LoginUrlResponse,
+)
 from portfolio_tracker.schemas.common import RequestTokenBody
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
 
-@router.get("/login-url")
+@router.get("/login-url", response_model=LoginUrlResponse)
 def login_url() -> dict[str, str]:
     try:
         return {"login_url": kite_auth.get_login_url()}
@@ -16,7 +21,7 @@ def login_url() -> dict[str, str]:
         raise HTTPException(status_code=400, detail="Kite API credentials are not configured") from exc
 
 
-@router.post("/callback")
+@router.post("/callback", response_model=ConnectedResponse)
 def callback(body: RequestTokenBody, session: Session = Depends(get_db)) -> dict[str, bool]:
     try:
         return kite_auth.exchange_request_token(session, body.request_token)
@@ -26,7 +31,7 @@ def callback(body: RequestTokenBody, session: Session = Depends(get_db)) -> dict
         raise HTTPException(status_code=401, detail="Token exchange failed") from exc
 
 
-@router.get("/callback")
+@router.get("/callback", response_model=ConnectedResponse)
 def callback_get(
     request_token: str,
     session: Session = Depends(get_db),
@@ -42,12 +47,12 @@ def callback_get(
         raise HTTPException(status_code=401, detail="Token exchange failed") from exc
 
 
-@router.get("/status")
+@router.get("/status", response_model=AuthStatusResponse)
 def status(session: Session = Depends(get_db)) -> dict:
     return kite_auth.get_auth_status(session)
 
 
-@router.post("/logout")
+@router.post("/logout", response_model=ConnectedResponse)
 def logout(session: Session = Depends(get_db)) -> dict[str, bool]:
     kite_auth.clear_token(session)
     return {"connected": False}
