@@ -260,3 +260,39 @@ def test_mf_sync_merges_kite_isin_tradingsymbol_onto_csv_instrument():
         snap = session.query(HoldingsSnapshot).one()
         assert snap.instrument_id == named_id
         assert snap.quantity == 1234.977
+
+
+def test_sync_does_not_advance_append_watermark_when_no_trades_appended():
+    Session = get_session_factory()
+    with Session() as session:
+        session.add(Setting(key=kite_auth.TOKEN_KEY, value="token"))
+        kite_auth.set_setting(
+            session, kite_auth.LAST_APPEND_KEY, "2026-01-22T10:00:00+05:30"
+        )
+        session.commit()
+        kite = MagicMock()
+        kite.holdings.return_value = [
+            {
+                "tradingsymbol": "RELIANCE",
+                "isin": "INE002A01018",
+                "exchange": "NSE",
+                "quantity": 10,
+                "average_price": 2000.0,
+            }
+        ]
+        kite.mf_holdings.return_value = []
+        kite.trades.return_value = []
+
+        with (
+            patch.object(kite_auth, "authenticated_kite", return_value=kite),
+            patch.object(kite_sync, "_today_ist", return_value="2026-08-01"),
+        ):
+            result = kite_sync.sync_all(session)
+        session.commit()
+
+        assert result["trades_appended"] == 0
+        assert (
+            kite_auth.get_setting(session, kite_auth.LAST_APPEND_KEY)
+            == "2026-01-22T10:00:00+05:30"
+        )
+        assert kite_auth.get_setting(session, kite_auth.LAST_SYNC_KEY) == result["last_sync_at"]

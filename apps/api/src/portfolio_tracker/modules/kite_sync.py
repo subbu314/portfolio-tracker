@@ -159,7 +159,8 @@ def sync_all(session: Session) -> SyncResult:
 
     now = datetime.now(IST).isoformat()
     kite_auth.set_setting(session, kite_auth.LAST_SYNC_KEY, now)
-    kite_auth.set_setting(session, kite_auth.LAST_APPEND_KEY, now)
+    if appended > 0:
+        kite_auth.set_setting(session, kite_auth.LAST_APPEND_KEY, now)
     return {
         "holdings_count": len(equity_holdings) + len(mutual_fund_holdings),
         "trades_appended": appended,
