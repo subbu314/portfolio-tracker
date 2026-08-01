@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 
 from portfolio_tracker.db.models import HoldingsSnapshot, Instrument, Transaction
 from portfolio_tracker.modules import kite_auth
-from portfolio_tracker.modules.csv_import import get_or_create_instrument
+from portfolio_tracker.modules.csv_import import _looks_like_isin, get_or_create_instrument
 
 IST = ZoneInfo("Asia/Kolkata")
 
@@ -49,15 +49,34 @@ def _upsert_holding(
 def _sync_holding(
     session: Session, holding: dict, as_of: str, instrument_type: str
 ) -> int:
-    symbol = holding.get("tradingsymbol") or holding.get("isin")
+    tradingsymbol = holding.get("tradingsymbol") or holding.get("isin")
+    isin = holding.get("isin")
+    if instrument_type == "mf":
+        if not isin and _looks_like_isin(tradingsymbol):
+            isin = str(tradingsymbol).strip().upper()
+        # Keep Console fund name when an instrument already exists for this ISIN.
+        if isin:
+            existing = (
+                session.query(Instrument).filter(Instrument.isin == isin).first()
+            )
+            symbol = existing.symbol if existing is not None else tradingsymbol
+        else:
+            symbol = tradingsymbol
+    else:
+        symbol = tradingsymbol
+
     instrument = get_or_create_instrument(
         session,
         symbol=symbol,
-        isin=holding.get("isin"),
+        isin=isin,
         instrument_type=instrument_type,
         exchange=holding.get("exchange"),
     )
+    if isin and not instrument.isin:
+        instrument.isin = str(isin).strip().upper()
     quantity = float(holding.get("quantity") or 0)
+    if abs(quantity) < 1e-8:
+        quantity = 0.0
     average_price = float(
         holding.get("average_price") or holding.get("last_price") or 0
     )

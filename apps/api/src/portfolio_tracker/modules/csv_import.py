@@ -203,6 +203,13 @@ def _parse_console_row(row: dict[str, str]) -> tuple[ParsedRow, str | None]:
     )
 
 
+def _looks_like_isin(value: str | None) -> bool:
+    if not value:
+        return False
+    candidate = value.strip().upper()
+    return len(candidate) == 12 and candidate.isalnum() and candidate[:2].isalpha()
+
+
 def get_or_create_instrument(
     session: Session,
     *,
@@ -211,18 +218,39 @@ def get_or_create_instrument(
     instrument_type: str,
     exchange: str | None,
 ) -> Instrument:
+    normalized_symbol = (symbol or "").strip()
+    normalized_isin = (isin or "").strip().upper() or None
+    if normalized_isin is None and _looks_like_isin(normalized_symbol):
+        normalized_isin = normalized_symbol.upper()
+
     instrument = None
-    if isin:
-        instrument = session.query(Instrument).filter(Instrument.isin == isin).first()
+    if normalized_isin:
+        instrument = (
+            session.query(Instrument).filter(Instrument.isin == normalized_isin).first()
+        )
+    if instrument is None and _looks_like_isin(normalized_symbol):
+        instrument = (
+            session.query(Instrument)
+            .filter(Instrument.isin == normalized_symbol.upper())
+            .first()
+        )
     if instrument is None:
-        instrument = session.query(Instrument).filter(Instrument.symbol == symbol).first()
+        instrument = (
+            session.query(Instrument)
+            .filter(Instrument.symbol == normalized_symbol)
+            .first()
+        )
     if instrument is not None:
+        if normalized_isin and not instrument.isin:
+            instrument.isin = normalized_isin
         return instrument
 
-    yahoo_symbol = f"{symbol}.NS" if instrument_type in {"equity", "etf"} else None
+    yahoo_symbol = (
+        f"{normalized_symbol}.NS" if instrument_type in {"equity", "etf"} else None
+    )
     instrument = Instrument(
-        symbol=symbol,
-        isin=isin,
+        symbol=normalized_symbol,
+        isin=normalized_isin,
         instrument_type=instrument_type,
         exchange=exchange,
         yahoo_symbol=yahoo_symbol,

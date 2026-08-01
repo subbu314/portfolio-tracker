@@ -216,3 +216,47 @@ def test_sync_endpoint_refreshes_non_kite_prices():
 
     assert response.status_code == 200
     assert response.json() == {**sync_result, "prices": price_result}
+
+
+def test_mf_sync_merges_kite_isin_tradingsymbol_onto_csv_instrument():
+    Session = get_session_factory()
+    with Session() as session:
+        session.add(Setting(key=kite_auth.TOKEN_KEY, value="token"))
+        named = Instrument(
+            symbol="QUANT SMALL CAP FUND - DIRECT PLAN",
+            isin="INF966L01689",
+            instrument_type="mf",
+            exchange="BSE",
+        )
+        session.add(named)
+        session.commit()
+        named_id = named.id
+
+        kite = MagicMock()
+        kite.holdings.return_value = []
+        kite.mf_holdings.return_value = [
+            {
+                "tradingsymbol": "INF966L01689",
+                # live Kite omits isin
+                "quantity": 1234.977,
+                "average_price": 257.96,
+            }
+        ]
+        kite.trades.return_value = []
+
+        with (
+            patch.object(kite_auth, "authenticated_kite", return_value=kite),
+            patch.object(kite_sync, "_today_ist", return_value="2026-08-01"),
+        ):
+            result = kite_sync.sync_all(session)
+        session.commit()
+
+        assert result["holdings_count"] == 1
+        assert session.query(Instrument).filter(Instrument.instrument_type == "mf").count() == 1
+        merged = session.query(Instrument).filter(Instrument.instrument_type == "mf").one()
+        assert merged.id == named_id
+        assert merged.symbol == "QUANT SMALL CAP FUND - DIRECT PLAN"
+        assert merged.isin == "INF966L01689"
+        snap = session.query(HoldingsSnapshot).one()
+        assert snap.instrument_id == named_id
+        assert snap.quantity == 1234.977
