@@ -3,6 +3,7 @@ from __future__ import annotations
 from datetime import datetime, timezone
 
 from kiteconnect import KiteConnect
+from kiteconnect.exceptions import TokenException
 from sqlalchemy.orm import Session
 
 from portfolio_tracker.config import get_settings
@@ -59,7 +60,9 @@ def exchange_request_token(session: Session, request_token: str) -> dict[str, bo
     try:
         data = kite.generate_session(request_token, api_secret=settings.kite_api_secret)
     except Exception as exc:  # kiteconnect raises varied errors
-        raise KiteAuthError(str(exc)) from exc
+        if invalidate_on_kite_error(session, exc):
+            session.commit()
+        raise KiteAuthError("Token exchange failed") from exc
     access_token = data["access_token"]
     set_setting(session, TOKEN_KEY, access_token)
     set_setting(session, TOKEN_UPDATED_KEY, datetime.now(timezone.utc).isoformat())
@@ -81,6 +84,29 @@ def clear_token(session: Session) -> None:
             session.delete(row)
 
 
+def invalidate_on_kite_error(session: Session, exc: Exception) -> bool:
+    """Clear stored credentials when Kite reports an authentication failure."""
+    message = str(exc).lower()
+    auth_markers = (
+        "tokenexception",
+        "invalid access token",
+        "invalid token",
+        "token is invalid",
+        "token has expired",
+        "token expired",
+        "session has expired",
+        "session expired",
+        "invalid session",
+        "authentication failed",
+        "not authenticated",
+        "unauthorized",
+    )
+    if not isinstance(exc, TokenException) and not any(marker in message for marker in auth_markers):
+        return False
+    clear_token(session)
+    return True
+
+
 def get_auth_status(session: Session) -> dict:
     return {
         "connected": is_token_valid(session),
@@ -91,6 +117,11 @@ def get_auth_status(session: Session) -> dict:
 
 
 def authenticated_kite(session: Session) -> KiteConnect:
+    """Build a Kite client.
+
+    Callers must call ``invalidate_on_kite_error`` and commit when a Kite API
+    request fails so expired sessions require reconnection.
+    """
     token = get_access_token(session)
     if not token:
         raise KiteAuthError("Not connected to Zerodha")

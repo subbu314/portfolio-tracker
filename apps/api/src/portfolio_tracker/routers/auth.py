@@ -13,7 +13,7 @@ def login_url() -> dict[str, str]:
     try:
         return {"login_url": kite_auth.get_login_url()}
     except kite_auth.KiteConfigError as exc:
-        raise HTTPException(status_code=400, detail=str(exc)) from exc
+        raise HTTPException(status_code=400, detail="Kite API credentials are not configured") from exc
 
 
 @router.post("/callback")
@@ -21,9 +21,9 @@ def callback(body: RequestTokenBody, session: Session = Depends(get_db)) -> dict
     try:
         return kite_auth.exchange_request_token(session, body.request_token)
     except kite_auth.KiteConfigError as exc:
-        raise HTTPException(status_code=400, detail=str(exc)) from exc
+        raise HTTPException(status_code=400, detail="Kite API credentials are not configured") from exc
     except kite_auth.KiteAuthError as exc:
-        raise HTTPException(status_code=401, detail=str(exc)) from exc
+        raise HTTPException(status_code=401, detail="Token exchange failed") from exc
 
 
 @router.get("/status")
