@@ -49,6 +49,9 @@ it.each([
     expect(o.absolute.current_value).toBe(0);
     expect(o.absolute.invested_cost).toBe(0);
     expect(o.absolute.gain_inr).toBe(0);
+    expect(o.xirr).toBeNull();
+    expect(o.windows.ITD).toBeNull();
+    expect(o.allocation).toEqual([]);
     expect(s.available).toBe(false);
   }],
   ["logged_out", async () => {
@@ -157,6 +160,9 @@ it.each([
     expect(o.absolute.gain_inr).toBeLessThan(0);
     expect(o.absolute.gain_pct).toBeLessThan(0);
     expect(o.absolute_excess_pp).toBeLessThan(0);
+    expect(o.xirr).toBeLessThan(0);
+    expect(o.windows.ITD?.xirr).toBeLessThan(0);
+    expect(o.windows.ITD?.xirr).not.toBe(0.15);
   }],
 ] as const)("%s scenario fixture", async (_name, fn) => {
   await fn();

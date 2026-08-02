@@ -3,16 +3,28 @@
     "gain_inr": -7000,
     "gain_pct": -0.09
   },
+  "xirr": -0.12,
+  "cagr": -0.08,
+  "benchmark_return": 0.09,
   "absolute_excess_pp": -3.0,
   "xirr_excess_pp": -2.5,
   "cagr_excess_pp": -1.5,
   "windows": {
     "ITD": {
+      "absolute_pct": -0.09,
+      "absolute_inr": -7000,
+      "xirr": -0.12,
+      "cagr": -0.08,
+      "benchmark_return": 0.09,
       "absolute_excess_pp": -3.0,
       "xirr_excess_pp": -2.5,
       "cagr_excess_pp": -1.5
     },
     "1Y": {
+      "absolute_pct": -0.05,
+      "xirr": -0.06,
+      "cagr": -0.05,
+      "benchmark_return": 0.07,
       "absolute_excess_pp": -1.2,
       "xirr_excess_pp": -1.0,
       "cagr_excess_pp": -0.8

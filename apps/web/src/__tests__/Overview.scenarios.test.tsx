@@ -26,6 +26,7 @@ it("shows empty allocation state when no holdings exist", async () => {
   render(<OverviewPage />);
 
   expect(await screen.findByText("No holdings yet")).toBeInTheDocument();
+  expect(screen.getAllByText("N/A").length).toBeGreaterThan(0);
 });
 
 it("shows login banner when logged_out", async () => {
