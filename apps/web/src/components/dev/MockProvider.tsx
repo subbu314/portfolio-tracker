@@ -1,8 +1,9 @@
 "use client";
 
+import { mocksEnabled } from "@/lib/mocks-enabled";
 import { useEffect, useState, type ReactNode } from "react";
 
-const useMocks = process.env.NEXT_PUBLIC_USE_MOCKS === "true";
+const useMocks = mocksEnabled();
 
 export function MockProvider({ children }: { children: ReactNode }) {
   const [isReady, setIsReady] = useState(!useMocks);

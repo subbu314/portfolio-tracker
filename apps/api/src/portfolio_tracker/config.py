@@ -28,7 +28,7 @@ class Settings(BaseSettings):
     kite_api_secret: str = ""
     kite_redirect_url: str = "http://127.0.0.1:8000/auth/callback"
     database_url: str = _DEFAULT_DATABASE_URL
-    cors_origins: str = "http://localhost:3000"
+    cors_origins: str = "http://localhost:3000,http://127.0.0.1:3000"
 
 
 @lru_cache

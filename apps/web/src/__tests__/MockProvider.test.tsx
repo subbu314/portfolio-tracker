@@ -24,6 +24,14 @@ afterEach(() => {
   vi.resetModules();
 });
 
+it("mocksEnabled is false in production even when USE_MOCKS is true", async () => {
+  vi.stubEnv("NEXT_PUBLIC_USE_MOCKS", "true");
+  vi.stubEnv("NODE_ENV", "production");
+  const { mocksEnabled } = await import("@/lib/mocks-enabled");
+
+  expect(mocksEnabled()).toBe(false);
+});
+
 async function loadMockProvider(useMocks: boolean) {
   vi.stubEnv("NEXT_PUBLIC_USE_MOCKS", String(useMocks));
   return import("@/components/dev/MockProvider");

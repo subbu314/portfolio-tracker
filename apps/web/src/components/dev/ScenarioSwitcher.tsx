@@ -7,6 +7,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { mocksEnabled } from "@/lib/mocks-enabled";
 import { loadFixture } from "@/mocks/load-fixture";
 import {
   getActiveScenario,
@@ -16,7 +17,7 @@ import {
   type ScenarioId,
 } from "@/mocks/scenarios";
 
-const useMocks = process.env.NEXT_PUBLIC_USE_MOCKS === "true";
+const useMocks = mocksEnabled();
 
 export function ScenarioSwitcher() {
   if (!useMocks) return null;

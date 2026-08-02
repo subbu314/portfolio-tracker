@@ -5,6 +5,18 @@ import pytest
 from portfolio_tracker.config import REPO_ROOT, Settings
 
 
+def test_default_cors_origins_allow_both_localhost_forms(
+    monkeypatch: pytest.MonkeyPatch,
+):
+    monkeypatch.delenv("CORS_ORIGINS", raising=False)
+
+    settings = Settings(_env_file=None)
+
+    assert settings.cors_origins == (
+        "http://localhost:3000,http://127.0.0.1:3000"
+    )
+
+
 def test_default_database_url_points_to_repo_root_db(monkeypatch: pytest.MonkeyPatch):
     monkeypatch.delenv("DATABASE_URL", raising=False)
 
