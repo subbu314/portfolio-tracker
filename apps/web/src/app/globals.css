@@ -1,3 +1,5 @@
+@import "tailwindcss";
+
 *,
 *::before,
 *::after {
@@ -5,19 +7,51 @@
 }
 
 :root {
-  --bg: #0f1419;
-  --surface: #1a222d;
-  --surface-2: #232d3b;
-  --border: #2e3a4a;
-  --text: #e8eef6;
-  --muted: #8b9bb0;
+  --background: #0b1220;
+  --surface: #121a27;
+  --surface-elevated: #182334;
+  --border: #2a3545;
+  --foreground: #e7eef8;
+  --muted-foreground: #8fa0b7;
+  --accent: #3d9cf0;
   --positive: #3ecf8e;
   --negative: #f07178;
   --warn: #e6a23c;
-  --accent: #5b9fd4;
+  --radius: 0.5rem;
+
+  /* shadcn aliases */
+  --card: var(--surface);
+  --card-foreground: var(--foreground);
+  --popover: var(--surface-elevated);
+  --popover-foreground: var(--foreground);
+  --primary: var(--accent);
+  --primary-foreground: #061018;
+  --secondary: var(--surface-elevated);
+  --secondary-foreground: var(--foreground);
+  --muted: var(--surface-elevated);
+  --destructive: var(--negative);
+  --input: var(--border);
+  --ring: var(--accent);
+
+  /* legacy aliases used by current CSS until later tasks */
+  --bg: var(--background);
+  --surface-2: var(--surface-elevated);
+  --text: var(--foreground);
   --nav-width: 220px;
   --nav-collapsed: 64px;
-  --font: "IBM Plex Sans", "Segoe UI", sans-serif;
+  --font: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
+}
+
+@theme inline {
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-accent: var(--accent);
+  --color-border: var(--border);
+  --color-positive: var(--positive);
+  --color-negative: var(--negative);
+  --color-warn: var(--warn);
 }
 
 html,
@@ -25,8 +59,9 @@ body {
   margin: 0;
   padding: 0;
   min-height: 100%;
-  background: radial-gradient(1200px 600px at 10% -10%, #1a2a3a 0%, var(--bg) 55%);
-  color: var(--text);
+  background:
+    radial-gradient(1200px 600px at 10% -10%, #152033 0%, var(--background) 55%);
+  color: var(--foreground);
   font-family: var(--font);
 }
 
@@ -80,7 +115,7 @@ input {
   gap: 0.75rem;
   padding: 0.55rem 0.65rem;
   border-radius: 8px;
-  color: var(--muted);
+  color: var(--muted-foreground);
 }
 
 .app-nav a[data-active="true"] {
@@ -101,7 +136,7 @@ input {
   margin-top: auto;
   background: transparent;
   border: 1px solid var(--border);
-  color: var(--muted);
+  color: var(--muted-foreground);
   border-radius: 8px;
   padding: 0.45rem 0.6rem;
   cursor: pointer;
@@ -122,7 +157,7 @@ input {
 }
 
 .field span {
-  color: var(--muted);
+  color: var(--muted-foreground);
 }
 
 .field select {
@@ -160,7 +195,7 @@ input {
 .status-banner[data-kind="login"] {
   border-color: var(--border);
   background: var(--surface-2);
-  color: var(--muted);
+  color: var(--muted-foreground);
 }
 
 .status-banner button {
@@ -206,7 +241,7 @@ input {
   border: 1px solid var(--border);
   border-radius: 999px;
   background: var(--surface-2);
-  color: var(--muted);
+  color: var(--muted-foreground);
   padding: 0.4rem 0.75rem;
 }
 
@@ -261,7 +296,7 @@ td {
 
 th {
   background: var(--surface-2);
-  color: var(--muted);
+  color: var(--muted-foreground);
   font-size: 0.875rem;
   font-weight: 600;
 }
@@ -280,7 +315,7 @@ td a {
 .eyebrow,
 .muted,
 .metric-breakdown {
-  color: var(--muted);
+  color: var(--muted-foreground);
 }
 
 .eyebrow {

@@ -59,9 +59,9 @@ export function ReturnSeriesChart({
       <ResponsiveContainer width="100%" height="100%">
         <LineChart data={chartPoints}>
           <CartesianGrid stroke="var(--border)" strokeDasharray="3 3" />
-          <XAxis dataKey="date" stroke="var(--muted)" />
+          <XAxis dataKey="date" stroke="var(--muted-foreground)" />
           <YAxis
-            stroke="var(--muted)"
+            stroke="var(--muted-foreground)"
             tickFormatter={(value: number) => `${value.toFixed(0)}%`}
           />
           <Tooltip formatter={(value) => `${Number(value).toFixed(2)}%`} />
