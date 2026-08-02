@@ -105,7 +105,17 @@ export function HoldingsTable({ title, variant, rows, windowKey }: Props) {
                       router.push(`/holdings/${row.instrument_id}`);
                     }}
                     onKeyDown={(event) => {
-                      if (event.key === "Enter" || event.key === " ") {
+                      const target = event.target;
+                      const isInteractiveTarget =
+                        target instanceof Element &&
+                        target.closest(
+                          'a, button, input, select, textarea, summary, [role="button"], [role="link"], [contenteditable="true"]',
+                        );
+
+                      if (
+                        !isInteractiveTarget &&
+                        (event.key === "Enter" || event.key === " ")
+                      ) {
                         event.preventDefault();
                         router.push(`/holdings/${row.instrument_id}`);
                       }

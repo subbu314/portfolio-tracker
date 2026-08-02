@@ -153,6 +153,32 @@ describe("HoldingsTable", () => {
   });
 
   it.each([
+    { key: "Enter" },
+    { key: "Enter", metaKey: true },
+    { key: "Enter", ctrlKey: true },
+  ])("lets the symbol link handle keydown: %o", (keyInit) => {
+    const rows: Holding[] = [
+      {
+        ...base,
+        instrument_id: 1,
+        symbol: "RELIANCE",
+        instrument_type: "equity",
+      },
+    ];
+    render(
+      <HoldingsTable
+        title="Stocks & ETFs"
+        variant="equity"
+        rows={rows}
+        windowKey="ITD"
+      />,
+    );
+
+    fireEvent.keyDown(screen.getByRole("link", { name: "RELIANCE" }), keyInit);
+    expect(mocks.push).not.toHaveBeenCalled();
+  });
+
+  it.each([
     { metaKey: true },
     { ctrlKey: true },
     { altKey: true },

@@ -33,3 +33,12 @@ Complete.
 ## Concerns
 
 - Technical Standards MCP was unavailable during implementation.
+
+## Important Review Fix: HoldingsTable keyboard handling
+
+- Holdings row keydown now ignores events bubbled from links and other interactive controls while retaining Enter/Space navigation for the focused row and non-interactive row content.
+- Regression coverage includes plain, Cmd+, and Ctrl+Enter on the symbol link.
+- RED: `cd apps/web && npx vitest run src/__tests__/HoldingsTable.test.tsx` — FAIL: 1 file; 3 failed, 10 passed. Each symbol-link Enter case incorrectly called row `router.push`.
+- GREEN: `cd apps/web && npx vitest run src/__tests__/HoldingsTable.test.tsx` — PASS: 1 file, 13 tests.
+- Full validation: `cd apps/web && npm test` — PASS: 27 files, 140 tests.
+- IDE diagnostics for `HoldingsTable.tsx` and `HoldingsTable.test.tsx`: clean.
