@@ -1,9 +1,14 @@
 import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { HoldingsTable } from "@/components/HoldingsTable";
 import type { Holding } from "@/lib/api";
 
+const mocks = vi.hoisted(() => ({
+  push: vi.fn(),
+}));
+
 vi.mock("next/navigation", () => ({
-  useRouter: () => ({ push: vi.fn() }),
+  useRouter: () => ({ push: mocks.push }),
 }));
 
 const base = {
@@ -41,6 +46,10 @@ const base = {
 } as const;
 
 describe("HoldingsTable", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
   it("renders Abs % XIRR CAGR Outperf and N/A for missing CAGR", () => {
     const rows: Holding[] = [
       {
@@ -66,5 +75,28 @@ describe("HoldingsTable", () => {
     expect(screen.getByText("12.00%")).toBeInTheDocument();
     expect(screen.getByText("N/A")).toHaveClass("text-muted-foreground"); // CAGR
     expect(screen.getByText("+2.00 pp")).toBeInTheDocument(); // absolute_excess_pp
+  });
+
+  it("navigates to holding detail when the row is activated", async () => {
+    const user = userEvent.setup();
+    const rows: Holding[] = [
+      {
+        ...base,
+        instrument_id: 1,
+        symbol: "RELIANCE",
+        instrument_type: "equity",
+      },
+    ];
+    render(
+      <HoldingsTable
+        title="Stocks & ETFs"
+        variant="equity"
+        rows={rows}
+        windowKey="ITD"
+      />,
+    );
+
+    await user.click(screen.getByRole("row", { name: /RELIANCE/i }));
+    expect(mocks.push).toHaveBeenCalledWith("/holdings/1");
   });
 });

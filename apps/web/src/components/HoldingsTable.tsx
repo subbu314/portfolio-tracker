@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   Card,
   CardContent,
@@ -39,6 +40,8 @@ function FormattedTableCell({ value }: { value: string }) {
 }
 
 export function HoldingsTable({ title, variant, rows, windowKey }: Props) {
+  const router = useRouter();
+
   return (
     <Card>
       <CardHeader className="p-5 pb-0">
@@ -75,7 +78,19 @@ export function HoldingsTable({ title, variant, rows, windowKey }: Props) {
                 const metrics = getWindowMetrics(row.windows, windowKey);
 
                 return (
-                  <TableRow key={row.instrument_id}>
+                  <TableRow
+                    key={row.instrument_id}
+                    className="cursor-pointer"
+                    tabIndex={0}
+                    aria-label={`Open ${row.symbol}`}
+                    onClick={() => router.push(`/holdings/${row.instrument_id}`)}
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter" || event.key === " ") {
+                        event.preventDefault();
+                        router.push(`/holdings/${row.instrument_id}`);
+                      }
+                    }}
+                  >
                     <TableCell>
                       <Link href={`/holdings/${row.instrument_id}`}>
                         {row.symbol}
