@@ -102,7 +102,7 @@ def test_transactions_404_unknown_instrument():
 
 
 def test_transactions_same_trade_date_ordered_by_id():
-    """Two txs on same trade_date must sort by id asc (not side/source)."""
+    """Two txs on same trade_date must sort by id asc (not insertion order)."""
     client = TestClient(create_app())
     Session = get_session_factory()
     with Session() as session:
@@ -115,9 +115,11 @@ def test_transactions_same_trade_date_ordered_by_id():
         )
         session.add(instrument)
         session.flush()
-        # Insert higher-id row first so API must apply id tie-break.
+        # Explicit ids: higher id committed first. Without ORDER BY id ASC,
+        # insertion order would return sell/api (id=20) before buy/csv (id=10).
         session.add(
             Transaction(
+                id=20,
                 instrument_id=instrument.id,
                 trade_date="2024-03-15",
                 side="sell",
@@ -128,8 +130,10 @@ def test_transactions_same_trade_date_ordered_by_id():
                 dedupe_key="same-day-2",
             )
         )
+        session.flush()
         session.add(
             Transaction(
+                id=10,
                 instrument_id=instrument.id,
                 trade_date="2024-03-15",
                 side="buy",
@@ -148,8 +152,9 @@ def test_transactions_same_trade_date_ordered_by_id():
     ]
     assert len(rows) == 2
     assert rows[0]["trade_date"] == rows[1]["trade_date"] == "2024-03-15"
-    assert rows[0]["id"] < rows[1]["id"]
-    assert rows[0]["side"] == "sell"
-    assert rows[0]["source"] == "api"
-    assert rows[1]["side"] == "buy"
-    assert rows[1]["source"] == "csv"
+    assert rows[0]["id"] == 10
+    assert rows[1]["id"] == 20
+    assert rows[0]["side"] == "buy"
+    assert rows[0]["source"] == "csv"
+    assert rows[1]["side"] == "sell"
+    assert rows[1]["source"] == "api"
