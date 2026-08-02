@@ -7,6 +7,19 @@ vi.mock("next/navigation", () => ({
 }));
 
 describe("AppShell", () => {
+  beforeEach(() => {
+    window.matchMedia = vi.fn().mockImplementation((query: string) => ({
+      matches: false,
+      media: query,
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+      addListener: vi.fn(),
+      removeListener: vi.fn(),
+      dispatchEvent: vi.fn(),
+      onchange: null,
+    }));
+  });
+
   it("renders brand and five nav items", () => {
     render(
       <AppShell>
@@ -69,5 +82,27 @@ describe("AppShell", () => {
     );
 
     expect(screen.queryByRole("button", { name: /mock:/i })).not.toBeInTheDocument();
+  });
+
+  it("defaults to collapsed below 760px", () => {
+    window.matchMedia = vi.fn().mockImplementation((query: string) => ({
+      matches: query.includes("760"),
+      media: query,
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+      addListener: vi.fn(),
+      removeListener: vi.fn(),
+      dispatchEvent: vi.fn(),
+      onchange: null,
+    }));
+    render(
+      <AppShell>
+        <p>child</p>
+      </AppShell>,
+    );
+    expect(screen.getByTestId("app-shell")).toHaveAttribute(
+      "data-collapsed",
+      "true",
+    );
   });
 });

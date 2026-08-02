@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   BookOpen,
   ChevronLeft,
@@ -31,6 +31,15 @@ function isActive(pathname: string, href: string): boolean {
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia("(max-width: 760px)");
+    const applyViewportDefault = () => setCollapsed(mediaQuery.matches);
+    applyViewportDefault();
+    mediaQuery.addEventListener("change", applyViewportDefault);
+    return () =>
+      mediaQuery.removeEventListener("change", applyViewportDefault);
+  }, []);
 
   return (
     <div
