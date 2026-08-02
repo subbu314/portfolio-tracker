@@ -1,0 +1,10 @@
+{
+  "gap": {
+    "message": "Trade history looks incomplete",
+    "suggested_from": "2024-04-01",
+    "suggested_to": "2024-09-30"
+  },
+  "credentials_configured": true,
+  "token_connected": true,
+  "reconcile": []
+}

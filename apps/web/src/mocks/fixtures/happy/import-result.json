@@ -1,0 +1,15 @@
+{
+  "new": 3,
+  "existing": 0,
+  "flagged_rows": [],
+  "financial_years": [
+    "FY 2024-25"
+  ],
+  "date_min": "2024-01-02",
+  "date_max": "2024-01-02",
+  "format": "console_tradebook",
+  "segment_counts": {
+    "EQ": 2,
+    "MF": 1
+  }
+}

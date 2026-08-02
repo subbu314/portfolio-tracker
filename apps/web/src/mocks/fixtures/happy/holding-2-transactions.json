@@ -1,0 +1,15 @@
+{
+  "instrument_id": 2,
+  "transactions": [
+    {
+      "id": 21,
+      "trade_date": "2024-01-02",
+      "side": "buy",
+      "quantity": 100,
+      "price": 200,
+      "fees": 0,
+      "amount": 20000,
+      "source": "csv"
+    }
+  ]
+}

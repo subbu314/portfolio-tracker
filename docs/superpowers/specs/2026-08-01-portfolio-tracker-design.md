@@ -18,11 +18,11 @@ Anyone who clones the repo runs their own local instance against their own Zerod
 - **Kite Connect Personal (free)** for holdings sync and same-day trade append
 - **Console CSV import** for full history (equity tradebook **and** Coin/MF tradebook); re-import for gap backfill
 - Asset types: **equity delivery, ETFs, Coin mutual funds**
-- Metrics (portfolio + per instrument), **inception-to-date only** in v1:
+- Metrics (portfolio + per instrument) for **ITD** and trailing **1Y / 3Y / 5Y** when history allows:
   - Absolute return (₹ and %)
   - CAGR when span ≥ 365 days (else N/A)
   - XIRR (cashflow-based; buys/sells/SIPs + terminal MV; **no dividends**)
-  - Benchmark return and **excess / outperformance** (percentage points)
+  - Benchmark return and **excess / outperformance** (percentage points) for absolute, XIRR, and CAGR when both sides exist
 - Benchmark mapping by MF category (auto from AMFI/scheme metadata when possible; e.g. flexi cap → Nifty 500, mid cap → Nifty Midcap 150, small cap → Nifty Smallcap 250); stocks/ETFs default to **Nifty 500**; all overridable in Settings
 - Portfolio-level outperformance: **value-weighted blend** of each holding’s benchmark
 - Gap detection and holdings-vs-transactions reconcile with CSV backfill prompts
@@ -34,7 +34,7 @@ Anyone who clones the repo runs their own local instance against their own Zerod
 - Hosted multi-user SaaS
 - EPF, FD, RD, PAASA, Bank Accounts, Cash / other brokers (later)
 - F&O / intraday as first-class long-term portfolio metrics
-- YTD / custom date-range returns (inception-to-date only in v1)
+- Free custom date-range picker (v1 uses fixed ITD + 1Y/3Y/5Y only; not arbitrary ranges)
 - Dividend cashflows in XIRR / absolute return; corporate-action reconstruction beyond relying on Zerodha qty/avg
 - Projections, expected corpus, churn / rebalancing analysis (**v1.1**)
 - Console scraping / unofficial automation of CSV download
@@ -47,7 +47,7 @@ Anyone who clones the repo runs their own local instance against their own Zerod
 - Churn / reallocation analysis
 - Non-Zerodha instruments and additional broker adapters
 - Optional paid Kite Connect for native live/historical candles
-- Optional YTD / custom return windows; optional dividend-aware XIRR
+- Optional free custom return windows / YTD control; optional dividend-aware XIRR
 
 ## 3. Architecture
 
@@ -93,10 +93,10 @@ Auth clarification: the app does **not** store Zerodha passwords. Flow is Kite O
 
 | Page        | Content                                                                                  |
 | ----------- | ---------------------------------------------------------------------------------------- |
-| Overview    | Total value, P&L, allocation, portfolio absolute/XIRR/CAGR/excess, gap/reconcile banners |
-| Holdings    | Per-row qty, avg, LTP, value, absolute %, XIRR, vs benchmark (Δ pp)                      |
-| Performance | Inception-to-date portfolio vs blend; contributor table for excess; charts               |
-| Import      | Equity and/or Coin CSV upload; last import/sync status; suggested gap date range         |
+| Overview    | Total value, P&L, allocation, ITD metrics + available 1Y/3Y/5Y summaries, gap/reconcile banners |
+| Holdings    | Per-row qty, avg, LTP, value, absolute %, XIRR, CAGR, excess vs benchmark (Δ pp)         |
+| Performance | Window switcher (ITD / 1Y / 3Y / 5Y); portfolio vs blend; contributor excess; charts     |
+| Import      | Console Equity and/or MF tradebook CSV; gap range prompts; segment/flagged import report |
 | Settings    | Connect Zerodha, Sync now, MF category + benchmark overrides, setup hints (no secrets)   |
 
 ## 5. Data model (SQLite)
@@ -110,11 +110,18 @@ Auth clarification: the app does **not** store Zerodha passwords. Flow is Kite O
 | `prices`            | Symbol, date, close/ltp                                          |
 | `benchmark_map`     | Instrument → benchmark index (default or override)               |
 | `benchmark_prices`  | Index series for excess calculation                              |
-| `metrics_cache`     | Computed metrics by scope + as_of                                |
+| ~~`metrics_cache`~~ | **Deferred to v2** — v1 recomputes metrics on every read         |
 
-### Returns window (v1)
+### Returns windows (v1)
 
-All absolute, CAGR, XIRR, and excess metrics are **inception-to-date** (first cashflow / first trade in scope → as-of). No YTD or custom range picker in v1.
+Compute absolute, CAGR, XIRR, and excess for:
+
+| Window | Definition |
+| ------ | ---------- |
+| **ITD** | First cashflow / first trade in scope → as-of |
+| **1Y / 3Y / 5Y** | Trailing windows ending at as-of (`as_of − 365/1095/1825` days). If inception is after the window start → that window is N/A |
+
+No free custom date-range picker in v1. Rolling absolute prefers point-to-point on opening MV → terminal MV; rolling XIRR uses opening MV as a synthetic cashflow plus in-window trades plus terminal MV.
 
 ### XIRR cashflow rule
 
@@ -156,7 +163,7 @@ All mappings overridable in Settings.
 
 ### Portfolio excess
 
-Value-weighted blend: each holding’s benchmark return weighted by current market value weight; portfolio excess = portfolio return − blended benchmark return over the **same inception-to-date window**. Instrument excess shown separately for every stock and MF.
+Value-weighted blend: each holding’s benchmark **point-to-point** return weighted by current market value weight for absolute excess; portfolio CAGR excess uses a value-weighted blend of per-instrument benchmark CAGRs. **XIRR excess** uses a same-cashflow **benchmark XIRR** (invest identical ₹/dates into each holding’s mapped index; terminal = remaining index MV) — never compare XIRR to a raw point-to-point bench %. Instrument excess shown separately for every stock and MF. Expose excess for absolute, XIRR, and CAGR when both sides exist.
 
 ### Market data providers (v1)
 
@@ -180,12 +187,11 @@ Refresh on sync / app open. Failures leave holdings visible without LTP and mark
 4. Import Console equity tradebook and/or Coin MF tradebook CSV(s) → `transactions` (importer detects format by headers)
 5. Sync → holdings snapshot + today’s trades (if any)
 6. Price job → Yahoo Finance for equity/ETF/index marks; AMFI for MF NAVs
-7. Metrics job → cache absolute / CAGR / XIRR / excess
-8. UI reads holdings + cached metrics
+7. UI reads holdings; metrics (absolute / CAGR / XIRR / excess) **recomputed on read** (no `metrics_cache` in v1)
 
 ### Ongoing
 
-- On Sync / app open (valid token): refresh holdings; append **today’s** API trades; run gap check; reconcile; refresh prices/metrics
+- On Sync / app open (valid token): refresh holdings; append **today’s** API trades; run gap check; reconcile; refresh prices; metrics recompute on next read
 - Token expired → reconnect banner; sync blocked until OAuth
 - After missed trading days: gap warning with suggested Console date range; user imports CSV; idempotent merge
 - If API holdings ≠ transaction-implied positions → reconcile alert; prefer resolving via CSV before trusting XIRR (user may dismiss with acknowledgment)
@@ -259,7 +265,7 @@ Exact package manager / tooling chosen at implementation-plan time; design assum
 ## 10. Success criteria (v1)
 
 - New user can clone, configure Kite Personal keys, connect, import equity and/or Coin tradebook CSVs, and see equity + MF portfolio locally
-- Overview shows inception-to-date total value, absolute returns, XIRR, CAGR (≥ 365 days), and portfolio outperformance vs value-weighted benchmarks
+- Overview shows total value plus absolute / XIRR / CAGR / outperformance for ITD, with trailing 1Y/3Y/5Y when history allows; Performance page switches windows
 - Equity/ETF marks from Yahoo Finance; MF marks from AMFI NAVs
 - Each stock and MF shows its own returns and excess vs its mapped index (category from AMFI when possible, overridable)
 - Missing days without app use are detected; CSV backfill restores history without duplicates
@@ -269,9 +275,11 @@ Exact package manager / tooling chosen at implementation-plan time; design assum
 
 | Topic | Decision |
 | ----- | -------- |
-| Returns window | Inception-to-date only; no YTD / custom ranges |
+| Returns windows | ITD + trailing 1Y/3Y/5Y when history allows; no free custom date picker |
 | Dividends / corporate actions | Dividends excluded from XIRR; no corporate-action engine; trust Zerodha qty/avg + trade CSVs |
 | CAGR eligibility | Span ≥ 365 days, else N/A |
+| Excess units | Absolute vs point-to-point bench %; CAGR vs bench CAGR; XIRR vs same-cashflow benchmark XIRR |
+| Metrics cache | v2 only; v1 recomputes on read |
 | CSV shapes | Both Console equity tradebook and Coin/MF tradebook; header-based detection; one Import page |
 | MF category | Auto from AMFI/scheme metadata when possible; Settings override; unknown → Nifty 500 + flag |
 

@@ -1,0 +1,27 @@
+{
+  "instrument_id": 2,
+  "benchmark": "Nifty 50",
+  "as_of": "2026-08-02",
+  "available": true,
+  "metric": "absolute",
+  "window": "ITD",
+  "start": "2024-01-02",
+  "incomplete": false,
+  "points": [
+    {
+      "date": "2026-07-29",
+      "holding_return": 0.1,
+      "benchmark_return": 0.07
+    },
+    {
+      "date": "2026-07-31",
+      "holding_return": 0.12,
+      "benchmark_return": 0.08
+    },
+    {
+      "date": "2026-08-02",
+      "holding_return": 0.1,
+      "benchmark_return": 0.07
+    }
+  ]
+}

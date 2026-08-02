@@ -1,0 +1,23 @@
+{
+  "total_value": 0,
+  "absolute": {
+    "current_value": 0,
+    "invested_cost": 0,
+    "gain_inr": 0,
+    "gain_pct": null
+  },
+  "xirr": null,
+  "cagr": null,
+  "benchmark_return": null,
+  "absolute_excess_pp": null,
+  "xirr_excess_pp": null,
+  "cagr_excess_pp": null,
+  "windows": {
+    "ITD": null,
+    "1Y": null,
+    "3Y": null,
+    "5Y": null
+  },
+  "allocation": [],
+  "incomplete": false
+}

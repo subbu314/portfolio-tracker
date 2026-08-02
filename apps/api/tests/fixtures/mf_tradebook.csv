@@ -1,0 +1,2 @@
+symbol,isin,trade_date,exchange,segment,series,trade_type,auction,quantity,price,trade_id,order_id,order_execution_time
+INF090I01239,INF090I01239,2024-03-01,BSE,MF,,buy,,100.5,99.50,T3,O3,2024-03-01 09:00:00

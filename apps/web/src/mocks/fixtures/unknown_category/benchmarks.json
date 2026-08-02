@@ -1,0 +1,31 @@
+{
+  "items": [
+    {
+      "instrument_id": 1,
+      "symbol": "RELIANCE",
+      "instrument_type": "equity",
+      "mf_category": null,
+      "needs_category": false,
+      "benchmark_index": "Nifty 500",
+      "source": "default"
+    },
+    {
+      "instrument_id": 2,
+      "symbol": "NIFTYBEES",
+      "instrument_type": "etf",
+      "mf_category": "Nifty 50",
+      "needs_category": false,
+      "benchmark_index": "Nifty 50",
+      "source": "default"
+    },
+    {
+      "instrument_id": 3,
+      "symbol": "PARAG_PARIKH_FLEXI_CAP",
+      "instrument_type": "mf",
+      "mf_category": null,
+      "needs_category": true,
+      "benchmark_index": "Nifty 500",
+      "source": "default"
+    }
+  ]
+}

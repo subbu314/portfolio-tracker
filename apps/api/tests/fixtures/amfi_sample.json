@@ -1,0 +1,16 @@
+{
+  "meta": {
+    "scheme_name": "Flexi Cap Fund",
+    "scheme_category": "Equity Scheme - Flexi Cap Fund"
+  },
+  "data": [
+    {
+      "date": "02-03-2024",
+      "nav": "100.25"
+    },
+    {
+      "date": "01-03-2024",
+      "nav": "99.50"
+    }
+  ]
+}

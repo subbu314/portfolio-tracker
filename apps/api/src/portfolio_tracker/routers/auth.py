@@ -1,0 +1,58 @@
+from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy.orm import Session
+
+from portfolio_tracker.db.session import get_db
+from portfolio_tracker.modules import kite_auth
+from portfolio_tracker.schemas.auth import (
+    AuthStatusResponse,
+    ConnectedResponse,
+    LoginUrlResponse,
+)
+from portfolio_tracker.schemas.common import RequestTokenBody
+
+router = APIRouter(prefix="/auth", tags=["auth"])
+
+
+@router.get("/login-url", response_model=LoginUrlResponse)
+def login_url() -> dict[str, str]:
+    try:
+        return {"login_url": kite_auth.get_login_url()}
+    except kite_auth.KiteConfigError as exc:
+        raise HTTPException(status_code=400, detail="Kite API credentials are not configured") from exc
+
+
+@router.post("/callback", response_model=ConnectedResponse)
+def callback(body: RequestTokenBody, session: Session = Depends(get_db)) -> dict[str, bool]:
+    try:
+        return kite_auth.exchange_request_token(session, body.request_token)
+    except kite_auth.KiteConfigError as exc:
+        raise HTTPException(status_code=400, detail="Kite API credentials are not configured") from exc
+    except kite_auth.KiteAuthError as exc:
+        raise HTTPException(status_code=401, detail="Token exchange failed") from exc
+
+
+@router.get("/callback", response_model=ConnectedResponse)
+def callback_get(
+    request_token: str,
+    session: Session = Depends(get_db),
+    status: str | None = None,
+) -> dict[str, bool]:
+    if status and status.lower() not in {"success", "ok"}:
+        raise HTTPException(status_code=401, detail="Token exchange failed")
+    try:
+        return kite_auth.exchange_request_token(session, request_token)
+    except kite_auth.KiteConfigError as exc:
+        raise HTTPException(status_code=400, detail="Kite API credentials are not configured") from exc
+    except kite_auth.KiteAuthError as exc:
+        raise HTTPException(status_code=401, detail="Token exchange failed") from exc
+
+
+@router.get("/status", response_model=AuthStatusResponse)
+def status(session: Session = Depends(get_db)) -> dict:
+    return kite_auth.get_auth_status(session)
+
+
+@router.post("/logout", response_model=ConnectedResponse)
+def logout(session: Session = Depends(get_db)) -> dict[str, bool]:
+    kite_auth.clear_token(session)
+    return {"connected": False}

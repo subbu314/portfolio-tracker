@@ -1,0 +1,2498 @@
+{
+  "components": {
+    "schemas": {
+      "AbsoluteReturn": {
+        "additionalProperties": false,
+        "properties": {
+          "current_value": {
+            "title": "Current Value",
+            "type": "number"
+          },
+          "gain_inr": {
+            "title": "Gain Inr",
+            "type": "number"
+          },
+          "gain_pct": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Gain Pct"
+          },
+          "invested_cost": {
+            "title": "Invested Cost",
+            "type": "number"
+          }
+        },
+        "required": [
+          "gain_inr",
+          "gain_pct",
+          "invested_cost",
+          "current_value"
+        ],
+        "title": "AbsoluteReturn",
+        "type": "object"
+      },
+      "AlertsResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "credentials_configured": {
+            "title": "Credentials Configured",
+            "type": "boolean"
+          },
+          "gap": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/GapAlert"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "reconcile": {
+            "items": {
+              "$ref": "#/components/schemas/ReconcileDiff"
+            },
+            "title": "Reconcile",
+            "type": "array"
+          },
+          "reconcile_message": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reconcile Message"
+          },
+          "token_connected": {
+            "title": "Token Connected",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "token_connected",
+          "credentials_configured",
+          "reconcile",
+          "gap"
+        ],
+        "title": "AlertsResponse",
+        "type": "object"
+      },
+      "AllocationSlice": {
+        "additionalProperties": false,
+        "properties": {
+          "symbol": {
+            "title": "Symbol",
+            "type": "string"
+          },
+          "weight": {
+            "title": "Weight",
+            "type": "number"
+          }
+        },
+        "required": [
+          "symbol",
+          "weight"
+        ],
+        "title": "AllocationSlice",
+        "type": "object"
+      },
+      "AuthStatusResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "connected": {
+            "title": "Connected",
+            "type": "boolean"
+          },
+          "credentials_configured": {
+            "title": "Credentials Configured",
+            "type": "boolean"
+          },
+          "last_sync_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Sync At"
+          },
+          "last_trade_append_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Trade Append At"
+          }
+        },
+        "required": [
+          "connected",
+          "credentials_configured",
+          "last_sync_at",
+          "last_trade_append_at"
+        ],
+        "title": "AuthStatusResponse",
+        "type": "object"
+      },
+      "BatchImportResultResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "files": {
+            "items": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/FileImportOkResponse"
+                },
+                {
+                  "$ref": "#/components/schemas/FileImportErrResponse"
+                }
+              ]
+            },
+            "title": "Files",
+            "type": "array"
+          },
+          "summary": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "title": "Summary",
+            "type": "object"
+          }
+        },
+        "required": [
+          "files",
+          "summary"
+        ],
+        "title": "BatchImportResultResponse",
+        "type": "object"
+      },
+      "BenchmarkBody": {
+        "properties": {
+          "benchmark_index": {
+            "title": "Benchmark Index",
+            "type": "string"
+          }
+        },
+        "required": [
+          "benchmark_index"
+        ],
+        "title": "BenchmarkBody",
+        "type": "object"
+      },
+      "BenchmarkItem": {
+        "additionalProperties": false,
+        "properties": {
+          "benchmark_index": {
+            "title": "Benchmark Index",
+            "type": "string"
+          },
+          "instrument_id": {
+            "title": "Instrument Id",
+            "type": "integer"
+          },
+          "instrument_type": {
+            "title": "Instrument Type",
+            "type": "string"
+          },
+          "mf_category": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mf Category"
+          },
+          "needs_category": {
+            "title": "Needs Category",
+            "type": "boolean"
+          },
+          "source": {
+            "title": "Source",
+            "type": "string"
+          },
+          "symbol": {
+            "title": "Symbol",
+            "type": "string"
+          }
+        },
+        "required": [
+          "instrument_id",
+          "symbol",
+          "instrument_type",
+          "mf_category",
+          "needs_category",
+          "benchmark_index",
+          "source"
+        ],
+        "title": "BenchmarkItem",
+        "type": "object"
+      },
+      "BenchmarkListResponse": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/BenchmarkItem"
+            },
+            "title": "Items",
+            "type": "array"
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "title": "BenchmarkListResponse",
+        "type": "object"
+      },
+      "BenchmarkUpdateResponse": {
+        "properties": {
+          "benchmark_index": {
+            "title": "Benchmark Index",
+            "type": "string"
+          },
+          "instrument_id": {
+            "title": "Instrument Id",
+            "type": "integer"
+          },
+          "source": {
+            "title": "Source",
+            "type": "string"
+          }
+        },
+        "required": [
+          "instrument_id",
+          "benchmark_index",
+          "source"
+        ],
+        "title": "BenchmarkUpdateResponse",
+        "type": "object"
+      },
+      "Body_import_csv_endpoint_import_csv_post": {
+        "properties": {
+          "file": {
+            "anyOf": [
+              {
+                "contentMediaType": "application/octet-stream",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "File"
+          },
+          "files": {
+            "anyOf": [
+              {
+                "items": {
+                  "contentMediaType": "application/octet-stream",
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Files"
+          }
+        },
+        "title": "Body_import_csv_endpoint_import_csv_post",
+        "type": "object"
+      },
+      "CatalogsResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "benchmark_indexes": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Benchmark Indexes",
+            "type": "array"
+          },
+          "mf_categories": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Mf Categories",
+            "type": "array"
+          }
+        },
+        "required": [
+          "mf_categories",
+          "benchmark_indexes"
+        ],
+        "title": "CatalogsResponse",
+        "type": "object"
+      },
+      "CategoryBody": {
+        "properties": {
+          "category": {
+            "title": "Category",
+            "type": "string"
+          }
+        },
+        "required": [
+          "category"
+        ],
+        "title": "CategoryBody",
+        "type": "object"
+      },
+      "CategoryUpdateResponse": {
+        "properties": {
+          "instrument_id": {
+            "title": "Instrument Id",
+            "type": "integer"
+          },
+          "mf_category": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mf Category"
+          }
+        },
+        "required": [
+          "instrument_id",
+          "mf_category"
+        ],
+        "title": "CategoryUpdateResponse",
+        "type": "object"
+      },
+      "ConnectedResponse": {
+        "properties": {
+          "connected": {
+            "title": "Connected",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "connected"
+        ],
+        "title": "ConnectedResponse",
+        "type": "object"
+      },
+      "ContributorResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "absolute_excess_pp": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Absolute Excess Pp"
+          },
+          "cagr_excess_pp": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cagr Excess Pp"
+          },
+          "symbol": {
+            "title": "Symbol",
+            "type": "string"
+          },
+          "value": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Value"
+          },
+          "weight": {
+            "title": "Weight",
+            "type": "number"
+          },
+          "windows": {
+            "$ref": "#/components/schemas/WindowsMap"
+          },
+          "xirr_excess_pp": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Xirr Excess Pp"
+          }
+        },
+        "required": [
+          "symbol",
+          "absolute_excess_pp",
+          "xirr_excess_pp",
+          "cagr_excess_pp",
+          "value",
+          "weight",
+          "windows"
+        ],
+        "title": "ContributorResponse",
+        "type": "object"
+      },
+      "FileImportErrResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "action": {
+            "title": "Action",
+            "type": "string"
+          },
+          "code": {
+            "enum": [
+              "encoding",
+              "csv_format",
+              "csv_parse",
+              "empty"
+            ],
+            "title": "Code",
+            "type": "string"
+          },
+          "errors": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Errors",
+            "type": "array"
+          },
+          "filename": {
+            "title": "Filename",
+            "type": "string"
+          },
+          "message": {
+            "title": "Message",
+            "type": "string"
+          },
+          "ok": {
+            "const": false,
+            "title": "Ok",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "filename",
+          "ok",
+          "code",
+          "message",
+          "errors",
+          "action"
+        ],
+        "title": "FileImportErrResponse",
+        "type": "object"
+      },
+      "FileImportOkResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "date_max": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Date Max"
+          },
+          "date_min": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Date Min"
+          },
+          "existing": {
+            "title": "Existing",
+            "type": "integer"
+          },
+          "filename": {
+            "title": "Filename",
+            "type": "string"
+          },
+          "financial_years": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Financial Years",
+            "type": "array"
+          },
+          "flagged_rows": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Flagged Rows",
+            "type": "array"
+          },
+          "format": {
+            "const": "console_tradebook",
+            "title": "Format",
+            "type": "string"
+          },
+          "new": {
+            "title": "New",
+            "type": "integer"
+          },
+          "ok": {
+            "const": true,
+            "title": "Ok",
+            "type": "boolean"
+          },
+          "segment_counts": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "title": "Segment Counts",
+            "type": "object"
+          }
+        },
+        "required": [
+          "filename",
+          "ok",
+          "format",
+          "new",
+          "existing",
+          "segment_counts",
+          "flagged_rows",
+          "date_min",
+          "date_max",
+          "financial_years"
+        ],
+        "title": "FileImportOkResponse",
+        "type": "object"
+      },
+      "GapAlert": {
+        "additionalProperties": false,
+        "properties": {
+          "message": {
+            "title": "Message",
+            "type": "string"
+          },
+          "suggested_from": {
+            "title": "Suggested From",
+            "type": "string"
+          },
+          "suggested_to": {
+            "title": "Suggested To",
+            "type": "string"
+          }
+        },
+        "required": [
+          "suggested_from",
+          "suggested_to",
+          "message"
+        ],
+        "title": "GapAlert",
+        "type": "object"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "title": "Detail",
+            "type": "array"
+          }
+        },
+        "title": "HTTPValidationError",
+        "type": "object"
+      },
+      "HealthResponse": {
+        "properties": {
+          "status": {
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "status"
+        ],
+        "title": "HealthResponse",
+        "type": "object"
+      },
+      "HoldingResponse": {
+        "properties": {
+          "absolute_excess_pp": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Absolute Excess Pp"
+          },
+          "absolute_inr": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Absolute Inr"
+          },
+          "absolute_pct": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Absolute Pct"
+          },
+          "avg_price": {
+            "title": "Avg Price",
+            "type": "number"
+          },
+          "benchmark": {
+            "title": "Benchmark",
+            "type": "string"
+          },
+          "benchmark_return": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Benchmark Return"
+          },
+          "cagr": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cagr"
+          },
+          "cagr_excess_pp": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cagr Excess Pp"
+          },
+          "incomplete": {
+            "title": "Incomplete",
+            "type": "boolean"
+          },
+          "instrument_id": {
+            "title": "Instrument Id",
+            "type": "integer"
+          },
+          "instrument_type": {
+            "title": "Instrument Type",
+            "type": "string"
+          },
+          "ltp": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ltp"
+          },
+          "mf_category": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mf Category"
+          },
+          "needs_category": {
+            "title": "Needs Category",
+            "type": "boolean"
+          },
+          "qty": {
+            "title": "Qty",
+            "type": "number"
+          },
+          "symbol": {
+            "title": "Symbol",
+            "type": "string"
+          },
+          "value": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Value"
+          },
+          "windows": {
+            "$ref": "#/components/schemas/WindowsMap"
+          },
+          "xirr": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Xirr"
+          },
+          "xirr_excess_pp": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Xirr Excess Pp"
+          }
+        },
+        "required": [
+          "instrument_id",
+          "symbol",
+          "instrument_type",
+          "qty",
+          "avg_price",
+          "ltp",
+          "value",
+          "absolute_pct",
+          "absolute_inr",
+          "xirr",
+          "cagr",
+          "benchmark",
+          "benchmark_return",
+          "absolute_excess_pp",
+          "xirr_excess_pp",
+          "cagr_excess_pp",
+          "incomplete",
+          "needs_category",
+          "mf_category",
+          "windows"
+        ],
+        "title": "HoldingResponse",
+        "type": "object"
+      },
+      "HoldingSeriesResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "as_of": {
+            "title": "As Of",
+            "type": "string"
+          },
+          "available": {
+            "title": "Available",
+            "type": "boolean"
+          },
+          "benchmark": {
+            "title": "Benchmark",
+            "type": "string"
+          },
+          "incomplete": {
+            "title": "Incomplete",
+            "type": "boolean"
+          },
+          "instrument_id": {
+            "title": "Instrument Id",
+            "type": "integer"
+          },
+          "metric": {
+            "const": "absolute",
+            "title": "Metric",
+            "type": "string"
+          },
+          "points": {
+            "items": {
+              "$ref": "#/components/schemas/SeriesPoint"
+            },
+            "title": "Points",
+            "type": "array"
+          },
+          "start": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Start"
+          },
+          "window": {
+            "enum": [
+              "ITD",
+              "1Y",
+              "3Y",
+              "5Y"
+            ],
+            "title": "Window",
+            "type": "string"
+          }
+        },
+        "required": [
+          "instrument_id",
+          "window",
+          "metric",
+          "benchmark",
+          "as_of",
+          "start",
+          "available",
+          "incomplete",
+          "points"
+        ],
+        "title": "HoldingSeriesResponse",
+        "type": "object"
+      },
+      "HoldingTransactionsResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "instrument_id": {
+            "title": "Instrument Id",
+            "type": "integer"
+          },
+          "transactions": {
+            "items": {
+              "$ref": "#/components/schemas/TransactionRowResponse"
+            },
+            "title": "Transactions",
+            "type": "array"
+          }
+        },
+        "required": [
+          "instrument_id",
+          "transactions"
+        ],
+        "title": "HoldingTransactionsResponse",
+        "type": "object"
+      },
+      "HoldingsResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "holdings": {
+            "items": {
+              "$ref": "#/components/schemas/HoldingResponse"
+            },
+            "title": "Holdings",
+            "type": "array"
+          }
+        },
+        "required": [
+          "holdings"
+        ],
+        "title": "HoldingsResponse",
+        "type": "object"
+      },
+      "ImportBadDetail": {
+        "additionalProperties": false,
+        "properties": {
+          "action": {
+            "title": "Action",
+            "type": "string"
+          },
+          "errors": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Errors",
+            "type": "array"
+          },
+          "message": {
+            "title": "Message",
+            "type": "string"
+          }
+        },
+        "required": [
+          "message",
+          "action"
+        ],
+        "title": "ImportBadDetail",
+        "type": "object"
+      },
+      "ImportBadErrorResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "detail": {
+            "$ref": "#/components/schemas/ImportBadDetail"
+          }
+        },
+        "required": [
+          "detail"
+        ],
+        "title": "ImportBadErrorResponse",
+        "type": "object"
+      },
+      "ImportResultResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "date_max": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Date Max"
+          },
+          "date_min": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Date Min"
+          },
+          "existing": {
+            "title": "Existing",
+            "type": "integer"
+          },
+          "financial_years": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Financial Years",
+            "type": "array"
+          },
+          "flagged_rows": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Flagged Rows",
+            "type": "array"
+          },
+          "format": {
+            "const": "console_tradebook",
+            "title": "Format",
+            "type": "string"
+          },
+          "new": {
+            "title": "New",
+            "type": "integer"
+          },
+          "segment_counts": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "title": "Segment Counts",
+            "type": "object"
+          }
+        },
+        "required": [
+          "format",
+          "new",
+          "existing",
+          "segment_counts",
+          "flagged_rows",
+          "date_min",
+          "date_max",
+          "financial_years"
+        ],
+        "title": "ImportResultResponse",
+        "type": "object"
+      },
+      "LoginUrlResponse": {
+        "properties": {
+          "login_url": {
+            "title": "Login Url",
+            "type": "string"
+          }
+        },
+        "required": [
+          "login_url"
+        ],
+        "title": "LoginUrlResponse",
+        "type": "object"
+      },
+      "OverviewResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "absolute": {
+            "$ref": "#/components/schemas/AbsoluteReturn"
+          },
+          "absolute_excess_pp": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Absolute Excess Pp"
+          },
+          "allocation": {
+            "items": {
+              "$ref": "#/components/schemas/AllocationSlice"
+            },
+            "title": "Allocation",
+            "type": "array"
+          },
+          "as_of": {
+            "title": "As Of",
+            "type": "string"
+          },
+          "benchmark_return": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Benchmark Return"
+          },
+          "cagr": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cagr"
+          },
+          "cagr_excess_pp": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cagr Excess Pp"
+          },
+          "incomplete": {
+            "title": "Incomplete",
+            "type": "boolean"
+          },
+          "total_value": {
+            "title": "Total Value",
+            "type": "number"
+          },
+          "windows": {
+            "$ref": "#/components/schemas/WindowsMap"
+          },
+          "xirr": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Xirr"
+          },
+          "xirr_excess_pp": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Xirr Excess Pp"
+          }
+        },
+        "required": [
+          "as_of",
+          "total_value",
+          "absolute",
+          "xirr",
+          "cagr",
+          "benchmark_return",
+          "absolute_excess_pp",
+          "xirr_excess_pp",
+          "cagr_excess_pp",
+          "allocation",
+          "incomplete",
+          "windows"
+        ],
+        "title": "OverviewResponse",
+        "type": "object"
+      },
+      "PerformanceResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "absolute": {
+            "$ref": "#/components/schemas/AbsoluteReturn"
+          },
+          "absolute_excess_pp": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Absolute Excess Pp"
+          },
+          "allocation": {
+            "items": {
+              "$ref": "#/components/schemas/AllocationSlice"
+            },
+            "title": "Allocation",
+            "type": "array"
+          },
+          "as_of": {
+            "title": "As Of",
+            "type": "string"
+          },
+          "benchmark_return": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Benchmark Return"
+          },
+          "cagr": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cagr"
+          },
+          "cagr_excess_pp": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cagr Excess Pp"
+          },
+          "contributors": {
+            "items": {
+              "$ref": "#/components/schemas/ContributorResponse"
+            },
+            "title": "Contributors",
+            "type": "array"
+          },
+          "default_window": {
+            "enum": [
+              "ITD",
+              "1Y",
+              "3Y",
+              "5Y"
+            ],
+            "title": "Default Window",
+            "type": "string"
+          },
+          "holdings": {
+            "items": {
+              "$ref": "#/components/schemas/HoldingResponse"
+            },
+            "title": "Holdings",
+            "type": "array"
+          },
+          "incomplete": {
+            "title": "Incomplete",
+            "type": "boolean"
+          },
+          "total_value": {
+            "title": "Total Value",
+            "type": "number"
+          },
+          "windows": {
+            "$ref": "#/components/schemas/WindowsMap"
+          },
+          "windows_available": {
+            "items": {
+              "enum": [
+                "ITD",
+                "1Y",
+                "3Y",
+                "5Y"
+              ],
+              "type": "string"
+            },
+            "title": "Windows Available",
+            "type": "array"
+          },
+          "xirr": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Xirr"
+          },
+          "xirr_excess_pp": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Xirr Excess Pp"
+          }
+        },
+        "required": [
+          "as_of",
+          "total_value",
+          "absolute",
+          "xirr",
+          "cagr",
+          "benchmark_return",
+          "absolute_excess_pp",
+          "xirr_excess_pp",
+          "cagr_excess_pp",
+          "allocation",
+          "incomplete",
+          "windows",
+          "contributors",
+          "holdings",
+          "windows_available",
+          "default_window"
+        ],
+        "title": "PerformanceResponse",
+        "type": "object"
+      },
+      "PortfolioSeriesResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "as_of": {
+            "title": "As Of",
+            "type": "string"
+          },
+          "available": {
+            "title": "Available",
+            "type": "boolean"
+          },
+          "incomplete": {
+            "title": "Incomplete",
+            "type": "boolean"
+          },
+          "metric": {
+            "const": "absolute",
+            "title": "Metric",
+            "type": "string"
+          },
+          "points": {
+            "items": {
+              "$ref": "#/components/schemas/SeriesPoint"
+            },
+            "title": "Points",
+            "type": "array"
+          },
+          "start": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Start"
+          },
+          "window": {
+            "enum": [
+              "ITD",
+              "1Y",
+              "3Y",
+              "5Y"
+            ],
+            "title": "Window",
+            "type": "string"
+          }
+        },
+        "required": [
+          "window",
+          "metric",
+          "as_of",
+          "start",
+          "available",
+          "incomplete",
+          "points"
+        ],
+        "title": "PortfolioSeriesResponse",
+        "type": "object"
+      },
+      "PricesRefreshResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "failed": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Failed",
+            "type": "array"
+          },
+          "incomplete": {
+            "title": "Incomplete",
+            "type": "boolean"
+          },
+          "updated": {
+            "title": "Updated",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "updated",
+          "failed",
+          "incomplete"
+        ],
+        "title": "PricesRefreshResponse",
+        "type": "object"
+      },
+      "ReconcileDiff": {
+        "additionalProperties": false,
+        "properties": {
+          "delta": {
+            "title": "Delta",
+            "type": "number"
+          },
+          "holdings_qty": {
+            "title": "Holdings Qty",
+            "type": "number"
+          },
+          "instrument_id": {
+            "title": "Instrument Id",
+            "type": "integer"
+          },
+          "symbol": {
+            "title": "Symbol",
+            "type": "string"
+          },
+          "tx_qty": {
+            "title": "Tx Qty",
+            "type": "number"
+          }
+        },
+        "required": [
+          "instrument_id",
+          "symbol",
+          "holdings_qty",
+          "tx_qty",
+          "delta"
+        ],
+        "title": "ReconcileDiff",
+        "type": "object"
+      },
+      "RequestTokenBody": {
+        "properties": {
+          "request_token": {
+            "title": "Request Token",
+            "type": "string"
+          }
+        },
+        "required": [
+          "request_token"
+        ],
+        "title": "RequestTokenBody",
+        "type": "object"
+      },
+      "SeriesPoint": {
+        "additionalProperties": false,
+        "properties": {
+          "benchmark_return": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Benchmark Return"
+          },
+          "date": {
+            "title": "Date",
+            "type": "string"
+          },
+          "holding_return": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Holding Return"
+          },
+          "portfolio_return": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Portfolio Return"
+          }
+        },
+        "required": [
+          "date"
+        ],
+        "title": "SeriesPoint",
+        "type": "object"
+      },
+      "SyncResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "holdings_count": {
+            "title": "Holdings Count",
+            "type": "integer"
+          },
+          "last_sync_at": {
+            "title": "Last Sync At",
+            "type": "string"
+          },
+          "prices": {
+            "$ref": "#/components/schemas/PricesRefreshResponse"
+          },
+          "trades_appended": {
+            "title": "Trades Appended",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "holdings_count",
+          "trades_appended",
+          "last_sync_at",
+          "prices"
+        ],
+        "title": "SyncResponse",
+        "type": "object"
+      },
+      "TransactionRowResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "amount": {
+            "title": "Amount",
+            "type": "number"
+          },
+          "fees": {
+            "title": "Fees",
+            "type": "number"
+          },
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "price": {
+            "title": "Price",
+            "type": "number"
+          },
+          "quantity": {
+            "title": "Quantity",
+            "type": "number"
+          },
+          "side": {
+            "title": "Side",
+            "type": "string"
+          },
+          "source": {
+            "title": "Source",
+            "type": "string"
+          },
+          "trade_date": {
+            "title": "Trade Date",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "trade_date",
+          "side",
+          "quantity",
+          "price",
+          "fees",
+          "amount",
+          "source"
+        ],
+        "title": "TransactionRowResponse",
+        "type": "object"
+      },
+      "ValidationError": {
+        "properties": {
+          "ctx": {
+            "title": "Context",
+            "type": "object"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "title": "Location",
+            "type": "array"
+          },
+          "msg": {
+            "title": "Message",
+            "type": "string"
+          },
+          "type": {
+            "title": "Error Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError",
+        "type": "object"
+      },
+      "WindowMetrics": {
+        "additionalProperties": false,
+        "properties": {
+          "absolute_excess_pp": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Absolute Excess Pp"
+          },
+          "absolute_inr": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Absolute Inr"
+          },
+          "absolute_pct": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Absolute Pct"
+          },
+          "benchmark_return": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Benchmark Return"
+          },
+          "cagr": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cagr"
+          },
+          "cagr_excess_pp": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cagr Excess Pp"
+          },
+          "xirr": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Xirr"
+          },
+          "xirr_excess_pp": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Xirr Excess Pp"
+          }
+        },
+        "title": "WindowMetrics",
+        "type": "object"
+      },
+      "WindowsMap": {
+        "additionalProperties": false,
+        "description": "Fixed window keys so OpenAPI/TS keep named properties (not string index).",
+        "properties": {
+          "1Y": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/WindowMetrics"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "3Y": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/WindowMetrics"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "5Y": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/WindowMetrics"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "ITD": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/WindowMetrics"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "ITD",
+          "1Y",
+          "3Y",
+          "5Y"
+        ],
+        "title": "WindowsMap",
+        "type": "object"
+      }
+    }
+  },
+  "info": {
+    "title": "Portfolio Tracker API",
+    "version": "0.1.0"
+  },
+  "openapi": "3.1.0",
+  "paths": {
+    "/auth/callback": {
+      "get": {
+        "operationId": "callback_get_auth_callback_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "request_token",
+            "required": true,
+            "schema": {
+              "title": "Request Token",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Status"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConnectedResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Callback Get",
+        "tags": [
+          "auth"
+        ]
+      },
+      "post": {
+        "operationId": "callback_auth_callback_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RequestTokenBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConnectedResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Callback",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/auth/login-url": {
+      "get": {
+        "operationId": "login_url_auth_login_url_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LoginUrlResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Login Url",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/auth/logout": {
+      "post": {
+        "operationId": "logout_auth_logout_post",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConnectedResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Logout",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/auth/status": {
+      "get": {
+        "operationId": "status_auth_status_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthStatusResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Status",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/health": {
+      "get": {
+        "operationId": "health_health_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Health",
+        "tags": [
+          "health"
+        ]
+      }
+    },
+    "/import/csv": {
+      "post": {
+        "operationId": "import_csv_endpoint_import_csv_post",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_import_csv_endpoint_import_csv_post"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/ImportResultResponse"
+                    },
+                    {
+                      "$ref": "#/components/schemas/BatchImportResultResponse"
+                    }
+                  ],
+                  "title": "Response Import Csv Endpoint Import Csv Post"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportBadErrorResponse"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Import Csv Endpoint",
+        "tags": [
+          "import"
+        ]
+      }
+    },
+    "/portfolio/alerts": {
+      "get": {
+        "operationId": "alerts_portfolio_alerts_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AlertsResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Alerts",
+        "tags": [
+          "portfolio"
+        ]
+      }
+    },
+    "/portfolio/holdings": {
+      "get": {
+        "operationId": "holdings_portfolio_holdings_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HoldingsResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Holdings",
+        "tags": [
+          "portfolio"
+        ]
+      }
+    },
+    "/portfolio/holdings/{instrument_id}": {
+      "get": {
+        "operationId": "holding_detail_portfolio_holdings__instrument_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "instrument_id",
+            "required": true,
+            "schema": {
+              "title": "Instrument Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HoldingResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "404": {
+            "description": "Holding not found"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Holding Detail",
+        "tags": [
+          "portfolio"
+        ]
+      }
+    },
+    "/portfolio/holdings/{instrument_id}/series": {
+      "get": {
+        "operationId": "holding_series_portfolio_holdings__instrument_id__series_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "instrument_id",
+            "required": true,
+            "schema": {
+              "title": "Instrument Id",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "window",
+            "required": false,
+            "schema": {
+              "default": "ITD",
+              "enum": [
+                "ITD",
+                "1Y",
+                "3Y",
+                "5Y"
+              ],
+              "title": "Window",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HoldingSeriesResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "description": "Invalid window"
+          },
+          "404": {
+            "description": "Instrument not found"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Holding Series",
+        "tags": [
+          "portfolio"
+        ]
+      }
+    },
+    "/portfolio/holdings/{instrument_id}/transactions": {
+      "get": {
+        "operationId": "holding_transactions_portfolio_holdings__instrument_id__transactions_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "instrument_id",
+            "required": true,
+            "schema": {
+              "title": "Instrument Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HoldingTransactionsResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "404": {
+            "description": "Instrument not found"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Holding Transactions",
+        "tags": [
+          "portfolio"
+        ]
+      }
+    },
+    "/portfolio/overview": {
+      "get": {
+        "operationId": "overview_portfolio_overview_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OverviewResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Overview",
+        "tags": [
+          "portfolio"
+        ]
+      }
+    },
+    "/portfolio/performance": {
+      "get": {
+        "operationId": "performance_portfolio_performance_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PerformanceResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Performance",
+        "tags": [
+          "portfolio"
+        ]
+      }
+    },
+    "/portfolio/series": {
+      "get": {
+        "operationId": "portfolio_series_portfolio_series_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "window",
+            "required": false,
+            "schema": {
+              "default": "ITD",
+              "enum": [
+                "ITD",
+                "1Y",
+                "3Y",
+                "5Y"
+              ],
+              "title": "Window",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PortfolioSeriesResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "description": "Invalid window"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Portfolio Series",
+        "tags": [
+          "portfolio"
+        ]
+      }
+    },
+    "/settings/benchmarks": {
+      "get": {
+        "operationId": "list_benchmarks_settings_benchmarks_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BenchmarkListResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "List Benchmarks",
+        "tags": [
+          "settings"
+        ]
+      }
+    },
+    "/settings/benchmarks/{instrument_id}": {
+      "put": {
+        "operationId": "put_benchmark_settings_benchmarks__instrument_id__put",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "instrument_id",
+            "required": true,
+            "schema": {
+              "title": "Instrument Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BenchmarkBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BenchmarkUpdateResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "description": "Unknown benchmark index"
+          },
+          "404": {
+            "description": "Instrument not found"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Put Benchmark",
+        "tags": [
+          "settings"
+        ]
+      }
+    },
+    "/settings/catalogs": {
+      "get": {
+        "operationId": "catalogs_settings_catalogs_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CatalogsResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Catalogs",
+        "tags": [
+          "settings"
+        ]
+      }
+    },
+    "/settings/categories/{instrument_id}": {
+      "put": {
+        "operationId": "put_category_settings_categories__instrument_id__put",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "instrument_id",
+            "required": true,
+            "schema": {
+              "title": "Instrument Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CategoryBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CategoryUpdateResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "404": {
+            "description": "Instrument not found"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Put Category",
+        "tags": [
+          "settings"
+        ]
+      }
+    },
+    "/sync": {
+      "post": {
+        "operationId": "sync_sync_post",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SyncResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "description": "Kite reconnection required"
+          }
+        },
+        "summary": "Sync",
+        "tags": [
+          "sync"
+        ]
+      }
+    }
+  }
+}

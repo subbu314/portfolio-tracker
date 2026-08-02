@@ -1,0 +1,14 @@
+{
+  "name": "portfolio-tracker",
+  "private": true,
+  "scripts": {
+    "api": "cd apps/api && uv run uvicorn portfolio_tracker.main:app --reload --port 8000",
+    "api:test": "cd apps/api && uv run pytest -v",
+    "generate:openapi": "cd apps/api && uv run python scripts/export_openapi.py ../web/openapi.json",
+    "web": "npm --prefix apps/web run dev",
+    "web:test": "npm --prefix apps/web test",
+    "generate:api": "npm run generate:openapi && npm --prefix apps/web run generate:api",
+    "check:api": "npm --prefix apps/web run check:api",
+    "test": "npm run api:test && npm run check:api && npm run web:test"
+  }
+}

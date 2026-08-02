@@ -1,0 +1,25 @@
+{
+  "as_of": "2026-08-02",
+  "available": true,
+  "metric": "absolute",
+  "window": "1Y",
+  "start": "2025-08-02",
+  "incomplete": false,
+  "points": [
+    {
+      "date": "2026-07-29",
+      "portfolio_return": 0.09,
+      "benchmark_return": 0.07
+    },
+    {
+      "date": "2026-07-31",
+      "portfolio_return": 0.11,
+      "benchmark_return": 0.08
+    },
+    {
+      "date": "2026-08-02",
+      "portfolio_return": 0.12,
+      "benchmark_return": 0.09
+    }
+  ]
+}

@@ -1,0 +1,9 @@
+{
+  "detail": {
+    "message": "Console tradebook parse failed",
+    "errors": [
+      "row 4: missing price",
+      "row 7: unsupported transaction type"
+    ]
+  }
+}

@@ -1,0 +1,85 @@
+{
+  "holdings": [
+    {
+      "instrument_id": 1,
+      "symbol": "RELIANCE",
+      "instrument_type": "equity",
+      "qty": 30,
+      "avg_price": 1250,
+      "ltp": null,
+      "value": null,
+      "absolute_pct": null,
+      "absolute_inr": null,
+      "xirr": null,
+      "cagr": null,
+      "benchmark": "Nifty 500",
+      "benchmark_return": null,
+      "absolute_excess_pp": null,
+      "xirr_excess_pp": null,
+      "cagr_excess_pp": null,
+      "mf_category": null,
+      "needs_category": false,
+      "incomplete": true,
+      "windows": {
+        "ITD": null,
+        "1Y": null,
+        "3Y": null,
+        "5Y": null
+      }
+    },
+    {
+      "instrument_id": 2,
+      "symbol": "NIFTYBEES",
+      "instrument_type": "etf",
+      "qty": 100,
+      "avg_price": 200,
+      "ltp": null,
+      "value": null,
+      "absolute_pct": null,
+      "absolute_inr": null,
+      "xirr": null,
+      "cagr": null,
+      "benchmark": "Nifty 50",
+      "benchmark_return": null,
+      "absolute_excess_pp": null,
+      "xirr_excess_pp": null,
+      "cagr_excess_pp": null,
+      "mf_category": "Nifty 50",
+      "needs_category": false,
+      "incomplete": true,
+      "windows": {
+        "ITD": null,
+        "1Y": null,
+        "3Y": null,
+        "5Y": null
+      }
+    },
+    {
+      "instrument_id": 3,
+      "symbol": "PARAG_PARIKH_FLEXI_CAP",
+      "instrument_type": "mf",
+      "qty": 200,
+      "avg_price": 100,
+      "ltp": null,
+      "value": null,
+      "absolute_pct": null,
+      "absolute_inr": null,
+      "xirr": null,
+      "cagr": null,
+      "benchmark": "Nifty 500",
+      "benchmark_return": null,
+      "absolute_excess_pp": null,
+      "xirr_excess_pp": null,
+      "cagr_excess_pp": null,
+      "mf_category": "Flexi Cap",
+      "needs_category": false,
+      "incomplete": true,
+      "windows": {
+        "ITD": null,
+        "1Y": null,
+        "3Y": null,
+        "5Y": null
+      }
+    }
+  ]
+}

@@ -1,0 +1,307 @@
+from unittest.mock import MagicMock, patch
+
+import pytest
+from fastapi.testclient import TestClient
+from kiteconnect.exceptions import TokenException
+
+from portfolio_tracker.db.engine import get_session_factory
+from portfolio_tracker.db.models import HoldingsSnapshot, Instrument, Setting, Transaction
+from portfolio_tracker.modules import app_settings, kite_auth, kite_sync
+
+
+def test_sync_upserts_holdings_and_appends_todays_trades():
+    Session = get_session_factory()
+    with Session() as session:
+        session.add(Setting(key=app_settings.TOKEN_KEY, value="token"))
+        session.commit()
+        kite = MagicMock()
+        kite.holdings.return_value = [
+            {
+                "tradingsymbol": "RELIANCE",
+                "isin": "INE002A01018",
+                "exchange": "NSE",
+                "quantity": 10,
+                "average_price": 2000.0,
+                "instrument_type": "EQ",
+            }
+        ]
+        kite.mf_holdings.return_value = [
+            {
+                "tradingsymbol": "INF090I01239",
+                "isin": "INF090I01239",
+                "quantity": 5,
+                "average_price": 100.0,
+            }
+        ]
+        kite.trades.return_value = [
+            {
+                "trade_id": "99",
+                "order_id": "55",
+                "tradingsymbol": "RELIANCE",
+                "exchange": "NSE",
+                "transaction_type": "BUY",
+                "quantity": 1,
+                "average_price": 2100.0,
+                "fill_timestamp": "2026-08-01 10:00:00",
+            }
+        ]
+
+        with (
+            patch.object(kite_auth, "authenticated_kite", return_value=kite),
+            patch.object(kite_sync, "_today_ist", return_value="2026-08-01"),
+        ):
+            result = kite_sync.sync_all(session)
+        session.commit()
+
+        assert result["holdings_count"] == 2
+        assert result["trades_appended"] == 1
+        assert session.query(HoldingsSnapshot).count() == 2
+        assert {row.instrument_type for row in session.query(Instrument).all()} == {
+            "equity",
+            "mf",
+        }
+        assert (
+            session.query(Transaction).filter(Transaction.source == "api").count() == 1
+        )
+        assert (
+            app_settings.get_setting(session, app_settings.LAST_SYNC_KEY)
+            == result["last_sync_at"]
+        )
+        assert (
+            app_settings.get_setting(session, app_settings.LAST_APPEND_KEY)
+            == result["last_sync_at"]
+        )
+
+
+def test_sync_removes_stale_snapshot_for_sold_symbol():
+    Session = get_session_factory()
+    with Session() as session:
+        session.add(Setting(key=app_settings.TOKEN_KEY, value="token"))
+        sold = Instrument(symbol="SOLD", isin="INE000000001", instrument_type="equity")
+        session.add(sold)
+        session.flush()
+        session.add(
+            HoldingsSnapshot(
+                instrument_id=sold.id,
+                quantity=5,
+                avg_price=100.0,
+                as_of="2026-07-15",
+            )
+        )
+        session.commit()
+
+        kite = MagicMock()
+        kite.holdings.return_value = [
+            {
+                "tradingsymbol": "RELIANCE",
+                "isin": "INE002A01018",
+                "exchange": "NSE",
+                "quantity": 10,
+                "average_price": 2000.0,
+            }
+        ]
+        kite.mf_holdings.return_value = []
+        kite.trades.return_value = []
+
+        with (
+            patch.object(kite_auth, "authenticated_kite", return_value=kite),
+            patch.object(kite_sync, "_today_ist", return_value="2026-08-01"),
+        ):
+            result = kite_sync.sync_all(session)
+        session.commit()
+
+        snapshots = session.query(HoldingsSnapshot).all()
+        assert result["holdings_count"] == 1
+        assert len(snapshots) == 1
+        assert snapshots[0].instrument_id != sold.id
+        assert (
+            session.query(HoldingsSnapshot)
+            .filter(HoldingsSnapshot.instrument_id == sold.id)
+            .first()
+            is None
+        )
+
+
+def test_sync_is_idempotent_and_updates_existing_holdings_snapshot():
+    Session = get_session_factory()
+    with Session() as session:
+        session.add(Setting(key=app_settings.TOKEN_KEY, value="token"))
+        session.commit()
+        kite = MagicMock()
+        holding = {
+            "tradingsymbol": "RELIANCE",
+            "isin": "INE002A01018",
+            "exchange": "NSE",
+            "quantity": 10,
+            "average_price": 2000.0,
+        }
+        kite.holdings.side_effect = [[holding], [{**holding, "quantity": 11}]]
+        kite.mf_holdings.return_value = []
+        kite.trades.return_value = [
+            {
+                "trade_id": "99",
+                "tradingsymbol": "RELIANCE",
+                "exchange": "NSE",
+                "transaction_type": "BUY",
+                "quantity": 1,
+                "average_price": 2100.0,
+                "fill_timestamp": "2026-08-01 10:00:00",
+            }
+        ]
+
+        with (
+            patch.object(kite_auth, "authenticated_kite", return_value=kite),
+            patch.object(kite_sync, "_today_ist", return_value="2026-08-01"),
+        ):
+            first = kite_sync.sync_all(session)
+            session.commit()
+            second = kite_sync.sync_all(session)
+            session.commit()
+
+        assert first["trades_appended"] == 1
+        assert second["trades_appended"] == 0
+        assert session.query(Transaction).count() == 1
+        assert session.query(HoldingsSnapshot).one().quantity == 11
+
+
+def test_sync_invalidates_expired_kite_token_without_exposing_upstream_error():
+    Session = get_session_factory()
+    with Session() as session:
+        session.add(Setting(key=app_settings.TOKEN_KEY, value="secret_access_token"))
+        session.commit()
+        kite = MagicMock()
+        kite.holdings.side_effect = TokenException(
+            "access token secret_access_token has expired"
+        )
+
+        with patch.object(kite_auth, "authenticated_kite", return_value=kite):
+            with pytest.raises(
+                kite_auth.KiteAuthError, match="^Kite session expired; reconnect Zerodha$"
+            ) as error:
+                kite_sync.sync_all(session)
+
+        assert "secret_access_token" not in str(error.value)
+
+    with Session() as session:
+        assert kite_auth.get_access_token(session) is None
+
+
+def test_sync_endpoint_requires_kite_reconnection():
+    from portfolio_tracker.main import create_app
+
+    with TestClient(create_app()) as client:
+        response = client.post("/sync")
+
+    assert response.status_code == 401
+    assert response.json() == {
+        "detail": "Reconnect Zerodha — access token missing or expired"
+    }
+
+
+def test_sync_endpoint_refreshes_non_kite_prices():
+    from portfolio_tracker.main import create_app
+    from portfolio_tracker.routers import sync as sync_router
+
+    Session = get_session_factory()
+    with Session() as session:
+        app_settings.set_setting(session, app_settings.TOKEN_KEY, "token")
+        session.commit()
+    sync_result = {
+        "holdings_count": 2,
+        "trades_appended": 1,
+        "last_sync_at": "2026-08-01T12:00:00+05:30",
+    }
+    price_result = {"updated": 3, "failed": [], "incomplete": False}
+
+    with (
+        patch.object(sync_router.kite_sync, "sync_all", return_value=sync_result),
+        patch.object(sync_router, "refresh_prices", return_value=price_result),
+        TestClient(create_app()) as client,
+    ):
+        response = client.post("/sync")
+
+    assert response.status_code == 200
+    assert response.json() == {**sync_result, "prices": price_result}
+
+
+def test_mf_sync_merges_kite_isin_tradingsymbol_onto_csv_instrument():
+    Session = get_session_factory()
+    with Session() as session:
+        session.add(Setting(key=app_settings.TOKEN_KEY, value="token"))
+        named = Instrument(
+            symbol="QUANT SMALL CAP FUND - DIRECT PLAN",
+            isin="INF966L01689",
+            instrument_type="mf",
+            exchange="BSE",
+        )
+        session.add(named)
+        session.commit()
+        named_id = named.id
+
+        kite = MagicMock()
+        kite.holdings.return_value = []
+        kite.mf_holdings.return_value = [
+            {
+                "tradingsymbol": "INF966L01689",
+                # live Kite omits isin
+                "quantity": 1234.977,
+                "average_price": 257.96,
+            }
+        ]
+        kite.trades.return_value = []
+
+        with (
+            patch.object(kite_auth, "authenticated_kite", return_value=kite),
+            patch.object(kite_sync, "_today_ist", return_value="2026-08-01"),
+        ):
+            result = kite_sync.sync_all(session)
+        session.commit()
+
+        assert result["holdings_count"] == 1
+        assert session.query(Instrument).filter(Instrument.instrument_type == "mf").count() == 1
+        merged = session.query(Instrument).filter(Instrument.instrument_type == "mf").one()
+        assert merged.id == named_id
+        assert merged.symbol == "QUANT SMALL CAP FUND - DIRECT PLAN"
+        assert merged.isin == "INF966L01689"
+        snap = session.query(HoldingsSnapshot).one()
+        assert snap.instrument_id == named_id
+        assert snap.quantity == 1234.977
+
+
+def test_sync_does_not_advance_append_watermark_when_no_trades_appended():
+    Session = get_session_factory()
+    with Session() as session:
+        session.add(Setting(key=app_settings.TOKEN_KEY, value="token"))
+        app_settings.set_setting(
+            session, app_settings.LAST_APPEND_KEY, "2026-01-22T10:00:00+05:30"
+        )
+        session.commit()
+        kite = MagicMock()
+        kite.holdings.return_value = [
+            {
+                "tradingsymbol": "RELIANCE",
+                "isin": "INE002A01018",
+                "exchange": "NSE",
+                "quantity": 10,
+                "average_price": 2000.0,
+            }
+        ]
+        kite.mf_holdings.return_value = []
+        kite.trades.return_value = []
+
+        with (
+            patch.object(kite_auth, "authenticated_kite", return_value=kite),
+            patch.object(kite_sync, "_today_ist", return_value="2026-08-01"),
+        ):
+            result = kite_sync.sync_all(session)
+        session.commit()
+
+        assert result["trades_appended"] == 0
+        assert (
+            app_settings.get_setting(session, app_settings.LAST_APPEND_KEY)
+            == "2026-01-22T10:00:00+05:30"
+        )
+        assert (
+            app_settings.get_setting(session, app_settings.LAST_SYNC_KEY)
+            == result["last_sync_at"]
+        )
