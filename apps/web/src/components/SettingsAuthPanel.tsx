@@ -1,5 +1,14 @@
 "use client";
 
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+
 type Props = {
   connected: boolean;
   credentialsConfigured: boolean;
@@ -27,29 +36,34 @@ export function SettingsAuthPanel({
     : "Not logged in — log in once so we can load your holdings";
 
   return (
-    <section className="panel">
-      <h2>Your Zerodha account</h2>
-      <p>{status}</p>
-      <div className="control-row">
-        <button
-          type="button"
-          disabled={busy || !credentialsConfigured}
-          onClick={() => void onLogin()}
-        >
-          {connected ? "Log in again" : "Log in with Zerodha"}
-        </button>
-        <button
-          type="button"
-          disabled={busy || !connected}
-          onClick={() => void onRefresh()}
-        >
-          {connected ? "Refresh holdings" : "Refresh holdings (log in first)"}
-        </button>
-      </div>
-      <p className="muted">
-        Refresh holdings = sync holdings, append today’s trades, refresh prices.
-        Missing history days → Import.
-      </p>
-    </section>
+    <Card>
+      <CardHeader className="p-5 pb-0">
+        <CardTitle>Your Zerodha account</CardTitle>
+        <CardDescription>{status}</CardDescription>
+      </CardHeader>
+      <CardContent className="p-5 pt-4">
+        <div className="control-row">
+          <Button
+            type="button"
+            disabled={busy || !credentialsConfigured}
+            onClick={() => void onLogin()}
+          >
+            {connected ? "Log in again" : "Log in with Zerodha"}
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            disabled={busy || !connected}
+            onClick={() => void onRefresh()}
+          >
+            {connected ? "Refresh holdings" : "Refresh holdings (log in first)"}
+          </Button>
+        </div>
+        <p className="mt-4 text-sm text-muted-foreground">
+          Refresh holdings = sync holdings, append today’s trades, refresh
+          prices. Missing history days → Import.
+        </p>
+      </CardContent>
+    </Card>
   );
 }

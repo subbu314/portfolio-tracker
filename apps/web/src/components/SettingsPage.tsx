@@ -2,7 +2,10 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { BenchmarkOverridesTable } from "@/components/BenchmarkOverridesTable";
+import { PageAlert } from "@/components/PageAlert";
 import { SettingsAuthPanel } from "@/components/SettingsAuthPanel";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   api,
   type AuthStatus,
@@ -75,12 +78,14 @@ export function SettingsPage() {
   return (
     <div className="stack">
       <h1>Settings</h1>
-      <p>
-        Kite api_key / api_secret live in <code>.env</code> (see{" "}
-        <code>.env.example</code>); never entered here. Kite console redirect
-        must match <code>KITE_REDIRECT_URL</code>.
-      </p>
-      {error ? <p role="alert">{error}</p> : null}
+      <Alert className="border-border bg-surface-elevated text-muted-foreground">
+        <AlertDescription>
+          Kite api_key / api_secret live in <code>.env</code> (see{" "}
+          <code>.env.example</code>); never entered here. Kite console redirect
+          must match <code>KITE_REDIRECT_URL</code>.
+        </AlertDescription>
+      </Alert>
+      {error ? <PageAlert>{error}</PageAlert> : null}
       {auth && !auth.credentials_configured ? (
         <div className="status-banner" data-kind="outdated" role="status">
           Set KITE_API_KEY and KITE_API_SECRET in .env before logging in.
@@ -96,7 +101,10 @@ export function SettingsPage() {
           busy={busy}
         />
       ) : (
-        <p>Loading account settings…</p>
+        <div className="stack" data-testid="settings-auth-skeleton">
+          <Skeleton className="h-8 w-48" />
+          <Skeleton className="h-20 w-full" />
+        </div>
       )}
       {benchmarks && catalogs ? (
         <BenchmarkOverridesTable
@@ -107,7 +115,10 @@ export function SettingsPage() {
           busy={busy}
         />
       ) : (
-        <p>Loading benchmark settings…</p>
+        <Skeleton
+          className="h-64 w-full"
+          data-testid="settings-benchmarks-skeleton"
+        />
       )}
     </div>
   );

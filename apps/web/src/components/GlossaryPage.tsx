@@ -1,4 +1,5 @@
 import { GlossaryTerm } from "@/components/GlossaryTerm";
+import { Button } from "@/components/ui/button";
 import { GLOSSARY_TERMS } from "@/lib/glossary";
 
 export function GlossaryPage() {
@@ -10,11 +11,14 @@ export function GlossaryPage() {
           Plain-language definitions for portfolio values and return metrics.
         </p>
       </header>
-      <nav className="glossary-jumps" aria-label="Jump to glossary term">
+      <nav
+        className="flex flex-wrap gap-2"
+        aria-label="Jump to glossary term"
+      >
         {GLOSSARY_TERMS.map((term) => (
-          <a key={term.id} href={`#${term.id}`}>
-            {term.title}
-          </a>
+          <Button key={term.id} asChild variant="outline" size="sm">
+            <a href={`#${term.id}`}>{term.title}</a>
+          </Button>
         ))}
       </nav>
       {GLOSSARY_TERMS.map((term) => (

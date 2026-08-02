@@ -24,12 +24,20 @@ const report = {
 };
 
 describe("ImportReport", () => {
-  it("shows counts and flagged rows", () => {
+  it("shows imported and existing counts as badges", () => {
     render(<ImportReport report={report} />);
 
-    expect(screen.getByText(/3/)).toBeInTheDocument();
-    expect(screen.getByText(/duplicates skipped|existing/i)).toBeInTheDocument();
+    expect(screen.getByText("3 new")).toHaveClass("bg-primary");
+    expect(screen.getByText("1 existing")).toHaveClass("bg-secondary");
+  });
+
+  it("emphasizes flagged rows", () => {
+    render(<ImportReport report={report} />);
+
     expect(screen.getByText(/row 4: missing price/)).toBeInTheDocument();
+    expect(screen.getByText(/row 4: missing price/)).toHaveClass(
+      "text-destructive",
+    );
   });
 });
 

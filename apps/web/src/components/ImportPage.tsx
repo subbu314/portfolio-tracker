@@ -4,6 +4,14 @@ import { useEffect, useState } from "react";
 import { CsvUpload } from "@/components/CsvUpload";
 import { GapCallout } from "@/components/GapCallout";
 import { ImportReport } from "@/components/ImportReport";
+import { PageAlert } from "@/components/PageAlert";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { api, type Alerts, type ImportResult } from "@/lib/api";
 import { loadImportReport, saveImportReport } from "@/lib/import-report";
 
@@ -82,17 +90,20 @@ export function ImportPage() {
           message={alerts.gap.message}
         />
       ) : null}
-      <section className="panel">
-        <h2>Upload Console tradebook</h2>
-        <p>
-          Export the Console tradebook for the From–To range and upload the CSV
-          here.
-        </p>
-        <CsvUpload onUpload={onUpload} uploading={uploading} />
-      </section>
+      <Card>
+        <CardHeader className="p-5 pb-0">
+          <CardTitle>Upload Console tradebook</CardTitle>
+          <CardDescription>
+            Export the Console tradebook for the From–To range and upload the
+            CSV here.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="p-5 pt-4">
+          <CsvUpload onUpload={onUpload} uploading={uploading} />
+        </CardContent>
+      </Card>
       {error ? (
-        <section className="panel" role="alert">
-          <h2>Import error</h2>
+        <PageAlert title="Import error">
           <p>{error.message}</p>
           {error.rows.length > 0 ? (
             <ul>
@@ -101,7 +112,7 @@ export function ImportPage() {
               ))}
             </ul>
           ) : null}
-        </section>
+        </PageAlert>
       ) : null}
       {report ? <ImportReport report={report} /> : null}
     </div>

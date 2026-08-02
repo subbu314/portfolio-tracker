@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 type Props = {
   suggestedFrom: string;
@@ -17,14 +18,14 @@ export function GapCallout({
   const [to, setTo] = useState(suggestedTo);
 
   return (
-    <section className="status-banner" data-kind="gap">
+    <Alert className="border-warn/55 bg-warn/10" data-kind="gap">
       <div>
-        <strong>{message}</strong>
+        <AlertTitle>{message}</AlertTitle>
         <p>Export that range from Console, then upload the tradebook CSV here.</p>
       </div>
-      <div className="control-row">
+      <AlertDescription className="control-row">
         <label className="field">
-          <span>From</span>
+          <span className="font-medium text-foreground">From</span>
           <input
             type="date"
             value={from}
@@ -32,14 +33,14 @@ export function GapCallout({
           />
         </label>
         <label className="field">
-          <span>To</span>
+          <span className="font-medium text-foreground">To</span>
           <input
             type="date"
             value={to}
             onChange={(event) => setTo(event.target.value)}
           />
         </label>
-      </div>
-    </section>
+      </AlertDescription>
+    </Alert>
   );
 }
