@@ -48,6 +48,10 @@ export function HoldingDetailPage({ instrumentId }: Props) {
 
   useEffect(() => {
     let cancelled = false;
+    setHolding(null);
+    setTransactions(null);
+    setNotFound(false);
+    setError(null);
     void Promise.all([
       api.getHolding(instrumentId),
       api.getHoldingTransactions(instrumentId),

@@ -77,3 +77,60 @@ it("keeps holding details visible when chart loading fails", async () => {
   expect(await screen.findByRole("alert")).toHaveTextContent("Series unavailable");
   expect(screen.getByText("N/A")).toHaveClass("text-muted-foreground");
 });
+
+it("clears notFound when navigating from missing id to valid id", async () => {
+  mocks.getHolding
+    .mockRejectedValueOnce(new Error("Holding not found"))
+    .mockResolvedValueOnce({
+      instrument_id: 2,
+      symbol: "INFY",
+      instrument_type: "equity",
+      qty: 10,
+      avg_price: 100,
+      ltp: 110,
+      value: 1100,
+      absolute_pct: 0.1,
+      absolute_inr: 100,
+      xirr: 0.1,
+      cagr: 0.1,
+      benchmark: "Nifty IT",
+      benchmark_return: 0.08,
+      absolute_excess_pp: 2,
+      xirr_excess_pp: 1,
+      cagr_excess_pp: 1,
+      incomplete: false,
+      needs_category: false,
+      mf_category: null,
+      windows: {
+        ITD: {
+          absolute_pct: 0.1,
+          absolute_inr: 100,
+          xirr: 0.1,
+          cagr: 0.1,
+          benchmark_return: 0.08,
+          absolute_excess_pp: 2,
+          xirr_excess_pp: 1,
+          cagr_excess_pp: 1,
+        },
+        "1Y": null,
+        "3Y": null,
+        "5Y": null,
+      },
+    });
+  mocks.getHoldingTransactions.mockResolvedValue({
+    instrument_id: 2,
+    transactions: [],
+  });
+  mocks.getHoldingSeries.mockResolvedValue({
+    available: false,
+    points: [],
+  });
+
+  const { rerender } = render(<HoldingDetailPage instrumentId={999} />);
+  expect(await screen.findByText(/Holding not found/i)).toBeInTheDocument();
+
+  rerender(<HoldingDetailPage instrumentId={2} />);
+  expect(await screen.findByText("INFY")).toBeInTheDocument();
+  expect(screen.queryByText(/Holding not found/i)).not.toBeInTheDocument();
+  expect(mocks.getHolding).toHaveBeenCalledWith(2);
+});
