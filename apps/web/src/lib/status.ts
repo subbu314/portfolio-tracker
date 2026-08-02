@@ -1,5 +1,5 @@
 export type StatusBannerModel = {
-  kind: "login" | "gap" | "outdated";
+  kind: "login" | "gap" | "outdated" | "incomplete";
   message: string;
   ctaLabel: string;
   ctaHref?: string;
@@ -48,14 +48,22 @@ export function deriveStatusBanner(input: StatusInput): StatusBannerModel | null
     };
   }
   const day = syncDay(input.lastSyncAt);
-  const outdated = input.incomplete || !day || day < input.today;
-  if (outdated) {
+  const syncStale = !day || day < input.today;
+  if (syncStale) {
     return {
       kind: "outdated",
       message: "Holdings may be outdated",
       ctaLabel: "Refresh holdings",
       ctaAction: "refresh",
       disabled: !input.connected,
+    };
+  }
+  if (input.incomplete) {
+    return {
+      kind: "incomplete",
+      message: "Some prices or benchmarks are missing",
+      ctaLabel: "View holdings",
+      ctaHref: "/holdings",
     };
   }
   return null;

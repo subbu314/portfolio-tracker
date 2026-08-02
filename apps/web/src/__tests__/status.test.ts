@@ -38,7 +38,7 @@ describe("deriveStatusBanner", () => {
     expect(banner?.ctaLabel).toMatch(/refresh holdings/i);
   });
 
-  it("flags incomplete metrics as outdated", () => {
+  it("uses incomplete status when sync is fresh but metrics are incomplete", () => {
     const banner = deriveStatusBanner({
       connected: true,
       lastSyncAt: "2026-08-02T09:00:00+05:30",
@@ -46,7 +46,22 @@ describe("deriveStatusBanner", () => {
       gap: null,
       today: "2026-08-02",
     });
+    expect(banner?.kind).toBe("incomplete");
+    expect(banner?.message).toMatch(/prices|benchmarks/i);
+    expect(banner?.ctaAction).toBeUndefined();
+    expect(banner?.ctaLabel).not.toMatch(/refresh holdings/i);
+  });
+
+  it("prefers sync-stale refresh over incomplete status", () => {
+    const banner = deriveStatusBanner({
+      connected: true,
+      lastSyncAt: "2026-08-01T09:00:00+05:30",
+      incomplete: true,
+      gap: null,
+      today: "2026-08-02",
+    });
     expect(banner?.kind).toBe("outdated");
+    expect(banner?.ctaAction).toBe("refresh");
   });
 
   it("returns null when healthy", () => {

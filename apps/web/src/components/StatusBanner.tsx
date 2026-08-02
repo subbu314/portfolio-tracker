@@ -19,7 +19,9 @@ export function StatusBanner({ model, onRefresh, refreshing }: Props) {
       role="status"
       data-kind={model.kind}
       className={cn(
-        model.kind === "outdated" || model.kind === "gap"
+        model.kind === "outdated" ||
+          model.kind === "gap" ||
+          model.kind === "incomplete"
           ? "border-warn/55 bg-warn/10"
           : "bg-surface-elevated",
       )}
