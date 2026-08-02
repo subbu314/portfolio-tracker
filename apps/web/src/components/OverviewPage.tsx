@@ -28,6 +28,7 @@ export function OverviewPage() {
   const [chartMetric, setChartMetric] = useState<MetricKey>("absolute");
   const [chartWindow, setChartWindow] = useState<WindowKey>("ITD");
   const [error, setError] = useState<string | null>(null);
+  const [chartError, setChartError] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
 
   async function loadCore() {
@@ -51,6 +52,7 @@ export function OverviewPage() {
   useEffect(() => {
     let cancelled = false;
     setSeries(null);
+    setChartError(null);
 
     if (chartMetric !== "absolute") {
       return () => {
@@ -64,7 +66,7 @@ export function OverviewPage() {
         if (!cancelled) setSeries(nextSeries);
       })
       .catch((loadError: Error) => {
-        if (!cancelled) setError(loadError.message);
+        if (!cancelled) setChartError(loadError.message);
       });
 
     return () => {
@@ -127,24 +129,31 @@ export function OverviewPage() {
         <div className="panel-head">
           <h2>Portfolio vs category benchmarks</h2>
           <MetricWindowSelects
+            idPrefix="chart"
+            labelPrefix="Portfolio chart"
             metric={chartMetric}
             window={chartWindow}
             onMetricChange={setChartMetric}
             onWindowChange={setChartWindow}
           />
         </div>
-        <ReturnSeriesChart
-          title="Portfolio vs category benchmarks"
-          available={series?.available ?? false}
-          metricSupportsSeries={chartMetric === "absolute"}
-          points={(series?.points ?? []).map((point) => ({
-            date: point.date,
-            portfolio: point.portfolio_return ?? null,
-            benchmark: point.benchmark_return ?? null,
-          }))}
-          portfolioLabel="Portfolio"
-          benchmarkLabel="Category benchmarks (market-weighted)"
-        />
+        {chartError ? (
+          <p role="alert">{chartError}</p>
+        ) : (
+          <ReturnSeriesChart
+            title="Portfolio vs category benchmarks"
+            available={series?.available ?? false}
+            loading={chartMetric === "absolute" && series === null}
+            metricSupportsSeries={chartMetric === "absolute"}
+            points={(series?.points ?? []).map((point) => ({
+              date: point.date,
+              portfolio: point.portfolio_return ?? null,
+              benchmark: point.benchmark_return ?? null,
+            }))}
+            portfolioLabel="Portfolio"
+            benchmarkLabel="Category benchmarks (market-weighted)"
+          />
+        )}
       </section>
       <section className="panel">
         <h2>Asset allocation</h2>

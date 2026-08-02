@@ -17,5 +17,8 @@ describe("format", () => {
   it("formats signed INR", () => {
     expect(formatSignedInr(100)).toContain("+");
     expect(formatSignedInr(100)).toContain("₹");
+    expect(formatSignedInr(null)).toBe("N/A");
+    expect(formatSignedInr(0)).toBe("₹0");
+    expect(formatSignedInr(-100)).toContain("−₹100");
   });
 });

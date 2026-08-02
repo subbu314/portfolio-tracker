@@ -1,6 +1,6 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import Link from "next/link";
 import type { Holding } from "@/lib/api";
 import { formatInr, formatPct, formatPp } from "@/lib/format";
 import { getWindowMetrics, type WindowKey } from "@/lib/windows";
@@ -13,8 +13,6 @@ type Props = {
 };
 
 export function HoldingsTable({ title, variant, rows, windowKey }: Props) {
-  const router = useRouter();
-
   return (
     <section className="panel">
       <h2>{title}</h2>
@@ -38,11 +36,12 @@ export function HoldingsTable({ title, variant, rows, windowKey }: Props) {
             const metrics = getWindowMetrics(row.windows, windowKey);
 
             return (
-              <tr
-                key={row.instrument_id}
-                onClick={() => router.push(`/holdings/${row.instrument_id}`)}
-              >
-                <td>{row.symbol}</td>
+              <tr key={row.instrument_id}>
+                <td>
+                  <Link href={`/holdings/${row.instrument_id}`}>
+                    {row.symbol}
+                  </Link>
+                </td>
                 {variant === "mf" && <td>{row.mf_category ?? "—"}</td>}
                 <td>{row.qty}</td>
                 <td>{formatInr(row.avg_price)}</td>

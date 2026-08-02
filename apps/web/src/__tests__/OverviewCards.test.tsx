@@ -56,7 +56,7 @@ describe("MetricCard", () => {
     expect(screen.getByText("10.00%")).toBeInTheDocument();
   });
 
-  it("shows outperformance copy and N/A when missing", () => {
+  it("shows N/A without beat copy when outperformance is missing", () => {
     render(
       <MetricCard
         title="Outperformance"
@@ -70,12 +70,63 @@ describe("MetricCard", () => {
         defaultMetric="xirr"
       />,
     );
-    expect(screen.getByText(/category benchmarks/i)).toBeInTheDocument();
     expect(screen.getByText("N/A")).toBeInTheDocument();
+    expect(
+      screen.queryByText(/you beat category benchmarks/i),
+    ).not.toBeInTheDocument();
+  });
+
+  it("uses trailing copy with absolute magnitude for negative outperformance", () => {
+    render(
+      <MetricCard
+        title="Outperformance"
+        windows={{
+          ITD: {
+            absolute_pct: 0.08,
+            absolute_inr: 1,
+            xirr: 0.08,
+            cagr: 0.08,
+            benchmark_return: 0.1,
+            absolute_excess_pp: -2,
+            xirr_excess_pp: -2,
+            cagr_excess_pp: -2,
+          },
+          "1Y": null,
+          "3Y": null,
+          "5Y": null,
+        }}
+        mode="outperformance"
+        defaultMetric="xirr"
+      />,
+    );
+
+    expect(
+      screen.getByText("You trail category benchmarks by 2.00 pp"),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByText(/you beat category benchmarks/i),
+    ).not.toBeInTheDocument();
   });
 });
 
 describe("ReturnSeriesChart", () => {
+  it("shows loading copy before series availability is known", () => {
+    render(
+      <ReturnSeriesChart
+        title="Portfolio returns"
+        available={false}
+        loading
+        metricSupportsSeries
+        points={[]}
+      />,
+    );
+
+    expect(screen.getByText("Loading chart…")).toBeInTheDocument();
+    expect(
+      screen.queryByText(/not enough history/i),
+    ).not.toBeInTheDocument();
+  });
+
   it("shows explicit N/A copy for unsupported metrics", () => {
     render(
       <ReturnSeriesChart

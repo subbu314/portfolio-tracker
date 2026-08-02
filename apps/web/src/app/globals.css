@@ -244,6 +244,39 @@ input {
   gap: 1rem;
 }
 
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 1rem;
+  font-variant-numeric: tabular-nums;
+}
+
+th,
+td {
+  padding: 0.75rem;
+  border-bottom: 1px solid var(--border);
+  text-align: left;
+  white-space: nowrap;
+}
+
+th {
+  background: var(--surface-2);
+  color: var(--muted);
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+tbody tr:hover {
+  background: color-mix(in srgb, var(--surface-2) 55%, transparent);
+}
+
+td a {
+  color: var(--accent);
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+}
+
 .eyebrow,
 .muted,
 .metric-breakdown {
@@ -277,6 +310,10 @@ input {
   margin-top: 0.35rem;
   color: var(--positive);
   font-size: 1.25rem;
+}
+
+.metric-percent[data-negative="true"] {
+  color: var(--negative);
 }
 
 .hero-return {

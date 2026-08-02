@@ -58,7 +58,10 @@ describe("HoldingsTable", () => {
         windowKey="ITD"
       />,
     );
-    expect(screen.getByText("RELIANCE")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "RELIANCE" })).toHaveAttribute(
+      "href",
+      "/holdings/1",
+    );
     expect(screen.getByText("10.00%")).toBeInTheDocument();
     expect(screen.getByText("12.00%")).toBeInTheDocument();
     expect(screen.getByText("N/A")).toBeInTheDocument(); // CAGR

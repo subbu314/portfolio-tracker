@@ -9,6 +9,8 @@ import {
 import { WindowSelect } from "@/components/WindowSelect";
 
 type Props = {
+  idPrefix?: string;
+  labelPrefix?: string;
   metric: MetricKey;
   window: WindowKey;
   onMetricChange: (m: MetricKey) => void;
@@ -16,17 +18,23 @@ type Props = {
 };
 
 export function MetricWindowSelects({
+  idPrefix = "performance",
+  labelPrefix = "",
   metric,
   window,
   onMetricChange,
   onWindowChange,
 }: Props) {
+  const metricLabelText = labelPrefix ? `${labelPrefix} metric` : "Metric";
+  const windowLabelText = labelPrefix ? `${labelPrefix} window` : "Window";
+
   return (
     <div className="control-row">
       <label className="field">
         <span>Metric</span>
         <select
-          aria-label="Metric"
+          id={`${idPrefix}-metric`}
+          aria-label={metricLabelText}
           value={metric}
           onChange={(e) => onMetricChange(e.target.value as MetricKey)}
         >
@@ -37,7 +45,12 @@ export function MetricWindowSelects({
           ))}
         </select>
       </label>
-      <WindowSelect value={window} onChange={onWindowChange} />
+      <WindowSelect
+        value={window}
+        onChange={onWindowChange}
+        id={`${idPrefix}-window`}
+        ariaLabel={windowLabelText}
+      />
     </div>
   );
 }

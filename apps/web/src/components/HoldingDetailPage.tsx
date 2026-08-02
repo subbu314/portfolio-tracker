@@ -34,6 +34,7 @@ export function HoldingDetailPage({ instrumentId }: Props) {
   const [series, setSeries] = useState<HoldingSeries | null>(null);
   const [window, setWindow] = useState<WindowKey>("ITD");
   const [error, setError] = useState<string | null>(null);
+  const [chartError, setChartError] = useState<string | null>(null);
   const [notFound, setNotFound] = useState(false);
 
   useEffect(() => {
@@ -60,13 +61,14 @@ export function HoldingDetailPage({ instrumentId }: Props) {
   useEffect(() => {
     let cancelled = false;
     setSeries(null);
+    setChartError(null);
     void api
       .getHoldingSeries(instrumentId, window)
       .then((nextSeries) => {
         if (!cancelled) setSeries(nextSeries);
       })
       .catch((loadError: Error) => {
-        if (!cancelled) setError(loadError.message);
+        if (!cancelled) setChartError(loadError.message);
       });
     return () => {
       cancelled = true;
@@ -102,7 +104,12 @@ export function HoldingDetailPage({ instrumentId }: Props) {
         </p>
       </header>
       <div className="control-row">
-        <WindowSelect value={window} onChange={setWindow} />
+        <WindowSelect
+          value={window}
+          onChange={setWindow}
+          id="holding-window"
+          ariaLabel="Holding return window"
+        />
       </div>
       <section className="card-grid" aria-label="Holding returns">
         <ReturnChip label="Abs %" value={formatPct(metrics?.absolute_pct)} />
@@ -115,18 +122,23 @@ export function HoldingDetailPage({ instrumentId }: Props) {
       </section>
       <section className="panel">
         <h2>Holding vs mapped category benchmark</h2>
-        <ReturnSeriesChart
-          title="Holding vs mapped category benchmark"
-          available={series?.available ?? false}
-          metricSupportsSeries
-          points={(series?.points ?? []).map((point) => ({
-            date: point.date,
-            portfolio: point.holding_return ?? null,
-            benchmark: point.benchmark_return ?? null,
-          }))}
-          portfolioLabel={holding.symbol}
-          benchmarkLabel={holding.benchmark}
-        />
+        {chartError ? (
+          <p role="alert">{chartError}</p>
+        ) : (
+          <ReturnSeriesChart
+            title="Holding vs mapped category benchmark"
+            available={series?.available ?? false}
+            loading={series === null}
+            metricSupportsSeries
+            points={(series?.points ?? []).map((point) => ({
+              date: point.date,
+              portfolio: point.holding_return ?? null,
+              benchmark: point.benchmark_return ?? null,
+            }))}
+            portfolioLabel={holding.symbol}
+            benchmarkLabel={holding.benchmark}
+          />
+        )}
       </section>
       <TransactionsTable rows={transactions.transactions} />
     </div>

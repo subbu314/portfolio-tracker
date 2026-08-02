@@ -31,16 +31,25 @@ export function MetricCard({
   const metrics = getWindowMetrics(windows, window);
   const portfolioReturn = pickReturnPct(metrics, metric);
   const benchmarkReturn = pickBenchmarkReturn(metrics);
+  const excessPp = pickExcessPp(metrics, metric);
   const value =
     mode === "return"
       ? formatPct(portfolioReturn)
-      : formatPp(pickExcessPp(metrics, metric));
+      : formatPp(excessPp);
+  const outperformanceCopy =
+    excessPp === null
+      ? null
+      : excessPp < 0
+        ? `You trail category benchmarks by ${formatPp(Math.abs(excessPp)).replace("+", "")}`
+        : `You beat category benchmarks by ${value}`;
 
   return (
     <section className="metric-card">
       <div className="panel-head">
         <h2>{title}</h2>
         <MetricWindowSelects
+          idPrefix={mode === "return" ? "return" : "outperf"}
+          labelPrefix={title}
           metric={metric}
           window={window}
           onMetricChange={setMetric}
@@ -50,7 +59,7 @@ export function MetricCard({
       <p className="metric-value">{value}</p>
       {mode === "outperformance" ? (
         <>
-          <p className="muted">You beat category benchmarks by {value}</p>
+          {outperformanceCopy ? <p className="muted">{outperformanceCopy}</p> : null}
           {portfolioReturn !== null && benchmarkReturn !== null ? (
             <p className="metric-breakdown">
               {formatPct(portfolioReturn)} − {formatPct(benchmarkReturn)}

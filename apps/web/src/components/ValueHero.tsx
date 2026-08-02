@@ -23,7 +23,12 @@ export function ValueHero({
       <div className="hero-return">
         <p className="eyebrow">Absolute return</p>
         <p className="metric-value">{formatSignedInr(gainInr)}</p>
-        <p className="metric-percent">{formatPct(gainPct)}</p>
+        <p
+          className="metric-percent"
+          data-negative={gainPct !== null && gainPct < 0}
+        >
+          {formatPct(gainPct)}
+        </p>
       </div>
     </section>
   );

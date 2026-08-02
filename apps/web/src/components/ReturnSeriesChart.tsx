@@ -14,6 +14,7 @@ import {
 type Props = {
   title: string;
   available: boolean;
+  loading?: boolean;
   metricSupportsSeries: boolean;
   points: {
     date: string;
@@ -27,6 +28,7 @@ type Props = {
 export function ReturnSeriesChart({
   title,
   available,
+  loading = false,
   metricSupportsSeries,
   points,
   portfolioLabel = "Portfolio",
@@ -38,6 +40,9 @@ export function ReturnSeriesChart({
         N/A — series chart supports Absolute return only for v1.
       </p>
     );
+  }
+  if (loading) {
+    return <p className="muted">Loading chart…</p>;
   }
   if (!available) {
     return <p className="muted">N/A — not enough history for this window.</p>;

@@ -35,28 +35,6 @@ vi.mock("@/components/AllocationChart", () => ({
 vi.mock("@/components/MetricCard", () => ({ MetricCard: () => null }));
 vi.mock("@/components/StatusBanner", () => ({ StatusBanner: () => null }));
 vi.mock("@/components/ValueHero", () => ({ ValueHero: () => null }));
-vi.mock("@/components/MetricWindowSelects", () => ({
-  MetricWindowSelects: ({
-    window,
-    onWindowChange,
-  }: {
-    window: string;
-    onWindowChange: (window: "ITD" | "1Y" | "3Y" | "5Y") => void;
-  }) => (
-    <select
-      aria-label="Chart window"
-      value={window}
-      onChange={(event) =>
-        onWindowChange(event.target.value as "ITD" | "1Y" | "3Y" | "5Y")
-      }
-    >
-      <option value="ITD">ITD</option>
-      <option value="1Y">1Y</option>
-      <option value="3Y">3Y</option>
-      <option value="5Y">5Y</option>
-    </select>
-  ),
-}));
 vi.mock("@/components/ReturnSeriesChart", () => ({
   ReturnSeriesChart: ({
     points,
@@ -104,7 +82,10 @@ it("clears previous series while a new window loads", async () => {
   itd.resolve(series("2020-01-01"));
   expect(await screen.findByText("2020-01-01")).toBeInTheDocument();
 
-  await user.selectOptions(screen.getByLabelText("Chart window"), "1Y");
+  await user.selectOptions(
+    screen.getByLabelText("Portfolio chart window"),
+    "1Y",
+  );
 
   expect(screen.getByText("Empty series")).toBeInTheDocument();
   expect(screen.queryByText("2020-01-01")).not.toBeInTheDocument();
@@ -120,7 +101,10 @@ it("ignores a superseded window response", async () => {
 
   render(<OverviewPage />);
   await waitFor(() => expect(mocks.getPortfolioSeries).toHaveBeenCalledWith("ITD"));
-  await user.selectOptions(screen.getByLabelText("Chart window"), "1Y");
+  await user.selectOptions(
+    screen.getByLabelText("Portfolio chart window"),
+    "1Y",
+  );
 
   oneYear.resolve(series("2025-01-01"));
   expect(await screen.findByText("2025-01-01")).toBeInTheDocument();
@@ -130,4 +114,16 @@ it("ignores a superseded window response", async () => {
     expect(screen.queryByText("2020-01-01")).not.toBeInTheDocument(),
   );
   expect(screen.getByText("2025-01-01")).toBeInTheDocument();
+});
+
+it("keeps the overview visible when chart loading fails", async () => {
+  mocks.getPortfolioSeries.mockRejectedValue(new Error("Series unavailable"));
+
+  render(<OverviewPage />);
+
+  expect(await screen.findByRole("heading", { name: "Overview" })).toBeInTheDocument();
+  expect(await screen.findByText("Series unavailable")).toHaveAttribute(
+    "role",
+    "alert",
+  );
 });

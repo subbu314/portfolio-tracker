@@ -6,15 +6,21 @@ type Props = {
   value: WindowKey;
   onChange: (w: WindowKey) => void;
   id?: string;
+  ariaLabel?: string;
 };
 
-export function WindowSelect({ value, onChange, id = "window" }: Props) {
+export function WindowSelect({
+  value,
+  onChange,
+  id = "window",
+  ariaLabel = "Window",
+}: Props) {
   return (
     <label className="field">
       <span>Window</span>
       <select
         id={id}
-        aria-label="Window"
+        aria-label={ariaLabel}
         value={value}
         onChange={(e) => onChange(e.target.value as WindowKey)}
       >
