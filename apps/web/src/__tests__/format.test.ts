@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { formatInr, formatPct, formatPp } from "@/lib/format";
+import { formatInr, formatPct, formatPp, formatSignedInr } from "@/lib/format";
 
 describe("format", () => {
   it("formats INR", () => {
@@ -13,5 +13,9 @@ describe("format", () => {
   });
   it("formats excess pp", () => {
     expect(formatPp(5.2)).toBe("+5.20 pp");
+  });
+  it("formats signed INR", () => {
+    expect(formatSignedInr(100)).toContain("+");
+    expect(formatSignedInr(100)).toContain("₹");
   });
 });

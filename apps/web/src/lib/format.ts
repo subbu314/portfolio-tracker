@@ -21,3 +21,10 @@ export function formatPp(value: number | null | undefined): string {
 export function formatXirr(value: number | null | undefined): string {
   return formatPct(value);
 }
+
+export function formatSignedInr(value: number | null | undefined): string {
+  if (value === null || value === undefined || Number.isNaN(value)) return "N/A";
+  if (value === 0) return formatInr(0);
+  const sign = value > 0 ? "+" : "−";
+  return `${sign}${formatInr(Math.abs(value))}`;
+}
