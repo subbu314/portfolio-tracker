@@ -117,3 +117,24 @@ All existing fixtures satisfied stronger assertions without modification.
 
 - `test(web): strengthen MSW scenario overlay assertions`
 
+## Review Fix: Cover remaining scenario overlay fields
+
+**Status:** Complete. No fixture changes.
+
+### Changes
+
+Extended `handlers.test.ts` scenario matrix with remaining overlay-field assertions:
+
+- **empty:** `absolute.current_value === 0`, `absolute.invested_cost === 0`, `absolute.gain_inr === 0`
+- **unknown_category:** `needs_category === true` items also have `mf_category === null` in benchmarks and holdings; `GET /portfolio/holdings/3` returns `needs_category: true` and `mf_category: null`
+- **missing_prices:** overview fetch; at least one of `xirr`, `cagr`, `absolute.gain_pct` is null
+
+### Validation
+
+- `cd apps/web && npm test -- src/__tests__/handlers.test.ts`: 10 passed.
+- `cd apps/web && npm test`: 93 passed (23 files).
+
+### Commit
+
+- `test(web): cover remaining scenario overlay fields`
+

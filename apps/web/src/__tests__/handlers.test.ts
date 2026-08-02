@@ -46,6 +46,9 @@ it.each([
     ]);
     expect(h.holdings).toEqual([]);
     expect(o.total_value).toBe(0);
+    expect(o.absolute.current_value).toBe(0);
+    expect(o.absolute.invested_cost).toBe(0);
+    expect(o.absolute.gain_inr).toBe(0);
     expect(s.available).toBe(false);
   }],
   ["logged_out", async () => {
@@ -77,27 +80,48 @@ it.each([
   }],
   ["unknown_category", async () => {
     localStorage.setItem(STORAGE_KEY, "unknown_category");
-    const [b, h] = await Promise.all([
+    const [b, h, detail] = await Promise.all([
       fetch(`${API}/settings/benchmarks`).then((r) => r.json()),
       fetch(`${API}/portfolio/holdings`).then((r) => r.json()),
+      fetch(`${API}/portfolio/holdings/3`).then((r) => r.json()),
     ]);
     expect(
       b.items.some((i: { needs_category: boolean }) => i.needs_category),
+    ).toBe(true);
+    expect(
+      b.items.every(
+        (i: { needs_category: boolean; mf_category: string | null }) =>
+          !i.needs_category || i.mf_category === null,
+      ),
     ).toBe(true);
     expect(
       h.holdings.some(
         (x: { needs_category: boolean }) => x.needs_category === true,
       ),
     ).toBe(true);
+    expect(
+      h.holdings.every(
+        (x: { needs_category: boolean; mf_category: string | null }) =>
+          !x.needs_category || x.mf_category === null,
+      ),
+    ).toBe(true);
+    expect(detail.needs_category).toBe(true);
+    expect(detail.mf_category).toBeNull();
   }],
   ["missing_prices", async () => {
     localStorage.setItem(STORAGE_KEY, "missing_prices");
-    const h = await fetch(`${API}/portfolio/holdings`).then((r) => r.json());
+    const [h, o] = await Promise.all([
+      fetch(`${API}/portfolio/holdings`).then((r) => r.json()),
+      fetch(`${API}/portfolio/overview`).then((r) => r.json()),
+    ]);
     expect(
       h.holdings.some((x: { ltp: number | null }) => x.ltp === null),
     ).toBe(true);
     expect(
       h.holdings.some((x: { value: number | null }) => x.value === null),
+    ).toBe(true);
+    expect(
+      [o.xirr, o.cagr, o.absolute.gain_pct].some((v) => v === null),
     ).toBe(true);
   }],
   ["negative", async () => {
