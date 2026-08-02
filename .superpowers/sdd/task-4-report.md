@@ -154,3 +154,30 @@ Command:
 `cd apps/api && uv run pytest -q`
 
 Result: 140 passed, 1 pre-existing Starlette deprecation warning in 3.91s.
+
+## Fix round: Overview chart review findings
+
+- Added explicit `N/A` to unsupported XIRR/CAGR series-chart copy.
+- Clear prior chart series before each metric/window request and ignore superseded
+  request success or failure callbacks.
+- Covering tests:
+  `apps/web/src/__tests__/OverviewCards.test.tsx` and
+  `apps/web/src/__tests__/OverviewPage.test.tsx`.
+
+### TDD RED
+
+- `npm test -- src/__tests__/OverviewCards.test.tsx` — failed as expected:
+  unsupported-metric copy omitted `N/A`.
+- `VITE_CONFIG_NATIVE_IGNORE_WARNING=true node node_modules/vitest/vitest.mjs run src/__tests__/OverviewPage.test.tsx`
+  — 2 failed as expected: old series remained during window loading and a late
+  superseded response replaced current-window data.
+
+### Covering tests
+
+- `VITE_CONFIG_NATIVE_IGNORE_WARNING=true node node_modules/vitest/vitest.mjs run src/__tests__/OverviewCards.test.tsx src/__tests__/OverviewPage.test.tsx`
+  — PASS: 2 files, 7 tests.
+
+### Full suite
+
+- `cd apps/web && npm test` — PASS: API 146 tests, generated API check,
+  web 10 files / 51 tests. One pre-existing Starlette deprecation warning.

@@ -33,7 +33,11 @@ export function ReturnSeriesChart({
   benchmarkLabel = "Benchmark",
 }: Props) {
   if (!metricSupportsSeries) {
-    return <p className="muted">Series chart supports Absolute return only for v1.</p>;
+    return (
+      <p className="muted">
+        N/A — series chart supports Absolute return only for v1.
+      </p>
+    );
   }
   if (!available) {
     return <p className="muted">N/A — not enough history for this window.</p>;

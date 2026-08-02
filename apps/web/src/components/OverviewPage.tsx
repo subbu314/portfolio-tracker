@@ -49,14 +49,27 @@ export function OverviewPage() {
   }, []);
 
   useEffect(() => {
+    let cancelled = false;
+    setSeries(null);
+
     if (chartMetric !== "absolute") {
-      setSeries(null);
-      return;
+      return () => {
+        cancelled = true;
+      };
     }
+
     void api
       .getPortfolioSeries(chartWindow)
-      .then(setSeries)
-      .catch((loadError: Error) => setError(loadError.message));
+      .then((nextSeries) => {
+        if (!cancelled) setSeries(nextSeries);
+      })
+      .catch((loadError: Error) => {
+        if (!cancelled) setError(loadError.message);
+      });
+
+    return () => {
+      cancelled = true;
+    };
   }, [chartMetric, chartWindow]);
 
   async function onRefresh() {

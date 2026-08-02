@@ -1,6 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MetricCard } from "@/components/MetricCard";
+import { ReturnSeriesChart } from "@/components/ReturnSeriesChart";
 import { ValueHero } from "@/components/ValueHero";
 
 describe("ValueHero", () => {
@@ -71,5 +72,24 @@ describe("MetricCard", () => {
     );
     expect(screen.getByText(/category benchmarks/i)).toBeInTheDocument();
     expect(screen.getByText("N/A")).toBeInTheDocument();
+  });
+});
+
+describe("ReturnSeriesChart", () => {
+  it("shows explicit N/A copy for unsupported metrics", () => {
+    render(
+      <ReturnSeriesChart
+        title="Portfolio returns"
+        available
+        metricSupportsSeries={false}
+        points={[]}
+      />,
+    );
+
+    expect(
+      screen.getByText(
+        "N/A — series chart supports Absolute return only for v1.",
+      ),
+    ).toBeInTheDocument();
   });
 });
