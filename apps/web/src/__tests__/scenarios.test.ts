@@ -4,7 +4,17 @@ import {
   setActiveScenario,
   STORAGE_KEY,
 } from "@/mocks/scenarios";
+import { fixtureModules } from "@/mocks/fixture-modules";
 import { loadFixture } from "@/mocks/load-fixture";
+
+describe("fixtureModules", () => {
+  it("registers happy overview and missing_prices overlay keys", () => {
+    expect(fixtureModules["./fixtures/happy/overview.json"]).toBeTruthy();
+    expect(
+      fixtureModules["./fixtures/missing_prices/overview.json"],
+    ).toBeTruthy();
+  });
+});
 
 it("lists all nine scenario ids", () => {
   expect(SCENARIO_IDS).toEqual([
