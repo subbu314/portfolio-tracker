@@ -35,3 +35,55 @@ it("returns fixed sync success JSON", async () => {
   expect(sync).toHaveProperty("holdings_count");
   expect(sync).toHaveProperty("last_sync_at");
 });
+
+it.each([
+  ["empty", async () => {
+    localStorage.setItem(STORAGE_KEY, "empty");
+    const h = await fetch(`${API}/portfolio/holdings`).then((r) => r.json());
+    expect(h.holdings).toEqual([]);
+  }],
+  ["logged_out", async () => {
+    localStorage.setItem(STORAGE_KEY, "logged_out");
+    const a = await fetch(`${API}/auth/status`).then((r) => r.json());
+    expect(a.connected).toBe(false);
+  }],
+  ["stale", async () => {
+    localStorage.setItem(STORAGE_KEY, "stale");
+    const a = await fetch(`${API}/auth/status`).then((r) => r.json());
+    expect(a.last_sync_at).toMatch(/^2020-/);
+  }],
+  ["gap", async () => {
+    localStorage.setItem(STORAGE_KEY, "gap");
+    const a = await fetch(`${API}/portfolio/alerts`).then((r) => r.json());
+    expect(a.gap?.suggested_from).toBeTruthy();
+  }],
+  ["import_errors", async () => {
+    localStorage.setItem(STORAGE_KEY, "import_errors");
+    const r = await fetch(`${API}/import/csv`, {
+      method: "POST",
+      body: new FormData(),
+    }).then((x) => x.json());
+    expect(r.flagged_rows.length).toBeGreaterThan(0);
+  }],
+  ["unknown_category", async () => {
+    localStorage.setItem(STORAGE_KEY, "unknown_category");
+    const b = await fetch(`${API}/settings/benchmarks`).then((r) => r.json());
+    expect(
+      b.items.some((i: { needs_category: boolean }) => i.needs_category),
+    ).toBe(true);
+  }],
+  ["missing_prices", async () => {
+    localStorage.setItem(STORAGE_KEY, "missing_prices");
+    const h = await fetch(`${API}/portfolio/holdings`).then((r) => r.json());
+    expect(
+      h.holdings.some((x: { ltp: number | null }) => x.ltp === null),
+    ).toBe(true);
+  }],
+  ["negative", async () => {
+    localStorage.setItem(STORAGE_KEY, "negative");
+    const o = await fetch(`${API}/portfolio/overview`).then((r) => r.json());
+    expect(o.absolute.gain_inr).toBeLessThan(0);
+  }],
+] as const)("%s scenario fixture", async (_name, fn) => {
+  await fn();
+});

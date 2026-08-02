@@ -1,0 +1,7 @@
+{
+  "existing": 2,
+  "flagged_rows": [
+    "row 4: missing price",
+    "row 7: unsupported transaction type"
+  ]
+}

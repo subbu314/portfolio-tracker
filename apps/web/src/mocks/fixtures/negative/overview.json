@@ -1,0 +1,21 @@
+{
+  "absolute": {
+    "gain_inr": -7000,
+    "gain_pct": -0.09
+  },
+  "absolute_excess_pp": -3.0,
+  "xirr_excess_pp": -2.5,
+  "cagr_excess_pp": -1.5,
+  "windows": {
+    "ITD": {
+      "absolute_excess_pp": -3.0,
+      "xirr_excess_pp": -2.5,
+      "cagr_excess_pp": -1.5
+    },
+    "1Y": {
+      "absolute_excess_pp": -1.2,
+      "xirr_excess_pp": -1.0,
+      "cagr_excess_pp": -0.8
+    }
+  }
+}
