@@ -1,7 +1,8 @@
 import type { ScenarioId } from "./scenarios";
 
 function deepMerge<T>(base: T, overlay: unknown): T {
-  if (overlay === null || overlay === undefined) return base;
+  if (overlay === undefined) return base;
+  if (overlay === null) return null as T;
   if (Array.isArray(overlay)) return overlay as T;
   if (typeof base !== "object" || base === null || typeof overlay !== "object") {
     return overlay as T;

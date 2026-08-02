@@ -29,6 +29,10 @@ it("defaults to happy and persists selection", () => {
 });
 
 it("merges scenario overlay onto happy fixture", () => {
-  const auth = loadFixture<{ connected: boolean }>("logged_out", "auth-status");
+  const auth = loadFixture<{ connected: boolean; last_sync_at: string | null }>(
+    "logged_out",
+    "auth-status",
+  );
   expect(auth.connected).toBe(false);
+  expect(auth.last_sync_at).toBeNull();
 });
