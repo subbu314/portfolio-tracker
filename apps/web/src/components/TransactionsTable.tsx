@@ -1,9 +1,6 @@
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { DataTableCard } from "@/components/table/DataTableCard";
+import { EmptyTableRow } from "@/components/table/EmptyTableRow";
+import { FormattedTableCell } from "@/components/table/FormattedTableCell";
 import {
   Table,
   TableBody,
@@ -30,61 +27,37 @@ type Props = {
   rows: Transaction[];
 };
 
-function FormattedTableCell({ value }: { value: string }) {
-  return (
-    <TableCell
-      className={
-        value === "N/A" ? "font-mono tabular-nums text-muted-foreground" : undefined
-      }
-    >
-      {value}
-    </TableCell>
-  );
-}
-
 export function TransactionsTable({ rows }: Props) {
   return (
-    <Card>
-      <CardHeader className="p-5 pb-0">
-        <CardTitle>Transactions</CardTitle>
-      </CardHeader>
-      <CardContent className="p-5 pt-4">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Date</TableHead>
-              <TableHead>Side</TableHead>
-              <TableHead>Qty</TableHead>
-              <TableHead>Price</TableHead>
-              <TableHead>Amount</TableHead>
-              <TableHead>Source</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {rows.length === 0 ? (
-              <TableRow>
-                <TableCell
-                  className="py-8 text-center text-muted-foreground"
-                  colSpan={6}
-                >
-                  No rows
-                </TableCell>
+    <DataTableCard title="Transactions">
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Date</TableHead>
+            <TableHead>Side</TableHead>
+            <TableHead>Qty</TableHead>
+            <TableHead>Price</TableHead>
+            <TableHead>Amount</TableHead>
+            <TableHead>Source</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {rows.length === 0 ? (
+            <EmptyTableRow colSpan={6} />
+          ) : (
+            rows.map((row) => (
+              <TableRow key={row.id}>
+                <TableCell>{row.trade_date}</TableCell>
+                <TableCell>{row.side}</TableCell>
+                <TableCell>{row.quantity}</TableCell>
+                <FormattedTableCell value={formatPrice(row.price)} />
+                <FormattedTableCell value={formatInr(row.amount)} />
+                <TableCell>{formatSource(row.source)}</TableCell>
               </TableRow>
-            ) : (
-              rows.map((row) => (
-                <TableRow key={row.id}>
-                  <TableCell>{row.trade_date}</TableCell>
-                  <TableCell>{row.side}</TableCell>
-                  <TableCell>{row.quantity}</TableCell>
-                  <FormattedTableCell value={formatPrice(row.price)} />
-                  <FormattedTableCell value={formatInr(row.amount)} />
-                  <TableCell>{formatSource(row.source)}</TableCell>
-                </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
-      </CardContent>
-    </Card>
+            ))
+          )}
+        </TableBody>
+      </Table>
+    </DataTableCard>
   );
 }
