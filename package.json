@@ -8,6 +8,7 @@
     "web": "npm --prefix apps/web run dev",
     "web:test": "npm --prefix apps/web test",
     "generate:api": "npm run generate:openapi && npm --prefix apps/web run generate:api",
-    "test": "npm run api:test && npm run web:test"
+    "check:api": "npm run generate:openapi && npm --prefix apps/web run check:api",
+    "test": "npm run api:test && npm run check:api && npm run web:test"
   }
 }

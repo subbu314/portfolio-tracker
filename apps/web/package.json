@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "eslint",
     "test": "vitest run",
-    "generate:api": "openapi-typescript ./openapi.json -o ./src/lib/api-types.ts"
+    "generate:api": "openapi-typescript ./openapi.json -o ./src/lib/api-types.ts",
+    "check:api": "openapi-typescript ./openapi.json -o ./src/lib/api-types.check.ts && node -e \"const fs=require('fs');const a=fs.readFileSync('src/lib/api-types.ts','utf8');const b=fs.readFileSync('src/lib/api-types.check.ts','utf8');fs.unlinkSync('src/lib/api-types.check.ts');if(a!==b){console.error('api-types.ts is stale; run npm run generate:api from repo root');process.exit(1)}\""
   },
   "dependencies": {
     "next": "15.5.22",
