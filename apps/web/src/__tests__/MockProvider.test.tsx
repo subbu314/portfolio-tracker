@@ -61,13 +61,13 @@ it("starts the worker when mocks are enabled", async () => {
 
   await waitFor(() => expect(browserMock.start).toHaveBeenCalledOnce());
   expect(browserMock.start).toHaveBeenCalledWith({
-    onUnhandledRequest: "bypass",
+    onUnhandledRequest: "warn",
     serviceWorker: { url: "/mockServiceWorker.js" },
   });
   expect(screen.getByText("child")).toBeInTheDocument();
 });
 
-it("renders children and an error when worker startup fails", async () => {
+it("does not render children when worker startup fails", async () => {
   browserMock.start.mockRejectedValueOnce(new Error("worker failed"));
   const { MockProvider } = await loadMockProvider(true);
   render(
@@ -77,7 +77,7 @@ it("renders children and an error when worker startup fails", async () => {
   );
 
   expect(await screen.findByRole("alert")).toHaveTextContent(/could not start/i);
-  expect(screen.getByText("child")).toBeInTheDocument();
+  expect(screen.queryByText("child")).not.toBeInTheDocument();
 });
 
 it("renders the same mock composition as the root layout", async () => {

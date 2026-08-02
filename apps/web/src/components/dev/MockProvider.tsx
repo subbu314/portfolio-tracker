@@ -29,12 +29,9 @@ export function MockProvider({ children }: { children: ReactNode }) {
 
   if (startupError) {
     return (
-      <>
-        <div role="alert" className="p-4 text-sm text-destructive">
-          Mock API could not start. Continuing without mocks.
-        </div>
-        {children}
-      </>
+      <div role="alert" className="p-4 text-sm text-destructive">
+        Mock API could not start. Fix mocks before continuing.
+      </div>
     );
   }
 
@@ -52,7 +49,7 @@ export function MockProvider({ children }: { children: ReactNode }) {
 async function startWorker(): Promise<void> {
   const { worker } = await import("@/mocks/browser");
   await worker.start({
-    onUnhandledRequest: "bypass",
+    onUnhandledRequest: "warn",
     serviceWorker: { url: "/mockServiceWorker.js" },
   });
 }
