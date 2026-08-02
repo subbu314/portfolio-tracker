@@ -793,6 +793,28 @@
         "title": "HoldingResponse",
         "type": "object"
       },
+      "HoldingTransactionsResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "instrument_id": {
+            "title": "Instrument Id",
+            "type": "integer"
+          },
+          "transactions": {
+            "items": {
+              "$ref": "#/components/schemas/TransactionRowResponse"
+            },
+            "title": "Transactions",
+            "type": "array"
+          }
+        },
+        "required": [
+          "instrument_id",
+          "transactions"
+        ],
+        "title": "HoldingTransactionsResponse",
+        "type": "object"
+      },
       "HoldingsResponse": {
         "additionalProperties": false,
         "properties": {
@@ -1302,6 +1324,55 @@
         "title": "SyncResponse",
         "type": "object"
       },
+      "TransactionRowResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "amount": {
+            "title": "Amount",
+            "type": "number"
+          },
+          "fees": {
+            "title": "Fees",
+            "type": "number"
+          },
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "price": {
+            "title": "Price",
+            "type": "number"
+          },
+          "quantity": {
+            "title": "Quantity",
+            "type": "number"
+          },
+          "side": {
+            "title": "Side",
+            "type": "string"
+          },
+          "source": {
+            "title": "Source",
+            "type": "string"
+          },
+          "trade_date": {
+            "title": "Trade Date",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "trade_date",
+          "side",
+          "quantity",
+          "price",
+          "fees",
+          "amount",
+          "source"
+        ],
+        "title": "TransactionRowResponse",
+        "type": "object"
+      },
       "ValidationError": {
         "properties": {
           "ctx": {
@@ -1775,6 +1846,96 @@
           }
         },
         "summary": "Holdings",
+        "tags": [
+          "portfolio"
+        ]
+      }
+    },
+    "/portfolio/holdings/{instrument_id}": {
+      "get": {
+        "operationId": "holding_detail_portfolio_holdings__instrument_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "instrument_id",
+            "required": true,
+            "schema": {
+              "title": "Instrument Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HoldingResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "404": {
+            "description": "Holding not found"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Holding Detail",
+        "tags": [
+          "portfolio"
+        ]
+      }
+    },
+    "/portfolio/holdings/{instrument_id}/transactions": {
+      "get": {
+        "operationId": "holding_transactions_portfolio_holdings__instrument_id__transactions_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "instrument_id",
+            "required": true,
+            "schema": {
+              "title": "Instrument Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HoldingTransactionsResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "404": {
+            "description": "Instrument not found"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Holding Transactions",
         "tags": [
           "portfolio"
         ]

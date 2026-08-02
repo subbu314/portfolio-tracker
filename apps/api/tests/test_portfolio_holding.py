@@ -99,3 +99,57 @@ def test_get_holding_and_transactions_http():
 def test_transactions_404_unknown_instrument():
     client = TestClient(create_app())
     assert client.get("/portfolio/holdings/99999/transactions").status_code == 404
+
+
+def test_transactions_same_trade_date_ordered_by_id():
+    """Two txs on same trade_date must sort by id asc (not side/source)."""
+    client = TestClient(create_app())
+    Session = get_session_factory()
+    with Session() as session:
+        instrument = Instrument(
+            symbol="TCS",
+            isin="INE467B01029",
+            instrument_type="equity",
+            exchange="NSE",
+            yahoo_symbol="TCS.NS",
+        )
+        session.add(instrument)
+        session.flush()
+        # Insert higher-id row first so API must apply id tie-break.
+        session.add(
+            Transaction(
+                instrument_id=instrument.id,
+                trade_date="2024-03-15",
+                side="sell",
+                quantity=3,
+                price=3500.0,
+                fees=5.0,
+                source="api",
+                dedupe_key="same-day-2",
+            )
+        )
+        session.add(
+            Transaction(
+                instrument_id=instrument.id,
+                trade_date="2024-03-15",
+                side="buy",
+                quantity=10,
+                price=3400.0,
+                fees=0.0,
+                source="csv",
+                dedupe_key="same-day-1",
+            )
+        )
+        session.commit()
+        instrument_id = instrument.id
+
+    rows = client.get(f"/portfolio/holdings/{instrument_id}/transactions").json()[
+        "transactions"
+    ]
+    assert len(rows) == 2
+    assert rows[0]["trade_date"] == rows[1]["trade_date"] == "2024-03-15"
+    assert rows[0]["id"] < rows[1]["id"]
+    assert rows[0]["side"] == "sell"
+    assert rows[0]["source"] == "api"
+    assert rows[1]["side"] == "buy"
+    assert rows[1]["source"] == "csv"

@@ -141,6 +141,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/portfolio/holdings/{instrument_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Holding Detail */
+        get: operations["holding_detail_portfolio_holdings__instrument_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/portfolio/holdings/{instrument_id}/transactions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Holding Transactions */
+        get: operations["holding_transactions_portfolio_holdings__instrument_id__transactions_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/portfolio/overview": {
         parameters: {
             query?: never;
@@ -484,6 +518,13 @@ export interface components {
             /** Xirr Excess Pp */
             xirr_excess_pp: number | null;
         };
+        /** HoldingTransactionsResponse */
+        HoldingTransactionsResponse: {
+            /** Instrument Id */
+            instrument_id: number;
+            /** Transactions */
+            transactions: components["schemas"]["TransactionRowResponse"][];
+        };
         /** HoldingsResponse */
         HoldingsResponse: {
             /** Holdings */
@@ -628,6 +669,25 @@ export interface components {
             prices: components["schemas"]["PricesRefreshResponse"];
             /** Trades Appended */
             trades_appended: number;
+        };
+        /** TransactionRowResponse */
+        TransactionRowResponse: {
+            /** Amount */
+            amount: number;
+            /** Fees */
+            fees: number;
+            /** Id */
+            id: number;
+            /** Price */
+            price: number;
+            /** Quantity */
+            quantity: number;
+            /** Side */
+            side: string;
+            /** Source */
+            source: string;
+            /** Trade Date */
+            trade_date: string;
         };
         /** ValidationError */
         ValidationError: {
@@ -903,6 +963,82 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HoldingsResponse"];
+                };
+            };
+        };
+    };
+    holding_detail_portfolio_holdings__instrument_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                instrument_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HoldingResponse"];
+                };
+            };
+            /** @description Holding not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    holding_transactions_portfolio_holdings__instrument_id__transactions_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                instrument_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HoldingTransactionsResponse"];
+                };
+            };
+            /** @description Instrument not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };
