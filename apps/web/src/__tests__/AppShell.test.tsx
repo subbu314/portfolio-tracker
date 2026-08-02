@@ -33,4 +33,19 @@ describe("AppShell", () => {
     await user.click(toggle);
     expect(screen.getByTestId("app-shell")).toHaveAttribute("data-collapsed", "true");
   });
+
+  it("keeps nav link accessible names when collapsed", async () => {
+    const user = userEvent.setup();
+    render(
+      <AppShell>
+        <p>child</p>
+      </AppShell>,
+    );
+    await user.click(screen.getByRole("button", { name: /collapse navigation/i }));
+    expect(screen.getByRole("link", { name: /overview/i })).toHaveAttribute("href", "/");
+    expect(screen.getByRole("link", { name: /holdings/i })).toHaveAttribute("href", "/holdings");
+    expect(screen.getByRole("link", { name: /import/i })).toHaveAttribute("href", "/import");
+    expect(screen.getByRole("link", { name: /settings/i })).toHaveAttribute("href", "/settings");
+    expect(screen.getByRole("link", { name: /glossary/i })).toHaveAttribute("href", "/glossary");
+  });
 });

@@ -33,6 +33,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             <Link
               key={item.href}
               href={item.href}
+              aria-label={item.label}
               data-active={isActive(pathname, item.href) ? "true" : "false"}
             >
               <span aria-hidden>{item.icon}</span>
