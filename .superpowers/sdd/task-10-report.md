@@ -1,140 +1,59 @@
-# Task 10 Report: Eight scenario overlays
+# Task 10 Report: P3 leftovers and mock polish
 
 ## Status
 
-Complete.
+DONE
 
 ## Implementation
 
-- Added minimal fixture overlays for empty, stale, gap, import-error, unknown-category, missing-price, and negative-return scenarios.
-- Retained existing logged-out auth overlay.
-- Added handler scenario matrix covering all eight non-happy scenarios.
+- FE-LIB-7: Normalized one trailing slash from `NEXT_PUBLIC_API_URL`.
+- FE-LIB-6: Treated unparseable sync timestamps as null/stale.
+- FE-LIB-10: Bucketed unknown instrument types under `Other`.
+- FE-UI-11: Reloaded auth, benchmark settings, and catalogs after sync.
+- FE-LIB-8: Rejected batch-shaped and otherwise invalid stored import reports.
+- FE-MOCK-6/7/8: Made missing-price totals, allocation, and ITD series unavailable; warned on missing overlays; nulled logged-out trade append time.
+- FE-CFG-3/4 and FE-TEST-4: Failed closed on MSW startup errors and warned on unhandled requests.
 
-## TDD evidence
+## TDD Evidence
 
-1. Added scenario matrix before overlays existed.
-2. Verified RED: seven scenario cases failed because their overlays were absent; logged-out passed using existing overlay.
-3. Added fixture overlays.
-4. Verified GREEN: 10 handler tests passed.
-
-## Verification
-
-- `npm --prefix apps/web run test -- src/__tests__/handlers.test.ts`: 10 passed.
-- `cd apps/web && npm test`: 146 API tests and 93 web tests passed.
-- Overlay JSON validation and `git diff --check`: passed.
-- Linter diagnostics: 0 errors.
-
-## Self-review
-
-- Overlay arrays replace the happy fixture only where item-level values must differ.
-- Empty charts are unavailable with no points; pre-existing unavailable 3Y and 5Y fixtures remain shared.
-- Nullable response fields are used for unavailable pricing metrics; required OpenAPI fields remain present through deep merge.
-
-## Concerns
-
-- Technical Standards MCP exposed no technical-standard tools during implementation.
-# Task 10 Report — Reconcile + gap detection
-
-## Status
-
-Implemented holdings-vs-transaction reconciliation, calendar-day trade append gap
-detection, alert aggregation, and `GET /portfolio/alerts`.
-
-## Changes
-
-- Added `transaction_implied_qty`, `reconcile_holdings`, `detect_gaps`, and
-  `get_alerts` in `modules/reconcile.py`.
-- Gap warnings provide exact Console Tradebook export dates, cover Equity and/or
-  Mutual Funds, and direct users to CSV import or Sync now instead of manual
-  transaction edits.
-- Added `/portfolio/alerts` for Overview and Import consumers.
-- Reused public `kite_auth.get_setting` / `kite_auth.set_setting` helpers and
-  existing `last_sync_at` / `last_trade_append_at` keys.
-
-## TDD evidence
-
-- Reconcile mismatch test failed with an empty result before implementation.
-- Gap test failed because `detect_gaps` was absent before implementation.
-- Alert aggregation test failed because `get_alerts` was absent before implementation.
-- Endpoint test failed with HTTP 404 before route implementation.
-- Added coverage for buy/sell net quantity, matching holdings, missing timestamp,
-  one-day boundary, same-day boundary, gap messaging, alert shape, and HTTP route.
+- FE-LIB-7 RED: request URL contained `//health`. GREEN: focused API regression passed.
+- FE-LIB-6 RED: invalid timestamp produced no banner. GREEN: status suite passed 7 tests.
+- FE-LIB-10 RED: unknown type inflated Equity to 100%. GREEN: allocation suite passed 4 tests.
+- FE-UI-11 RED: benchmark settings loaded once after sync. GREEN: Settings suite passed 4 tests.
+- FE-LIB-8 RED: batch-shaped JSON was returned as an import report. GREEN: ImportReport suite passed 12 tests.
+- FE-MOCK-6/7/8 RED: stale totals/series/trade timestamp leaked from happy fixtures and no warning was emitted. GREEN: focused handlers regressions passed 4 tests.
+- FE-CFG-3/4 RED: startup failure rendered children and worker bypassed unhandled requests. GREEN: MockProvider suite passed 5 tests.
 
 ## Validation
 
-- `cd apps/api && uv run pytest tests/test_reconcile.py -v`: 9 passed.
-- `npm run api:test`: 89 passed, 1 pre-existing TestClient deprecation warning.
-- IDE diagnostics: no errors in changed Python files.
-- `git diff --check`: passed.
+- `cd apps/web && npm test` — PASS: 27 files, 146 tests.
+- IDE diagnostics for changed source files: clean.
 
-## Self-review
+## Commits
 
-- Scope matches Task 10 brief; no manual transaction mutation path added.
-- Calendar-day threshold is explicit: no warning at zero or one day; warning after
-  more than one day.
-- Reconciliation excludes quantities equal within `1e-6`.
-- Technical Standards MCP was unavailable during implementation; repository
-  conventions and loaded engineering standards were applied.
+- `6a0d025 fix(web): normalize trailing slash in API base URL`
+- `2b77c15 fix(web): treat invalid sync dates as stale`
+- `ef50fe4 fix(web): bucket unknown instrument types as other`
+- `90788c3 fix(web): reload settings after holdings sync`
+- `2932d45 fix(web): validate stored import report shape`
+- `0cdb26a fix(web): make missing-price mocks honest`
+- `fe46878 fix(web): fail closed when mock worker startup fails`
 
-## Concern
+## Concerns
 
-Root `npm test` cannot complete because `apps/web/package.json` does not exist yet.
-API suite completes successfully before that expected future-task failure.
+- npm emits pre-existing unsupported-config warnings for `devdir`, `always-auth`, and `email`.
+- `npm ci` reports three high-severity dependency vulnerabilities; remediation is outside this task.
+- Unrelated pre-existing working-tree changes remain uncommitted.
 
-## Important findings follow-up
+## Important Review Findings
 
-- Reconciliation now checks the union of holdings and transaction instrument IDs,
-  treating either missing side as zero quantity.
-- Added regression coverage for a transaction-only position with no holdings snapshot.
-- Alerts with reconciliation mismatches now include Console CSV backfill, Kite
-  re-sync, and no-manual-edit guidance independently of gap detection.
-- Focused validation: `11 passed`; IDE diagnostics: no errors.
+- FE-LIB-8: Strengthened stored import-report validation for every required report field; discriminator-only JSON now returns null.
+- FE-MOCK-6: Added unavailable missing-price portfolio-series overlays for 1Y, 3Y, and 5Y, preventing happy-series fallback.
 
-## Review Fix: Strengthen scenario-matrix assertions
+## Important Review Validation
 
-**Status:** Complete. No fixture overlay changes required.
-
-### Changes
-
-Extended `it.each` scenario matrix in `handlers.test.ts` with stronger assertions while keeping existing checks:
-
-- **empty:** `overview.total_value === 0`, `series-ITD available === false`
-- **logged_out:** `last_sync_at === null` (in addition to `connected === false`)
-- **gap:** `gap.message` and `suggested_to` truthy (alongside existing `suggested_from`)
-- **import_errors:** `existing > 0` (alongside existing `flagged_rows`)
-- **unknown_category:** holdings include `needs_category === true` (alongside benchmarks check)
-- **missing_prices:** some holding has `value === null` (alongside existing `ltp === null`)
-- **negative:** `gain_pct < 0` and `absolute_excess_pp < 0` (alongside existing `gain_inr < 0`)
-
-All existing fixtures satisfied stronger assertions without modification.
-
-### Validation
-
-- `cd apps/web && npm test -- src/__tests__/handlers.test.ts`: 10 passed.
-- `cd apps/web && npm test`: 93 passed (23 files).
-
-### Commit
-
-- `test(web): strengthen MSW scenario overlay assertions`
-
-## Review Fix: Cover remaining scenario overlay fields
-
-**Status:** Complete. No fixture changes.
-
-### Changes
-
-Extended `handlers.test.ts` scenario matrix with remaining overlay-field assertions:
-
-- **empty:** `absolute.current_value === 0`, `absolute.invested_cost === 0`, `absolute.gain_inr === 0`
-- **unknown_category:** `needs_category === true` items also have `mf_category === null` in benchmarks and holdings; `GET /portfolio/holdings/3` returns `needs_category: true` and `mf_category: null`
-- **missing_prices:** overview fetch; at least one of `xirr`, `cagr`, `absolute.gain_pct` is null
-
-### Validation
-
-- `cd apps/web && npm test -- src/__tests__/handlers.test.ts`: 10 passed.
-- `cd apps/web && npm test`: 93 passed (23 files).
-
-### Commit
-
-- `test(web): cover remaining scenario overlay fields`
+- `npm --prefix apps/web test -- src/__tests__/ImportReport.test.tsx src/__tests__/handlers.test.ts` — PASS: 2 files, 26 tests.
+- `cd apps/web && npm test` — PASS: 27 files, 147 tests.
+- IDE diagnostics for changed TypeScript files: clean.
+- Fix commit: `0aa6a37 fix(web): close important Task 10 findings`.
 
