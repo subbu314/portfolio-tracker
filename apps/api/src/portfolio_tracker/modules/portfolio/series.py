@@ -97,8 +97,7 @@ def get_portfolio_series(session: Session, as_of: str, window: str) -> dict:
         if inputs.transactions_by_instrument.get(inst.id)
     }
     candidate_dates = _price_dates(session, symbols, start, as_of)
-    if as_of not in candidate_dates:
-        candidate_dates = [*candidate_dates, as_of]
+    candidate_dates = sorted({*candidate_dates, start, as_of})
 
     base_day: str | None = None
     base_mv = 0.0

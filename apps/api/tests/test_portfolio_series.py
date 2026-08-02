@@ -1,3 +1,4 @@
+import pytest
 from fastapi.testclient import TestClient
 
 from portfolio_tracker.db.engine import get_session_factory
@@ -92,6 +93,68 @@ def test_portfolio_series_itd_absolute():
     assert by_date["2022-01-03"]["portfolio_return"] == 0.0
     assert abs(by_date["2024-06-01"]["portfolio_return"] - 0.3) < 1e-9
     assert abs(by_date["2024-06-01"]["benchmark_return"] - 0.2) < 1e-9
+
+
+@pytest.mark.parametrize("has_as_of_quote", [False, True])
+def test_portfolio_series_uses_window_start_with_forward_filled_price(
+    has_as_of_quote,
+):
+    Session = get_session_factory()
+    with Session() as session:
+        instrument = Instrument(
+            symbol="RELIANCE",
+            isin="INE002A01018",
+            instrument_type="equity",
+            exchange="NSE",
+            yahoo_symbol="RELIANCE.NS",
+        )
+        session.add(instrument)
+        session.flush()
+        session.add(
+            Transaction(
+                instrument_id=instrument.id,
+                trade_date="2022-01-03",
+                side="buy",
+                quantity=10,
+                price=2000.0,
+                fees=0,
+                source="csv",
+                dedupe_key="window-start-forward-fill",
+            )
+        )
+        prices = [
+            Price(
+                symbol="RELIANCE.NS",
+                price_date="2023-06-01",
+                close=2000.0,
+                source="yahoo",
+            ),
+            Price(
+                symbol="RELIANCE.NS",
+                price_date="2023-12-01",
+                close=2200.0,
+                source="yahoo",
+            ),
+        ]
+        if has_as_of_quote:
+            prices.append(
+                Price(
+                    symbol="RELIANCE.NS",
+                    price_date="2024-06-01",
+                    close=2400.0,
+                    source="yahoo",
+                )
+            )
+        session.add_all(prices)
+        session.commit()
+
+        result = portfolio.get_portfolio_series(
+            session, as_of="2024-06-01", window="1Y"
+        )
+
+    assert result["start"] == "2023-06-02"
+    assert result["points"][0]["date"] == "2023-06-02"
+    assert result["points"][0]["portfolio_return"] == 0.0
 
 
 def test_portfolio_series_http_and_unavailable_window():

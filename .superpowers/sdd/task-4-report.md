@@ -74,3 +74,36 @@ Result: 7 passed, 1 pre-existing Starlette deprecation warning.
 
 - Existing FastAPI TestClient emits a Starlette/httpx deprecation warning.
 - Sonar reports cognitive complexity 30 for brief-supplied series algorithm.
+
+## Fix round: portfolio series base date
+
+- Included `start` and `as_of` in sorted, unique candidate dates so forward-filled
+  prices can establish market value on window start.
+- Added regression coverage for a holding owned before window start whose latest
+  price is before start, both with and without an `as_of` quote.
+- OpenAPI schema is unchanged; API client regeneration was not needed.
+
+### TDD RED
+
+Command:
+
+`cd apps/api && uv run pytest tests/test_portfolio_series.py::test_portfolio_series_uses_window_start_with_forward_filled_price -q`
+
+Result: 2 failed as expected; both cases returned `2023-12-01` instead of
+window start `2023-06-02`.
+
+### Covering test
+
+Command:
+
+`cd apps/api && uv run pytest tests/test_portfolio_series.py -q`
+
+Result: 5 passed, 1 pre-existing Starlette deprecation warning.
+
+### Full suite
+
+Command:
+
+`cd apps/api && uv run pytest -q`
+
+Result: 140 passed, 1 pre-existing Starlette deprecation warning in 3.91s.
