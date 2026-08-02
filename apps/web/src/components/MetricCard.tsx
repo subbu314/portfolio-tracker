@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { FormattedMetricValue } from "@/components/FormattedMetricValue";
 import { MetricWindowSelects } from "@/components/MetricWindowSelects";
 import { Card } from "@/components/ui/card";
 import { formatPct, formatPp } from "@/lib/format";
@@ -37,7 +38,6 @@ export function MetricCard({
     mode === "return"
       ? formatPct(portfolioReturn)
       : formatPp(excessPp);
-  const isUnavailable = value === "N/A";
   const outperformanceCopy =
     excessPp === null
       ? null
@@ -58,15 +58,10 @@ export function MetricCard({
           onWindowChange={setWindow}
         />
       </div>
-      <p
-        className={
-          isUnavailable
-            ? "font-mono tabular-nums text-muted-foreground"
-            : "metric-value font-mono tabular-nums"
-        }
-      >
-        {value}
-      </p>
+      <FormattedMetricValue
+        value={value}
+        availableClassName="metric-value font-mono tabular-nums"
+      />
       {mode === "outperformance" ? (
         <>
           {outperformanceCopy ? <p className="muted">{outperformanceCopy}</p> : null}

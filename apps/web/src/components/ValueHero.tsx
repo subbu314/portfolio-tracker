@@ -1,4 +1,5 @@
 import { formatInr, formatPct, formatSignedInr } from "@/lib/format";
+import { FormattedMetricValue } from "@/components/FormattedMetricValue";
 import { Card } from "@/components/ui/card";
 
 type Props = {
@@ -15,7 +16,6 @@ export function ValueHero({
   gainPct,
 }: Props) {
   const gainPctValue = formatPct(gainPct);
-  const isGainPctUnavailable = gainPctValue === "N/A";
 
   return (
     <Card className="value-hero p-5">
@@ -34,16 +34,11 @@ export function ValueHero({
         <p className="metric-value font-mono tabular-nums">
           {formatSignedInr(gainInr)}
         </p>
-        <p
-          className={
-            isGainPctUnavailable
-              ? "font-mono tabular-nums text-muted-foreground"
-              : "metric-percent font-mono tabular-nums"
-          }
+        <FormattedMetricValue
+          value={gainPctValue}
+          availableClassName="metric-percent font-mono tabular-nums"
           data-negative={gainPct !== null && gainPct < 0}
-        >
-          {gainPctValue}
-        </p>
+        />
       </div>
     </Card>
   );

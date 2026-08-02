@@ -2,11 +2,11 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { MetricChip } from "@/components/MetricChip";
 import { PageAlert } from "@/components/PageAlert";
 import { ReturnSeriesChart } from "@/components/ReturnSeriesChart";
 import { TransactionsTable } from "@/components/TransactionsTable";
 import { WindowSelect } from "@/components/WindowSelect";
-import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   api,
@@ -20,21 +20,6 @@ import { getWindowMetrics, type WindowKey } from "@/lib/windows";
 type Props = {
   instrumentId: number;
 };
-
-function ReturnChip({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="metric-card">
-      <Badge variant="secondary">{label}</Badge>
-      <p
-        className={
-          value === "N/A" ? "font-mono tabular-nums text-muted-foreground" : "metric-value"
-        }
-      >
-        {value}
-      </p>
-    </div>
-  );
-}
 
 export function HoldingDetailPage({ instrumentId }: Props) {
   const [holding, setHolding] = useState<Holding | null>(null);
@@ -145,10 +130,10 @@ export function HoldingDetailPage({ instrumentId }: Props) {
         />
       </div>
       <section className="card-grid" aria-label="Holding returns">
-        <ReturnChip label="Abs %" value={formatPct(metrics?.absolute_pct)} />
-        <ReturnChip label="XIRR" value={formatPct(metrics?.xirr)} />
-        <ReturnChip label="CAGR" value={formatPct(metrics?.cagr)} />
-        <ReturnChip
+        <MetricChip label="Abs %" value={formatPct(metrics?.absolute_pct)} />
+        <MetricChip label="XIRR" value={formatPct(metrics?.xirr)} />
+        <MetricChip label="CAGR" value={formatPct(metrics?.cagr)} />
+        <MetricChip
           label="Outperf."
           value={formatPp(metrics?.absolute_excess_pp)}
         />
