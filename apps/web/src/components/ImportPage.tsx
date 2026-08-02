@@ -72,9 +72,15 @@ export function ImportPage() {
       }
       saveImportReport(result);
       setReport(result);
-      const nextAlerts = await api.getAlerts();
-      setAlerts(nextAlerts);
-      setAlertsError(null);
+      try {
+        const nextAlerts = await api.getAlerts();
+        setAlerts(nextAlerts);
+        setAlertsError(null);
+      } catch (error) {
+        setAlertsError(
+          error instanceof Error ? error.message : "Failed to refresh alerts",
+        );
+      }
     } catch (error) {
       setUploadError(parseImportError(error));
     } finally {

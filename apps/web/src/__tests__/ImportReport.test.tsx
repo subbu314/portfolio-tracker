@@ -139,6 +139,26 @@ describe("ImportPage", () => {
     expect(mocks.getAlerts).toHaveBeenCalledTimes(2);
   });
 
+  it("keeps the import report when the post-import alerts refresh fails", async () => {
+    const user = userEvent.setup();
+    mocks.getAlerts
+      .mockResolvedValueOnce({ gap: null })
+      .mockRejectedValueOnce(new Error("alerts refresh failed"));
+    mocks.postImportCsv.mockResolvedValue(report);
+    render(<ImportPage />);
+
+    await user.upload(
+      screen.getByLabelText(/console tradebook csv/i),
+      new File(["ok"], "ok.csv", { type: "text/csv" }),
+    );
+    await user.click(screen.getByRole("button", { name: "Upload" }));
+
+    expect(await screen.findByText("Alerts error")).toBeInTheDocument();
+    expect(screen.getByText("alerts refresh failed")).toBeInTheDocument();
+    expect(screen.getByText(/3 new/i)).toBeInTheDocument();
+    expect(screen.queryByText("Import error")).not.toBeInTheDocument();
+  });
+
   it("titles alerts load failures separately from import errors", async () => {
     mocks.getAlerts.mockRejectedValue(new Error("alerts down"));
     render(<ImportPage />);
