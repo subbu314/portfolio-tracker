@@ -30,6 +30,18 @@ type Props = {
   rows: Transaction[];
 };
 
+function FormattedTableCell({ value }: { value: string }) {
+  return (
+    <TableCell
+      className={
+        value === "N/A" ? "font-mono tabular-nums text-muted-foreground" : undefined
+      }
+    >
+      {value}
+    </TableCell>
+  );
+}
+
 export function TransactionsTable({ rows }: Props) {
   return (
     <Card>
@@ -64,8 +76,8 @@ export function TransactionsTable({ rows }: Props) {
                   <TableCell>{row.trade_date}</TableCell>
                   <TableCell>{row.side}</TableCell>
                   <TableCell>{row.quantity}</TableCell>
-                  <TableCell>{formatInr(row.price)}</TableCell>
-                  <TableCell>{formatInr(row.amount)}</TableCell>
+                  <FormattedTableCell value={formatInr(row.price)} />
+                  <FormattedTableCell value={formatInr(row.amount)} />
                   <TableCell>{formatSource(row.source)}</TableCell>
                 </TableRow>
               ))

@@ -15,6 +15,17 @@ vi.mock("@/components/TransactionsTable", () => ({
   TransactionsTable: () => <p>Transactions</p>,
 }));
 
+it("shows skeleton while core holding data loads", () => {
+  mocks.getHolding.mockReturnValue(new Promise(() => {}));
+  mocks.getHoldingTransactions.mockReturnValue(new Promise(() => {}));
+  mocks.getHoldingSeries.mockReturnValue(new Promise(() => {}));
+
+  render(<HoldingDetailPage instrumentId={1} />);
+
+  expect(screen.getByTestId("page-skeleton")).toBeInTheDocument();
+  expect(screen.queryByText("Loading…")).not.toBeInTheDocument();
+});
+
 it("keeps holding details visible when chart loading fails", async () => {
   mocks.getHolding.mockResolvedValue({
     instrument_id: 1,
@@ -64,4 +75,5 @@ it("keeps holding details visible when chart loading fails", async () => {
     await screen.findByRole("heading", { name: "RELIANCE" }),
   ).toBeInTheDocument();
   expect(await screen.findByRole("alert")).toHaveTextContent("Series unavailable");
+  expect(screen.getByText("N/A")).toHaveClass("text-muted-foreground");
 });

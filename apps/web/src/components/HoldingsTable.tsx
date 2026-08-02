@@ -26,6 +26,18 @@ type Props = {
   windowKey: WindowKey;
 };
 
+function FormattedTableCell({ value }: { value: string }) {
+  return (
+    <TableCell
+      className={
+        value === "N/A" ? "font-mono tabular-nums text-muted-foreground" : undefined
+      }
+    >
+      {value}
+    </TableCell>
+  );
+}
+
 export function HoldingsTable({ title, variant, rows, windowKey }: Props) {
   return (
     <Card>
@@ -73,15 +85,15 @@ export function HoldingsTable({ title, variant, rows, windowKey }: Props) {
                       <TableCell>{row.mf_category ?? "—"}</TableCell>
                     )}
                     <TableCell>{row.qty}</TableCell>
-                    <TableCell>{formatInr(row.avg_price)}</TableCell>
-                    <TableCell>{formatInr(row.ltp)}</TableCell>
-                    <TableCell>{formatInr(row.value)}</TableCell>
-                    <TableCell>{formatPct(metrics?.absolute_pct)}</TableCell>
-                    <TableCell>{formatPct(metrics?.xirr)}</TableCell>
-                    <TableCell>{formatPct(metrics?.cagr)}</TableCell>
-                    <TableCell>
-                      {formatPp(metrics?.absolute_excess_pp)}
-                    </TableCell>
+                    <FormattedTableCell value={formatInr(row.avg_price)} />
+                    <FormattedTableCell value={formatInr(row.ltp)} />
+                    <FormattedTableCell value={formatInr(row.value)} />
+                    <FormattedTableCell value={formatPct(metrics?.absolute_pct)} />
+                    <FormattedTableCell value={formatPct(metrics?.xirr)} />
+                    <FormattedTableCell value={formatPct(metrics?.cagr)} />
+                    <FormattedTableCell
+                      value={formatPp(metrics?.absolute_excess_pp)}
+                    />
                   </TableRow>
                 );
               })

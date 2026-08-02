@@ -25,7 +25,13 @@ function ReturnChip({ label, value }: { label: string; value: string }) {
   return (
     <div className="metric-card">
       <Badge variant="secondary">{label}</Badge>
-      <p className="metric-value">{value}</p>
+      <p
+        className={
+          value === "N/A" ? "font-mono tabular-nums text-muted-foreground" : "metric-value"
+        }
+      >
+        {value}
+      </p>
     </div>
   );
 }

@@ -64,7 +64,7 @@ describe("HoldingsTable", () => {
     );
     expect(screen.getByText("10.00%")).toBeInTheDocument();
     expect(screen.getByText("12.00%")).toBeInTheDocument();
-    expect(screen.getByText("N/A")).toBeInTheDocument(); // CAGR
+    expect(screen.getByText("N/A")).toHaveClass("text-muted-foreground"); // CAGR
     expect(screen.getByText("+2.00 pp")).toBeInTheDocument(); // absolute_excess_pp
   });
 });
