@@ -44,6 +44,9 @@ import missingPricesHolding2 from "./fixtures/missing_prices/holding-2.json";
 import missingPricesHolding3 from "./fixtures/missing_prices/holding-3.json";
 import missingPricesHoldings from "./fixtures/missing_prices/holdings.json";
 import missingPricesOverview from "./fixtures/missing_prices/overview.json";
+import missingPricesSeries1Y from "./fixtures/missing_prices/series-1Y.json";
+import missingPricesSeries3Y from "./fixtures/missing_prices/series-3Y.json";
+import missingPricesSeries5Y from "./fixtures/missing_prices/series-5Y.json";
 import missingPricesSeriesItd from "./fixtures/missing_prices/series-ITD.json";
 import negativeOverview from "./fixtures/negative/overview.json";
 import staleAuthStatus from "./fixtures/stale/auth-status.json";
@@ -98,6 +101,9 @@ export const fixtureModules: Record<string, unknown> = {
   "./fixtures/missing_prices/holding-3.json": missingPricesHolding3,
   "./fixtures/missing_prices/holdings.json": missingPricesHoldings,
   "./fixtures/missing_prices/overview.json": missingPricesOverview,
+  "./fixtures/missing_prices/series-1Y.json": missingPricesSeries1Y,
+  "./fixtures/missing_prices/series-3Y.json": missingPricesSeries3Y,
+  "./fixtures/missing_prices/series-5Y.json": missingPricesSeries5Y,
   "./fixtures/missing_prices/series-ITD.json": missingPricesSeriesItd,
   "./fixtures/negative/overview.json": negativeOverview,
   "./fixtures/stale/auth-status.json": staleAuthStatus,

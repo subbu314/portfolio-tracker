@@ -134,11 +134,13 @@ it.each([
   }],
   ["missing_prices", async () => {
     localStorage.setItem(STORAGE_KEY, "missing_prices");
-    const [h, o, detail, series] = await Promise.all([
+    const [h, o, detail, ...seriesByWindow] = await Promise.all([
       fetch(`${API}/portfolio/holdings`).then((r) => r.json()),
       fetch(`${API}/portfolio/overview`).then((r) => r.json()),
       fetch(`${API}/portfolio/holdings/1`).then((r) => r.json()),
-      fetch(`${API}/portfolio/series?window=ITD`).then((r) => r.json()),
+      ...(["ITD", "1Y", "3Y", "5Y"] as const).map((window) =>
+        fetch(`${API}/portfolio/series?window=${window}`).then((r) => r.json()),
+      ),
     ]);
     expect(h.holdings.every((x: { ltp: number | null }) => x.ltp === null)).toBe(
       true,
@@ -152,7 +154,12 @@ it.each([
     expect(o.incomplete).toBe(true);
     expect(o.total_value === 0 || o.total_value === null).toBe(true);
     expect(o.allocation).toEqual([]);
-    expect(series.available).toBe(false);
+    expect(
+      seriesByWindow.every(
+        (series: { available: boolean; points: unknown[] }) =>
+          series.available === false && series.points.length === 0,
+      ),
+    ).toBe(true);
     expect(o.windows.ITD).toMatchObject({
       absolute_pct: null,
       absolute_inr: null,

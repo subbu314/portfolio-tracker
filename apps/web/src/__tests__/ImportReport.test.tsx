@@ -82,6 +82,15 @@ describe("import report storage", () => {
 
     expect(loadImportReport()).toBeNull();
   });
+
+  it("returns null for discriminator-only stored JSON", () => {
+    sessionStorage.setItem(
+      "portfolio-tracker:last-import",
+      JSON.stringify({ format: "console_tradebook" }),
+    );
+
+    expect(loadImportReport()).toBeNull();
+  });
 });
 
 describe("ImportPage", () => {
