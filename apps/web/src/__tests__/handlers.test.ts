@@ -49,8 +49,11 @@ it.each([
     expect(o.absolute.current_value).toBe(0);
     expect(o.absolute.invested_cost).toBe(0);
     expect(o.absolute.gain_inr).toBe(0);
+    expect(o.absolute.gain_pct).toBeNull();
     expect(o.xirr).toBeNull();
+    expect(o.cagr).toBeNull();
     expect(o.windows.ITD).toBeNull();
+    expect(o.windows["1Y"]).toBeNull();
     expect(o.allocation).toEqual([]);
     expect(s.available).toBe(false);
   }],
@@ -161,8 +164,15 @@ it.each([
     expect(o.absolute.gain_pct).toBeLessThan(0);
     expect(o.absolute_excess_pp).toBeLessThan(0);
     expect(o.xirr).toBeLessThan(0);
+    expect(o.cagr).toBeLessThan(0);
+    expect(o.windows.ITD?.absolute_pct).toBeLessThan(0);
     expect(o.windows.ITD?.xirr).toBeLessThan(0);
+    expect(o.windows.ITD?.cagr).toBeLessThan(0);
     expect(o.windows.ITD?.xirr).not.toBe(0.15);
+    expect(o.windows["1Y"]?.absolute_pct).toBeLessThan(0);
+    expect(o.windows["1Y"]?.xirr).toBeLessThan(0);
+    expect(o.windows["1Y"]?.cagr).toBeLessThan(0);
+    expect(o.windows["1Y"]?.xirr_excess_pp).toBeLessThan(0);
   }],
 ] as const)("%s scenario fixture", async (_name, fn) => {
   await fn();
