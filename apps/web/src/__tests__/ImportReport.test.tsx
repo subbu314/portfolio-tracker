@@ -113,6 +113,40 @@ describe("ImportPage", () => {
     expect(loadImportReport()).toEqual(report);
   });
 
+  it("refetches alerts after successful import", async () => {
+    const user = userEvent.setup();
+    mocks.getAlerts
+      .mockResolvedValueOnce({
+        gap: {
+          suggested_from: "2026-01-01",
+          suggested_to: "2026-08-01",
+          message: "Missing history",
+        },
+      })
+      .mockResolvedValueOnce({ gap: null });
+    mocks.postImportCsv.mockResolvedValue(report);
+    render(<ImportPage />);
+    expect(await screen.findByDisplayValue("2026-01-01")).toBeInTheDocument();
+
+    await user.upload(
+      screen.getByLabelText(/console tradebook csv/i),
+      new File(["ok"], "ok.csv", { type: "text/csv" }),
+    );
+    await user.click(screen.getByRole("button", { name: "Upload" }));
+
+    await screen.findByText(/3 new/i);
+    expect(screen.queryByDisplayValue("2026-01-01")).not.toBeInTheDocument();
+    expect(mocks.getAlerts).toHaveBeenCalledTimes(2);
+  });
+
+  it("titles alerts load failures separately from import errors", async () => {
+    mocks.getAlerts.mockRejectedValue(new Error("alerts down"));
+    render(<ImportPage />);
+
+    expect(await screen.findByText("Alerts error")).toBeInTheDocument();
+    expect(screen.queryByText("Import error")).not.toBeInTheDocument();
+  });
+
   it("shows API error details", async () => {
     const user = userEvent.setup();
     mocks.postImportCsv.mockRejectedValue(

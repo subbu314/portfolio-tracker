@@ -49,7 +49,8 @@ function parseImportError(error: unknown): ImportError {
 export function ImportPage() {
   const [alerts, setAlerts] = useState<Alerts | null>(null);
   const [report, setReport] = useState<SingleImportResult | null>(null);
-  const [error, setError] = useState<ImportError | null>(null);
+  const [alertsError, setAlertsError] = useState<string | null>(null);
+  const [uploadError, setUploadError] = useState<ImportError | null>(null);
   const [uploading, setUploading] = useState(false);
 
   useEffect(() => {
@@ -58,14 +59,12 @@ export function ImportPage() {
     void api
       .getAlerts()
       .then(setAlerts)
-      .catch((loadError: Error) =>
-        setError({ message: loadError.message, rows: [] }),
-      );
+      .catch((loadError: Error) => setAlertsError(loadError.message));
   }, []);
 
   async function onUpload(file: File) {
     setUploading(true);
-    setError(null);
+    setUploadError(null);
     try {
       const result = await api.postImportCsv(file);
       if (!isSingleImportResult(result)) {
@@ -73,8 +72,11 @@ export function ImportPage() {
       }
       saveImportReport(result);
       setReport(result);
-    } catch (uploadError) {
-      setError(parseImportError(uploadError));
+      const nextAlerts = await api.getAlerts();
+      setAlerts(nextAlerts);
+      setAlertsError(null);
+    } catch (error) {
+      setUploadError(parseImportError(error));
     } finally {
       setUploading(false);
     }
@@ -90,6 +92,9 @@ export function ImportPage() {
           message={alerts.gap.message}
         />
       ) : null}
+      {alertsError ? (
+        <PageAlert title="Alerts error">{alertsError}</PageAlert>
+      ) : null}
       <Card>
         <CardHeader className="p-5 pb-0">
           <CardTitle>Upload Console tradebook</CardTitle>
@@ -102,12 +107,12 @@ export function ImportPage() {
           <CsvUpload onUpload={onUpload} uploading={uploading} />
         </CardContent>
       </Card>
-      {error ? (
+      {uploadError ? (
         <PageAlert title="Import error">
-          <p>{error.message}</p>
-          {error.rows.length > 0 ? (
+          <p>{uploadError.message}</p>
+          {uploadError.rows.length > 0 ? (
             <ul>
-              {error.rows.map((row) => (
+              {uploadError.rows.map((row) => (
                 <li key={row}>{row}</li>
               ))}
             </ul>
