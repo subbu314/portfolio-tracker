@@ -1,5 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import { HoldingDetailPage } from "@/components/HoldingDetailPage";
+import { makeHolding, makeWindows } from "@/__tests__/fixtures/holdings";
 
 const mocks = vi.hoisted(() => ({
   getHolding: vi.fn(),
@@ -27,42 +28,7 @@ it("shows skeleton while core holding data loads", () => {
 });
 
 it("keeps holding details visible when chart loading fails", async () => {
-  mocks.getHolding.mockResolvedValue({
-    instrument_id: 1,
-    symbol: "RELIANCE",
-    instrument_type: "equity",
-    qty: 2,
-    avg_price: 100,
-    ltp: 120,
-    value: 240,
-    absolute_pct: 0.2,
-    absolute_inr: 40,
-    xirr: 0.15,
-    cagr: null,
-    benchmark: "Nifty 500",
-    benchmark_return: 0.1,
-    absolute_excess_pp: 10,
-    xirr_excess_pp: 5,
-    cagr_excess_pp: null,
-    incomplete: false,
-    needs_category: false,
-    mf_category: null,
-    windows: {
-      ITD: {
-        absolute_pct: 0.2,
-        absolute_inr: 40,
-        xirr: 0.15,
-        cagr: null,
-        benchmark_return: 0.1,
-        absolute_excess_pp: 10,
-        xirr_excess_pp: 5,
-        cagr_excess_pp: null,
-      },
-      "1Y": null,
-      "3Y": null,
-      "5Y": null,
-    },
-  });
+  mocks.getHolding.mockResolvedValue(makeHolding());
   mocks.getHoldingTransactions.mockResolvedValue({
     instrument_id: 1,
     transactions: [],
@@ -81,28 +47,23 @@ it("keeps holding details visible when chart loading fails", async () => {
 it("clears notFound when navigating from missing id to valid id", async () => {
   mocks.getHolding
     .mockRejectedValueOnce(new Error("Holding not found"))
-    .mockResolvedValueOnce({
-      instrument_id: 2,
-      symbol: "INFY",
-      instrument_type: "equity",
-      qty: 10,
-      avg_price: 100,
-      ltp: 110,
-      value: 1100,
-      absolute_pct: 0.1,
-      absolute_inr: 100,
-      xirr: 0.1,
-      cagr: 0.1,
-      benchmark: "Nifty IT",
-      benchmark_return: 0.08,
-      absolute_excess_pp: 2,
-      xirr_excess_pp: 1,
-      cagr_excess_pp: 1,
-      incomplete: false,
-      needs_category: false,
-      mf_category: null,
-      windows: {
-        ITD: {
+    .mockResolvedValueOnce(
+      makeHolding({
+        instrument_id: 2,
+        symbol: "INFY",
+        qty: 10,
+        ltp: 110,
+        value: 1100,
+        absolute_pct: 0.1,
+        absolute_inr: 100,
+        xirr: 0.1,
+        cagr: 0.1,
+        benchmark: "Nifty IT",
+        benchmark_return: 0.08,
+        absolute_excess_pp: 2,
+        xirr_excess_pp: 1,
+        cagr_excess_pp: 1,
+        windows: makeWindows({
           absolute_pct: 0.1,
           absolute_inr: 100,
           xirr: 0.1,
@@ -111,12 +72,9 @@ it("clears notFound when navigating from missing id to valid id", async () => {
           absolute_excess_pp: 2,
           xirr_excess_pp: 1,
           cagr_excess_pp: 1,
-        },
-        "1Y": null,
-        "3Y": null,
-        "5Y": null,
-      },
-    });
+        }),
+      }),
+    );
   mocks.getHoldingTransactions.mockResolvedValue({
     instrument_id: 2,
     transactions: [],
@@ -136,48 +94,11 @@ it("clears notFound when navigating from missing id to valid id", async () => {
 });
 
 it("clears stale holding data when navigating between valid ids", async () => {
-  const holdingA = {
-    instrument_id: 1,
-    symbol: "RELIANCE",
-    instrument_type: "equity",
-    qty: 2,
-    avg_price: 100,
-    ltp: 120,
-    value: 240,
-    absolute_pct: 0.2,
-    absolute_inr: 40,
-    xirr: 0.15,
-    cagr: null,
-    benchmark: "Nifty 500",
-    benchmark_return: 0.1,
-    absolute_excess_pp: 10,
-    xirr_excess_pp: 5,
-    cagr_excess_pp: null,
-    incomplete: false,
-    needs_category: false,
-    mf_category: null,
-    windows: {
-      ITD: {
-        absolute_pct: 0.2,
-        absolute_inr: 40,
-        xirr: 0.15,
-        cagr: null,
-        benchmark_return: 0.1,
-        absolute_excess_pp: 10,
-        xirr_excess_pp: 5,
-        cagr_excess_pp: null,
-      },
-      "1Y": null,
-      "3Y": null,
-      "5Y": null,
-    },
-  };
-  const holdingB = {
+  const holdingA = makeHolding();
+  const holdingB = makeHolding({
     instrument_id: 2,
     symbol: "INFY",
-    instrument_type: "equity",
     qty: 10,
-    avg_price: 100,
     ltp: 110,
     value: 1100,
     absolute_pct: 0.1,
@@ -189,25 +110,17 @@ it("clears stale holding data when navigating between valid ids", async () => {
     absolute_excess_pp: 2,
     xirr_excess_pp: 1,
     cagr_excess_pp: 1,
-    incomplete: false,
-    needs_category: false,
-    mf_category: null,
-    windows: {
-      ITD: {
-        absolute_pct: 0.1,
-        absolute_inr: 100,
-        xirr: 0.1,
-        cagr: 0.1,
-        benchmark_return: 0.08,
-        absolute_excess_pp: 2,
-        xirr_excess_pp: 1,
-        cagr_excess_pp: 1,
-      },
-      "1Y": null,
-      "3Y": null,
-      "5Y": null,
-    },
-  };
+    windows: makeWindows({
+      absolute_pct: 0.1,
+      absolute_inr: 100,
+      xirr: 0.1,
+      cagr: 0.1,
+      benchmark_return: 0.08,
+      absolute_excess_pp: 2,
+      xirr_excess_pp: 1,
+      cagr_excess_pp: 1,
+    }),
+  });
 
   let resolveHoldingB!: (value: typeof holdingB) => void;
   let resolveTransactionsB!: (value: {
