@@ -3,6 +3,23 @@ import userEvent from "@testing-library/user-event";
 import { MetricCard } from "@/components/MetricCard";
 import { ReturnSeriesChart } from "@/components/ReturnSeriesChart";
 import { ValueHero } from "@/components/ValueHero";
+import type { WindowsMap } from "@/lib/windows";
+
+const windowsWithXirr015AndBench009AndExcess25: WindowsMap = {
+  ITD: {
+    absolute_pct: 0.15,
+    absolute_inr: 1,
+    xirr: 0.15,
+    cagr: 0.11,
+    benchmark_return: 0.09,
+    absolute_excess_pp: 3,
+    xirr_excess_pp: 2.5,
+    cagr_excess_pp: 1.5,
+  },
+  "1Y": null,
+  "3Y": null,
+  "5Y": null,
+};
 
 describe("ValueHero", () => {
   it("shows value, invested, and absolute return", () => {
@@ -111,6 +128,19 @@ describe("MetricCard", () => {
     expect(
       screen.queryByText(/you beat category benchmarks/i),
     ).not.toBeInTheDocument();
+  });
+
+  it("hides absolute benchmark breakdown when outperf metric is XIRR", () => {
+    render(
+      <MetricCard
+        title="Outperformance"
+        mode="outperformance"
+        defaultMetric="xirr"
+        windows={windowsWithXirr015AndBench009AndExcess25}
+      />,
+    );
+    expect(screen.getByText("+2.50 pp")).toBeInTheDocument();
+    expect(screen.queryByText(/15\.00% − 9\.00%/)).not.toBeInTheDocument();
   });
 });
 

@@ -70,7 +70,9 @@ export function MetricCard({
       {mode === "outperformance" ? (
         <>
           {outperformanceCopy ? <p className="muted">{outperformanceCopy}</p> : null}
-          {portfolioReturn !== null && benchmarkReturn !== null ? (
+          {metric === "absolute" &&
+          portfolioReturn !== null &&
+          benchmarkReturn !== null ? (
             <p className="metric-breakdown font-mono tabular-nums">
               {formatPct(portfolioReturn)} − {formatPct(benchmarkReturn)}
             </p>

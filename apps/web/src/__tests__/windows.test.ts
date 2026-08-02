@@ -28,7 +28,7 @@ describe("windows helpers", () => {
     expect(getWindowMetrics(windows, "1Y")).toBeNull();
   });
 
-  it("picks return / excess / benchmark by metric", () => {
+  it("picks return and excess pp by metric", () => {
     const m = getWindowMetrics(windows, "ITD");
     expect(pickReturnPct(m, "xirr")).toBe(0.15);
     expect(pickReturnPct(m, "absolute")).toBe(0.2);
