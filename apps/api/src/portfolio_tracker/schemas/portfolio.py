@@ -4,7 +4,6 @@ from portfolio_tracker.schemas.common import (
     AbsoluteReturn,
     AllocationSlice,
     WindowKey,
-    WindowMetrics,
     WindowsMap,
 )
 

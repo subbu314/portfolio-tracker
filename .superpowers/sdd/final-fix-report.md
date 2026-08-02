@@ -17,3 +17,18 @@
 ## Commit
 
 `fix: restore kite token key; align Performance docs with flat payload`
+
+## OpenAPI review-fix follow-up
+
+### Changes
+
+- Root `check:api` now runs only the web API type-drift check; live-app-to-OpenAPI validation remains in pytest.
+- Web API drift check creates and removes `apps/web/.api-types.check.ts`, outside `src/`.
+- Removed unused `WindowMetrics` import from portfolio schemas.
+
+### Verification
+
+- `cd apps/api && uv run pytest tests/test_openapi_export.py tests/test_schemas_common.py tests/test_openapi_portfolio.py -q`: 7 passed, 1 Starlette deprecation warning.
+- `cd apps/web && npm run check:api`: passed; generated and removed `.api-types.check.ts`.
+- `cd apps/web && npm test`: passed; root test script ran 127 API tests and 20 web tests. Warnings: Starlette deprecation and Vitest ESM configuration notice.
+- `npm run check:api && git diff --exit-code -- apps/web/openapi.json`: passed; `apps/web/openapi.json` remained unchanged.
