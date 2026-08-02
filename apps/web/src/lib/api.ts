@@ -25,6 +25,16 @@ export type AuthStatus = AppJson<"/auth/status", "get">;
 export type SyncResult = AppJson<"/sync", "post">;
 export type ImportResult = AppJson<"/import/csv", "post">;
 export type BenchmarkList = AppJson<"/settings/benchmarks", "get">;
+export type HoldingTransactions = AppJson<
+  "/portfolio/holdings/{instrument_id}/transactions",
+  "get"
+>;
+export type PortfolioSeries = AppJson<"/portfolio/series", "get">;
+export type HoldingSeries = AppJson<
+  "/portfolio/holdings/{instrument_id}/series",
+  "get"
+>;
+export type Catalogs = AppJson<"/settings/catalogs", "get">;
 
 export const api = {
   getHealth: () => request<AppJson<"/health", "get">>("/health"),
@@ -33,6 +43,25 @@ export const api = {
     const data = await request<HoldingsResponse>("/portfolio/holdings");
     return data.holdings;
   },
+  getHolding: (instrumentId: number) =>
+    request<AppJson<"/portfolio/holdings/{instrument_id}", "get">>(
+      `/portfolio/holdings/${instrumentId}`,
+    ),
+  getHoldingTransactions: (instrumentId: number) =>
+    request<HoldingTransactions>(
+      `/portfolio/holdings/${instrumentId}/transactions`,
+    ),
+  getPortfolioSeries: (window: "ITD" | "1Y" | "3Y" | "5Y" = "ITD") =>
+    request<PortfolioSeries>(
+      `/portfolio/series?window=${encodeURIComponent(window)}`,
+    ),
+  getHoldingSeries: (
+    instrumentId: number,
+    window: "ITD" | "1Y" | "3Y" | "5Y" = "ITD",
+  ) =>
+    request<HoldingSeries>(
+      `/portfolio/holdings/${instrumentId}/series?window=${encodeURIComponent(window)}`,
+    ),
   getPerformance: () => request<Performance>("/portfolio/performance"),
   getAlerts: () => request<Alerts>("/portfolio/alerts"),
   getAuthStatus: () => request<AuthStatus>("/auth/status"),
@@ -57,6 +86,7 @@ export const api = {
     return request<ImportResult>("/import/csv", { method: "POST", body });
   },
   getBenchmarkSettings: () => request<BenchmarkList>("/settings/benchmarks"),
+  getCatalogs: () => request<Catalogs>("/settings/catalogs"),
   putBenchmark: (instrumentId: number, benchmark_index: string) =>
     request<AppJson<"/settings/benchmarks/{instrument_id}", "put">>(
       `/settings/benchmarks/${instrumentId}`,

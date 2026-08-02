@@ -170,6 +170,60 @@ describe("api client request mapping", () => {
     );
   });
 
+  it("getHolding GETs /portfolio/holdings/:id", async () => {
+    const fetchMock = mockOk({ instrument_id: 7, symbol: "RELIANCE" });
+    await api.getHolding(7);
+    expectGetRequest(fetchMock, "/portfolio/holdings/7");
+  });
+
+  it("getHoldingTransactions GETs transactions path", async () => {
+    const fetchMock = mockOk({ instrument_id: 7, transactions: [] });
+    await api.getHoldingTransactions(7);
+    expectGetRequest(fetchMock, "/portfolio/holdings/7/transactions");
+  });
+
+  it("getPortfolioSeries GETs /portfolio/series with window", async () => {
+    const fetchMock = mockOk({
+      window: "1Y",
+      metric: "absolute",
+      as_of: "2026-08-01",
+      start: "2025-08-01",
+      available: true,
+      incomplete: false,
+      points: [],
+    });
+    await api.getPortfolioSeries("1Y");
+    expect(fetchMock).toHaveBeenCalledWith(
+      `${BASE}/portfolio/series?window=1Y`,
+      expect.objectContaining({ cache: "no-store" }),
+    );
+  });
+
+  it("getHoldingSeries GETs holding series with window", async () => {
+    const fetchMock = mockOk({
+      instrument_id: 7,
+      window: "ITD",
+      metric: "absolute",
+      benchmark: "Nifty 500",
+      as_of: "2026-08-01",
+      start: "2024-01-01",
+      available: true,
+      incomplete: false,
+      points: [],
+    });
+    await api.getHoldingSeries(7, "ITD");
+    expect(fetchMock).toHaveBeenCalledWith(
+      `${BASE}/portfolio/holdings/7/series?window=ITD`,
+      expect.objectContaining({ cache: "no-store" }),
+    );
+  });
+
+  it("getCatalogs GETs /settings/catalogs", async () => {
+    const fetchMock = mockOk({ mf_categories: [], benchmark_indexes: [] });
+    await api.getCatalogs();
+    expectGetRequest(fetchMock, "/settings/catalogs");
+  });
+
   it("throws with response text on non-OK", async () => {
     vi.stubGlobal(
       "fetch",
