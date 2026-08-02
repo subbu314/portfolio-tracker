@@ -9,6 +9,7 @@ import { SeriesChartPanel } from "@/components/SeriesChartPanel";
 import { StatusBanner } from "@/components/StatusBanner";
 import { ValueHero } from "@/components/ValueHero";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useCancellableQuery } from "@/hooks/useCancellableQuery";
 import { allocationByKind } from "@/lib/allocation";
 import {
   api,
@@ -16,7 +17,6 @@ import {
   type AuthStatus,
   type Holding,
   type Overview,
-  type PortfolioSeries,
 } from "@/lib/api";
 import { toPortfolioChartPoints } from "@/lib/series";
 import { deriveStatusBanner, todayIst } from "@/lib/status";
@@ -27,13 +27,19 @@ export function OverviewPage() {
   const [holdings, setHoldings] = useState<Holding[]>([]);
   const [auth, setAuth] = useState<AuthStatus | null>(null);
   const [alerts, setAlerts] = useState<Alerts | null>(null);
-  const [series, setSeries] = useState<PortfolioSeries | null>(null);
   const [chartMetric, setChartMetric] = useState<MetricKey>("absolute");
   const [chartWindow, setChartWindow] = useState<WindowKey>("ITD");
   const [pageError, setPageError] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
-  const [chartError, setChartError] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
+  const {
+    data: series,
+    error: chartError,
+  } = useCancellableQuery({
+    key: [chartWindow],
+    enabled: chartMetric === "absolute",
+    queryFn: () => api.getPortfolioSeries(chartWindow),
+  });
 
   async function loadCore() {
     const [nextOverview, nextHoldings, nextAuth, nextAlerts] =
@@ -55,31 +61,6 @@ export function OverviewPage() {
       setPageError(loadError.message),
     );
   }, []);
-
-  useEffect(() => {
-    let cancelled = false;
-    setSeries(null);
-    setChartError(null);
-
-    if (chartMetric !== "absolute") {
-      return () => {
-        cancelled = true;
-      };
-    }
-
-    void api
-      .getPortfolioSeries(chartWindow)
-      .then((nextSeries) => {
-        if (!cancelled) setSeries(nextSeries);
-      })
-      .catch((loadError: Error) => {
-        if (!cancelled) setChartError(loadError.message);
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [chartMetric, chartWindow]);
 
   async function onRefresh() {
     setRefreshing(true);

@@ -1,4 +1,5 @@
 import type { paths } from "./api-types";
+import type { WindowKey } from "@/lib/windows";
 
 const API_URL = (
   process.env.NEXT_PUBLIC_API_URL ?? "http://127.0.0.1:8000"
@@ -70,13 +71,13 @@ export const api = {
     request<HoldingTransactions>(
       `/portfolio/holdings/${instrumentId}/transactions`,
     ),
-  getPortfolioSeries: (window: "ITD" | "1Y" | "3Y" | "5Y" = "ITD") =>
+  getPortfolioSeries: (window: WindowKey = "ITD") =>
     request<PortfolioSeries>(
       `/portfolio/series?window=${encodeURIComponent(window)}`,
     ),
   getHoldingSeries: (
     instrumentId: number,
-    window: "ITD" | "1Y" | "3Y" | "5Y" = "ITD",
+    window: WindowKey = "ITD",
   ) =>
     request<HoldingSeries>(
       `/portfolio/holdings/${instrumentId}/series?window=${encodeURIComponent(window)}`,

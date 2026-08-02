@@ -8,10 +8,10 @@ import { SeriesChartPanel } from "@/components/SeriesChartPanel";
 import { TransactionsTable } from "@/components/TransactionsTable";
 import { WindowSelect } from "@/components/WindowSelect";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useCancellableQuery } from "@/hooks/useCancellableQuery";
 import {
   api,
   type Holding,
-  type HoldingSeries,
   type HoldingTransactions,
 } from "@/lib/api";
 import { formatPct, formatPp, formatPrice } from "@/lib/format";
@@ -26,11 +26,16 @@ export function HoldingDetailPage({ instrumentId }: Props) {
   const [holding, setHolding] = useState<Holding | null>(null);
   const [transactions, setTransactions] =
     useState<HoldingTransactions | null>(null);
-  const [series, setSeries] = useState<HoldingSeries | null>(null);
   const [window, setWindow] = useState<WindowKey>("ITD");
   const [error, setError] = useState<string | null>(null);
-  const [chartError, setChartError] = useState<string | null>(null);
   const [notFound, setNotFound] = useState(false);
+  const {
+    data: series,
+    error: chartError,
+  } = useCancellableQuery({
+    key: [instrumentId, window],
+    queryFn: () => api.getHoldingSeries(instrumentId, window),
+  });
 
   useEffect(() => {
     let cancelled = false;
@@ -56,23 +61,6 @@ export function HoldingDetailPage({ instrumentId }: Props) {
       cancelled = true;
     };
   }, [instrumentId]);
-
-  useEffect(() => {
-    let cancelled = false;
-    setSeries(null);
-    setChartError(null);
-    void api
-      .getHoldingSeries(instrumentId, window)
-      .then((nextSeries) => {
-        if (!cancelled) setSeries(nextSeries);
-      })
-      .catch((loadError: Error) => {
-        if (!cancelled) setChartError(loadError.message);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [instrumentId, window]);
 
   if (notFound) {
     return (
