@@ -1,40 +1,43 @@
-# Task 5 Report: Refresh gap after import + alerts error title
+# Task 5 Report: `useCancellableQuery` + WindowKey series methods
 
 ## Status: DONE
 
 ## Implementation
 
-- Refetched alerts after a successful Console tradebook CSV import so gap guidance reflects imported history.
-- Split alerts-load and upload error state, rendering `Alerts error` and `Import error` independently.
-- Cleared stale alerts errors after a successful post-import refresh.
+- Added `useCancellableQuery`, cancelling prior requests on key changes, resetting query state, and skipping disabled queries.
+- Typed series API windows with `WindowKey`.
+- Moved Overview and holding-detail series loads to hook while preserving Overview page/action/chart error separation and holding core-load not-found mapping.
 
 ## TDD Evidence
 
-1. RED: both regressions failed—gap remained visible after import and alerts failures rendered no `Alerts error` title.
-2. GREEN: focused ImportPage suite passed 10 tests.
+- RED: `useCancellableQuery` suite failed because its module did not exist.
+- GREEN: hook, Overview, HoldingDetail, and API suites passed (34 tests).
 
 ## Validation
 
-- `npm --prefix apps/web test` — PASS: 115 tests across 26 files.
-- IDE diagnostics for modified source and test files — clean.
+- `cd apps/web && npm test` — PASS: 147 API tests and 160 web tests across 31 files.
+- IDE diagnostics — clean.
+
+## Self-review
+
+- Confirmed commit scope contains only five Task 5 source/test files.
+- Confirmed no whitespace errors with `git show --check`.
 
 ## Concerns
 
-- Existing npm configuration warnings remain in test output.
+- Existing npm configuration warnings and one FastAPI TestClient deprecation warning remain unrelated to this task.
 
 ## Commit
 
-- `133cab0` fix(web): refresh import gap alerts after successful CSV upload
+- `66e34b0` refactor(web): add cancellable query hook for series loads
 
-## Important Review Fix
+## Review Fix: key dependency identity
 
-- Kept successful import report state when the post-import alerts refresh fails.
-- Routed post-import refresh failures to `Alerts error` without showing `Import error`.
-- Added regression coverage for preserved import success/report state.
+- Replaced variable-length effect dependencies with serialized `keyId`, ensuring key-content and key-length changes both restart the query, clear query state, and cancel superseded results.
+- Added regression coverage for `["a"]` → `["a", "b"]`, asserting a second query begins and a superseded response cannot replace its result.
 
 ## Review Fix Validation
 
-- RED: `cd apps/web && npx vitest run src/__tests__/ImportReport.test.tsx` — FAIL: 1 failed, 10 passed; refresh failure rendered `Import error`.
-- GREEN: `cd apps/web && npx vitest run src/__tests__/ImportReport.test.tsx` — PASS: 11 tests.
-- `cd apps/web && npm test` — PASS: 116 tests across 26 files.
-- IDE diagnostics for modified source and test files — clean.
+- `cd apps/web && npm test -- src/__tests__/useCancellableQuery.test.tsx src/__tests__/OverviewPage.test.tsx src/__tests__/HoldingDetailPage.test.tsx src/__tests__/api.test.ts` — PASS: 147 API tests; 35 web tests across 4 files.
+- `cd apps/web && npm test` — PASS: 147 API tests; 161 web tests across 31 files.
+- IDE diagnostics — clean.

@@ -19,6 +19,7 @@ export function useCancellableQuery<T>({
 } {
   const [data, setData] = useState<T | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const keyId = JSON.stringify(key);
 
   useEffect(() => {
     let cancelled = false;
@@ -46,8 +47,8 @@ export function useCancellableQuery<T>({
     return () => {
       cancelled = true;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- key/enabled are the cache identity; queryFn is recreated by callers
-  }, [...key, enabled]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- keyId/enabled are the cache identity; queryFn is recreated by callers
+  }, [keyId, enabled]);
 
   return {
     data,
