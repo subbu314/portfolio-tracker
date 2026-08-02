@@ -7,11 +7,28 @@ type AppJson<P extends keyof paths, M extends keyof paths[P]> =
     ? R
     : never;
 
+function errorMessageFromBody(body: string, fallback: string): string {
+  if (!body) return fallback;
+  try {
+    const parsed = JSON.parse(body) as {
+      detail?: string | { message?: string; errors?: string[] } | { msg: string }[];
+    };
+    const detail = parsed.detail;
+    if (typeof detail === "string") return detail;
+    if (Array.isArray(detail)) {
+      return detail.map((item) => item.msg).filter(Boolean).join("; ") || body;
+    }
+  } catch {
+    // Plain-text response body.
+  }
+  return body;
+}
+
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const res = await fetch(`${API_URL}${path}`, { ...init, cache: "no-store" });
   if (!res.ok) {
-    const detail = await res.text();
-    throw new Error(detail || res.statusText);
+    const body = await res.text();
+    throw new Error(errorMessageFromBody(body, res.statusText));
   }
   return res.json() as Promise<T>;
 }

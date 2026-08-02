@@ -235,4 +235,18 @@ describe("api client request mapping", () => {
     );
     await expect(api.getHealth()).rejects.toThrow(/nope/);
   });
+
+  it("parses FastAPI JSON detail into Error message", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue({
+        ok: false,
+        statusText: "Unauthorized",
+        text: async () => JSON.stringify({ detail: "Not authenticated" }),
+      }),
+    );
+    await expect(api.getHealth()).rejects.toMatchObject({
+      message: "Not authenticated",
+    });
+  });
 });
