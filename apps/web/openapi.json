@@ -412,26 +412,7 @@
             "type": "number"
           },
           "windows": {
-            "additionalProperties": {
-              "anyOf": [
-                {
-                  "$ref": "#/components/schemas/WindowMetrics"
-                },
-                {
-                  "type": "null"
-                }
-              ]
-            },
-            "propertyNames": {
-              "enum": [
-                "ITD",
-                "1Y",
-                "3Y",
-                "5Y"
-              ]
-            },
-            "title": "Windows",
-            "type": "object"
+            "$ref": "#/components/schemas/WindowsMap"
           },
           "xirr_excess_pp": {
             "anyOf": [
@@ -763,26 +744,7 @@
             "title": "Value"
           },
           "windows": {
-            "additionalProperties": {
-              "anyOf": [
-                {
-                  "$ref": "#/components/schemas/WindowMetrics"
-                },
-                {
-                  "type": "null"
-                }
-              ]
-            },
-            "propertyNames": {
-              "enum": [
-                "ITD",
-                "1Y",
-                "3Y",
-                "5Y"
-              ]
-            },
-            "title": "Windows",
-            "type": "object"
+            "$ref": "#/components/schemas/WindowsMap"
           },
           "xirr": {
             "anyOf": [
@@ -1043,26 +1005,7 @@
             "type": "number"
           },
           "windows": {
-            "additionalProperties": {
-              "anyOf": [
-                {
-                  "$ref": "#/components/schemas/WindowMetrics"
-                },
-                {
-                  "type": "null"
-                }
-              ]
-            },
-            "propertyNames": {
-              "enum": [
-                "ITD",
-                "1Y",
-                "3Y",
-                "5Y"
-              ]
-            },
-            "title": "Windows",
-            "type": "object"
+            "$ref": "#/components/schemas/WindowsMap"
           },
           "xirr": {
             "anyOf": [
@@ -1198,26 +1141,7 @@
             "type": "number"
           },
           "windows": {
-            "additionalProperties": {
-              "anyOf": [
-                {
-                  "$ref": "#/components/schemas/WindowMetrics"
-                },
-                {
-                  "type": "null"
-                }
-              ]
-            },
-            "propertyNames": {
-              "enum": [
-                "ITD",
-                "1Y",
-                "3Y",
-                "5Y"
-              ]
-            },
-            "title": "Windows",
-            "type": "object"
+            "$ref": "#/components/schemas/WindowsMap"
           },
           "windows_available": {
             "items": {
@@ -1511,6 +1435,60 @@
           }
         },
         "title": "WindowMetrics",
+        "type": "object"
+      },
+      "WindowsMap": {
+        "additionalProperties": false,
+        "description": "Fixed window keys so OpenAPI/TS keep named properties (not string index).",
+        "properties": {
+          "1Y": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/WindowMetrics"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "3Y": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/WindowMetrics"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "5Y": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/WindowMetrics"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "ITD": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/WindowMetrics"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "ITD",
+          "1Y",
+          "3Y",
+          "5Y"
+        ],
+        "title": "WindowsMap",
         "type": "object"
       }
     }

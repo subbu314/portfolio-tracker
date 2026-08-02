@@ -27,3 +27,17 @@ def test_openapi_includes_portfolio_response_schemas():
     ] == {
         "$ref": "#/components/schemas/OverviewResponse"
     }
+
+
+def test_openapi_windows_map_has_fixed_properties():
+    schema = TestClient(create_app()).get("/openapi.json").json()
+    windows = schema["components"]["schemas"]["WindowsMap"]
+    props = set(windows["properties"].keys())
+    assert props == {"ITD", "1Y", "3Y", "5Y"}
+    assert set(windows["required"]) == {"ITD", "1Y", "3Y", "5Y"}
+    assert windows.get("additionalProperties") is False
+
+    overview_windows = schema["components"]["schemas"]["OverviewResponse"]["properties"][
+        "windows"
+    ]
+    assert overview_windows.get("$ref") == "#/components/schemas/WindowsMap"

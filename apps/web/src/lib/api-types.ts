@@ -369,10 +369,7 @@ export interface components {
             value: number | null;
             /** Weight */
             weight: number;
-            /** Windows */
-            windows: {
-                [key: string]: components["schemas"]["WindowMetrics"] | null;
-            };
+            windows: components["schemas"]["WindowsMap"];
             /** Xirr Excess Pp */
             xirr_excess_pp: number | null;
         };
@@ -481,10 +478,7 @@ export interface components {
             symbol: string;
             /** Value */
             value: number | null;
-            /** Windows */
-            windows: {
-                [key: string]: components["schemas"]["WindowMetrics"] | null;
-            };
+            windows: components["schemas"]["WindowsMap"];
             /** Xirr */
             xirr: number | null;
             /** Xirr Excess Pp */
@@ -556,10 +550,7 @@ export interface components {
             incomplete: boolean;
             /** Total Value */
             total_value: number;
-            /** Windows */
-            windows: {
-                [key: string]: components["schemas"]["WindowMetrics"] | null;
-            };
+            windows: components["schemas"]["WindowsMap"];
             /** Xirr */
             xirr: number | null;
             /** Xirr Excess Pp */
@@ -593,10 +584,7 @@ export interface components {
             incomplete: boolean;
             /** Total Value */
             total_value: number;
-            /** Windows */
-            windows: {
-                [key: string]: components["schemas"]["WindowMetrics"] | null;
-            };
+            windows: components["schemas"]["WindowsMap"];
             /** Windows Available */
             windows_available: ("ITD" | "1Y" | "3Y" | "5Y")[];
             /** Xirr */
@@ -672,6 +660,16 @@ export interface components {
             xirr?: number | null;
             /** Xirr Excess Pp */
             xirr_excess_pp?: number | null;
+        };
+        /**
+         * WindowsMap
+         * @description Fixed window keys so OpenAPI/TS keep named properties (not string index).
+         */
+        WindowsMap: {
+            "1Y": components["schemas"]["WindowMetrics"] | null;
+            "3Y": components["schemas"]["WindowMetrics"] | null;
+            "5Y": components["schemas"]["WindowMetrics"] | null;
+            ITD: components["schemas"]["WindowMetrics"] | null;
         };
     };
     responses: never;

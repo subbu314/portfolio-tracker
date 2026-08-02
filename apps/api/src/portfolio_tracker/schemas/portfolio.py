@@ -5,6 +5,7 @@ from portfolio_tracker.schemas.common import (
     AllocationSlice,
     WindowKey,
     WindowMetrics,
+    WindowsMap,
 )
 
 
@@ -29,7 +30,7 @@ class HoldingResponse(BaseModel):
     cagr_excess_pp: float | None
     incomplete: bool
     needs_category: bool
-    windows: dict[WindowKey, WindowMetrics | None]
+    windows: WindowsMap
 
 
 class HoldingsResponse(BaseModel):
@@ -52,7 +53,7 @@ class OverviewResponse(BaseModel):
     cagr_excess_pp: float | None
     allocation: list[AllocationSlice]
     incomplete: bool
-    windows: dict[WindowKey, WindowMetrics | None]
+    windows: WindowsMap
 
 
 class ContributorResponse(BaseModel):
@@ -64,7 +65,7 @@ class ContributorResponse(BaseModel):
     cagr_excess_pp: float | None
     value: float | None
     weight: float
-    windows: dict[WindowKey, WindowMetrics | None]
+    windows: WindowsMap
 
 
 class PerformanceResponse(OverviewResponse):
