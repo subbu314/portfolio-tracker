@@ -1,3 +1,30 @@
+# Final Fix Report: UI API Gaps
+
+## Status
+
+Complete. Left locked `MV(t) / MV(base) - 1` formula unchanged.
+
+## What Changed
+
+- Portfolio series now skips incomplete base days until every held instrument has a usable forward-filled price. Days with missing held-instrument prices produce `portfolio_return: null` and set `incomplete: true`; no partial market value is used.
+- Added regression coverage for two holdings where one price history starts late. Base moves to first fully priced day, so no fabricated `+100%` return occurs.
+- Batch-loaded portfolio prices, benchmark maps, and benchmark levels, then forward-filled each series in memory. Portfolio series now uses bounded bulk queries instead of price and benchmark lookups for every holding/day. Daily source-price points remain unchanged.
+- Removed unused `MF_CATEGORY_CHOICES`.
+
+## Tests
+
+- `cd apps/api && uv run pytest -q tests/test_portfolio_series.py` — 10 passed, 1 existing Starlette deprecation warning.
+- `cd apps/api && uv run pytest -q` — 146 passed, 1 existing Starlette deprecation warning.
+- IDE diagnostics: no errors in changed portfolio series or tests. Existing Sonar warning in `benchmarks.py` reports repeated `"Nifty 500"` literals; unchanged except for removal of unused constant.
+
+## Commits
+
+- `2bdf9c0 fix(api): prevent partial-price portfolio return spikes`
+
+## Remaining Concerns
+
+- Series output dates remain source price dates plus window boundaries, as before; no synthetic calendar dates were added.
+- Query reduction is structural rather than benchmarked: portfolio prices and benchmark levels are each read once per series, then forward-filled in memory.
 # Final whole-branch review fixes
 
 ## Result
