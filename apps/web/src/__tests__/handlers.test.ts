@@ -110,19 +110,46 @@ it.each([
   }],
   ["missing_prices", async () => {
     localStorage.setItem(STORAGE_KEY, "missing_prices");
-    const [h, o] = await Promise.all([
+    const [h, o, detail] = await Promise.all([
       fetch(`${API}/portfolio/holdings`).then((r) => r.json()),
       fetch(`${API}/portfolio/overview`).then((r) => r.json()),
+      fetch(`${API}/portfolio/holdings/1`).then((r) => r.json()),
     ]);
+    expect(h.holdings.every((x: { ltp: number | null }) => x.ltp === null)).toBe(
+      true,
+    );
     expect(
-      h.holdings.some((x: { ltp: number | null }) => x.ltp === null),
+      h.holdings.every(
+        (x: { value: number | null; absolute_pct: number | null }) =>
+          x.value === null && x.absolute_pct === null,
+      ),
     ).toBe(true);
-    expect(
-      h.holdings.some((x: { value: number | null }) => x.value === null),
-    ).toBe(true);
-    expect(
-      [o.xirr, o.cagr, o.absolute.gain_pct].some((v) => v === null),
-    ).toBe(true);
+    expect(o.incomplete).toBe(true);
+    expect(o.windows.ITD).toMatchObject({
+      absolute_pct: null,
+      absolute_inr: null,
+      xirr: null,
+      cagr: null,
+      benchmark_return: null,
+      absolute_excess_pp: null,
+      xirr_excess_pp: null,
+      cagr_excess_pp: null,
+    });
+    expect(o.windows["1Y"]).toMatchObject({
+      absolute_pct: null,
+      xirr: null,
+      cagr: null,
+      benchmark_return: null,
+      absolute_excess_pp: null,
+      xirr_excess_pp: null,
+      cagr_excess_pp: null,
+    });
+    expect(detail).toMatchObject({
+      ltp: null,
+      value: null,
+      absolute_pct: null,
+      incomplete: true,
+    });
   }],
   ["negative", async () => {
     localStorage.setItem(STORAGE_KEY, "negative");

@@ -7,10 +7,10 @@ export function allocationByKind(holdings: Holding[]): AllocationSliceUi[] {
   let mf = 0;
   let etf = 0;
   for (const h of holdings) {
-    const v = h.value ?? 0;
-    if (h.instrument_type === "mf") mf += v;
-    else if (h.instrument_type === "etf") etf += v;
-    else equity += v;
+    if (h.value == null) continue;
+    if (h.instrument_type === "mf") mf += h.value;
+    else if (h.instrument_type === "etf") etf += h.value;
+    else equity += h.value;
   }
   const total = equity + mf + etf;
   if (!total) return [];

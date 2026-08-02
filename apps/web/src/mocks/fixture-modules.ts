@@ -38,6 +38,9 @@ import happySeriesItd from "./fixtures/happy/series-ITD.json";
 import happySyncResult from "./fixtures/happy/sync-result.json";
 import importErrorsImportResult from "./fixtures/import_errors/import-result.json";
 import loggedOutAuthStatus from "./fixtures/logged_out/auth-status.json";
+import missingPricesHolding1 from "./fixtures/missing_prices/holding-1.json";
+import missingPricesHolding2 from "./fixtures/missing_prices/holding-2.json";
+import missingPricesHolding3 from "./fixtures/missing_prices/holding-3.json";
 import missingPricesHoldings from "./fixtures/missing_prices/holdings.json";
 import missingPricesOverview from "./fixtures/missing_prices/overview.json";
 import negativeOverview from "./fixtures/negative/overview.json";
@@ -87,6 +90,9 @@ export const fixtureModules: Record<string, unknown> = {
   "./fixtures/happy/sync-result.json": happySyncResult,
   "./fixtures/import_errors/import-result.json": importErrorsImportResult,
   "./fixtures/logged_out/auth-status.json": loggedOutAuthStatus,
+  "./fixtures/missing_prices/holding-1.json": missingPricesHolding1,
+  "./fixtures/missing_prices/holding-2.json": missingPricesHolding2,
+  "./fixtures/missing_prices/holding-3.json": missingPricesHolding3,
   "./fixtures/missing_prices/holdings.json": missingPricesHoldings,
   "./fixtures/missing_prices/overview.json": missingPricesOverview,
   "./fixtures/negative/overview.json": negativeOverview,

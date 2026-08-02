@@ -7,5 +7,28 @@
   "benchmark_return": null,
   "absolute_excess_pp": null,
   "xirr_excess_pp": null,
-  "cagr_excess_pp": null
+  "cagr_excess_pp": null,
+  "windows": {
+    "ITD": {
+      "absolute_pct": null,
+      "absolute_inr": null,
+      "xirr": null,
+      "cagr": null,
+      "benchmark_return": null,
+      "absolute_excess_pp": null,
+      "xirr_excess_pp": null,
+      "cagr_excess_pp": null
+    },
+    "1Y": {
+      "absolute_pct": null,
+      "absolute_inr": null,
+      "xirr": null,
+      "cagr": null,
+      "benchmark_return": null,
+      "absolute_excess_pp": null,
+      "xirr_excess_pp": null,
+      "cagr_excess_pp": null
+    }
+  },
+  "incomplete": true
 }

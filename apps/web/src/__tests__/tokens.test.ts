@@ -14,3 +14,8 @@ it("defines polish design tokens from the spec", () => {
   expect(css).toContain("#8fa0b7");
   expect(css).toContain("#3d9cf0");
 });
+
+it("maps shadcn semantic colors into the Tailwind theme", () => {
+  expect(css).toContain("--color-primary: var(--primary)");
+  expect(css).toContain("--color-card: var(--card)");
+});

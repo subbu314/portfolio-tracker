@@ -46,4 +46,16 @@ describe("allocationByKind", () => {
     ]);
     expect(allocationByKind([])).toEqual([]);
   });
+
+  it("excludes holdings whose value is unavailable", () => {
+    expect(
+      allocationByKind([
+        h({ instrument_type: "equity", value: null }),
+        h({ instrument_type: "mf", value: 30 }),
+      ]),
+    ).toEqual([{ label: "Mutual funds", weight: 1 }]);
+    expect(
+      allocationByKind([h({ instrument_type: "equity", value: null })]),
+    ).toEqual([]);
+  });
 });
