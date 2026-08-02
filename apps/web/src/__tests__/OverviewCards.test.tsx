@@ -52,7 +52,8 @@ describe("MetricCard", () => {
       />,
     );
     expect(screen.getByText("18.00%")).toBeInTheDocument();
-    await user.selectOptions(screen.getByLabelText(/metric/i), "cagr");
+    await user.click(screen.getByRole("combobox", { name: /metric/i }));
+    await user.click(screen.getByRole("option", { name: "CAGR" }));
     expect(screen.getByText("10.00%")).toBeInTheDocument();
   });
 
@@ -121,7 +122,10 @@ describe("ReturnSeriesChart", () => {
       />,
     );
 
-    expect(screen.getByText("Loading chart…")).toBeInTheDocument();
+    expect(document.querySelector(".animate-pulse")).toHaveClass(
+      "h-[320px]",
+      "w-full",
+    );
     expect(
       screen.queryByText(/not enough history/i),
     ).not.toBeInTheDocument();

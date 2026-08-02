@@ -4,14 +4,20 @@ import { Cell, Legend, Pie, PieChart, ResponsiveContainer, Tooltip } from "recha
 import type { AllocationSliceUi } from "@/lib/allocation";
 import { formatPct } from "@/lib/format";
 
-const COLORS = ["#5b9fd4", "#3ecf8e", "#e6a23c"];
+const COLORS = ["var(--accent)", "var(--positive)", "var(--warn)"];
 
 type Props = {
   slices: AllocationSliceUi[];
 };
 
 export function AllocationChart({ slices }: Props) {
-  if (slices.length === 0) return <p className="muted">No holdings yet</p>;
+  if (slices.length === 0) {
+    return (
+      <div className="rounded-lg border bg-surface-elevated p-4 text-muted-foreground">
+        No holdings yet
+      </div>
+    );
+  }
 
   return (
     <div className="chart-frame" aria-label="Asset allocation chart">
@@ -28,6 +34,7 @@ export function AllocationChart({ slices }: Props) {
               <Cell
                 key={slice.label}
                 fill={COLORS[index % COLORS.length]}
+                stroke="var(--border)"
               />
             ))}
           </Pie>

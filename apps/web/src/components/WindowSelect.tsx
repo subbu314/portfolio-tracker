@@ -1,5 +1,12 @@
 "use client";
 
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { WINDOW_KEYS, type WindowKey } from "@/lib/windows";
 
 type Props = {
@@ -16,20 +23,29 @@ export function WindowSelect({
   ariaLabel = "Window",
 }: Props) {
   return (
-    <label className="field">
-      <span>Window</span>
-      <select
-        id={id}
-        aria-label={ariaLabel}
+    <div className="flex flex-col gap-1.5 text-sm">
+      <span id={`${id}-label`} className="text-muted-foreground">
+        Window
+      </span>
+      <Select
         value={value}
-        onChange={(e) => onChange(e.target.value as WindowKey)}
+        onValueChange={(nextValue) => onChange(nextValue as WindowKey)}
       >
-        {WINDOW_KEYS.map((k) => (
-          <option key={k} value={k}>
-            {k}
-          </option>
-        ))}
-      </select>
-    </label>
+        <SelectTrigger
+          id={id}
+          aria-label={ariaLabel}
+          className="min-w-[7rem]"
+        >
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          {WINDOW_KEYS.map((key) => (
+            <SelectItem key={key} value={key}>
+              {key}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+    </div>
   );
 }

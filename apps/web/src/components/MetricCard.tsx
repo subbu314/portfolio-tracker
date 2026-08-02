@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { MetricWindowSelects } from "@/components/MetricWindowSelects";
+import { Card } from "@/components/ui/card";
 import { formatPct, formatPp } from "@/lib/format";
 import {
   getWindowMetrics,
@@ -44,7 +45,7 @@ export function MetricCard({
         : `You beat category benchmarks by ${value}`;
 
   return (
-    <section className="metric-card">
+    <Card className="metric-card p-5">
       <div className="panel-head">
         <h2>{title}</h2>
         <MetricWindowSelects
@@ -56,17 +57,17 @@ export function MetricCard({
           onWindowChange={setWindow}
         />
       </div>
-      <p className="metric-value">{value}</p>
+      <p className="metric-value font-mono tabular-nums">{value}</p>
       {mode === "outperformance" ? (
         <>
           {outperformanceCopy ? <p className="muted">{outperformanceCopy}</p> : null}
           {portfolioReturn !== null && benchmarkReturn !== null ? (
-            <p className="metric-breakdown">
+            <p className="metric-breakdown font-mono tabular-nums">
               {formatPct(portfolioReturn)} − {formatPct(benchmarkReturn)}
             </p>
           ) : null}
         </>
       ) : null}
-    </section>
+    </Card>
   );
 }

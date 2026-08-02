@@ -10,6 +10,7 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
+import { Skeleton } from "@/components/ui/skeleton";
 
 type Props = {
   title: string;
@@ -36,16 +37,20 @@ export function ReturnSeriesChart({
 }: Props) {
   if (!metricSupportsSeries) {
     return (
-      <p className="muted">
+      <div className="rounded-lg border bg-surface-elevated p-4 text-muted-foreground">
         N/A — series chart supports Absolute return only for v1.
-      </p>
+      </div>
     );
   }
   if (loading) {
-    return <p className="muted">Loading chart…</p>;
+    return <Skeleton className="h-[320px] w-full" />;
   }
-  if (!available) {
-    return <p className="muted">N/A — not enough history for this window.</p>;
+  if (!available || points.length === 0) {
+    return (
+      <div className="rounded-lg border bg-surface-elevated p-4 text-muted-foreground">
+        N/A — not enough history for this window.
+      </div>
+    );
   }
 
   const chartPoints = points.map((point) => ({

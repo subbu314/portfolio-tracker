@@ -8,7 +8,8 @@ describe("WindowSelect", () => {
     const user = userEvent.setup();
     const onChange = vi.fn();
     render(<WindowSelect value="ITD" onChange={onChange} />);
-    await user.selectOptions(screen.getByLabelText(/window/i), "1Y");
+    await user.click(screen.getByRole("combobox", { name: /window/i }));
+    await user.click(screen.getByRole("option", { name: "1Y" }));
     expect(onChange).toHaveBeenCalledWith("1Y");
   });
 });
@@ -26,9 +27,11 @@ describe("MetricWindowSelects", () => {
         onWindowChange={onWindow}
       />,
     );
-    await user.selectOptions(screen.getByLabelText(/metric/i), "cagr");
+    await user.click(screen.getByRole("combobox", { name: /metric/i }));
+    await user.click(screen.getByRole("option", { name: "CAGR" }));
     expect(onMetric).toHaveBeenCalledWith("cagr");
-    await user.selectOptions(screen.getByLabelText(/window/i), "3Y");
+    await user.click(screen.getByRole("combobox", { name: /window/i }));
+    await user.click(screen.getByRole("option", { name: "3Y" }));
     expect(onWindow).toHaveBeenCalledWith("3Y");
   });
 

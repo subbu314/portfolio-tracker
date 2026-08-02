@@ -7,6 +7,13 @@ import {
   type WindowKey,
 } from "@/lib/windows";
 import { WindowSelect } from "@/components/WindowSelect";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 type Props = {
   idPrefix?: string;
@@ -30,21 +37,35 @@ export function MetricWindowSelects({
 
   return (
     <div className="control-row">
-      <label className="field">
-        <span>Metric</span>
-        <select
-          id={`${idPrefix}-metric`}
-          aria-label={metricLabelText}
-          value={metric}
-          onChange={(e) => onMetricChange(e.target.value as MetricKey)}
+      <div className="flex flex-col gap-1.5 text-sm">
+        <span
+          id={`${idPrefix}-metric-label`}
+          className="text-muted-foreground"
         >
-          {METRIC_KEYS.map((k) => (
-            <option key={k} value={k}>
-              {metricLabel(k)}
-            </option>
-          ))}
-        </select>
-      </label>
+          Metric
+        </span>
+        <Select
+          value={metric}
+          onValueChange={(nextMetric) =>
+            onMetricChange(nextMetric as MetricKey)
+          }
+        >
+          <SelectTrigger
+            id={`${idPrefix}-metric`}
+            aria-label={metricLabelText}
+            className="min-w-[7rem]"
+          >
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {METRIC_KEYS.map((key) => (
+              <SelectItem key={key} value={key}>
+                {metricLabel(key)}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
       <WindowSelect
         value={window}
         onChange={onWindowChange}

@@ -82,10 +82,10 @@ it("clears previous series while a new window loads", async () => {
   itd.resolve(series("2020-01-01"));
   expect(await screen.findByText("2020-01-01")).toBeInTheDocument();
 
-  await user.selectOptions(
-    screen.getByLabelText("Portfolio chart window"),
-    "1Y",
+  await user.click(
+    screen.getByRole("combobox", { name: "Portfolio chart window" }),
   );
+  await user.click(screen.getByRole("option", { name: "1Y" }));
 
   expect(screen.getByText("Empty series")).toBeInTheDocument();
   expect(screen.queryByText("2020-01-01")).not.toBeInTheDocument();
@@ -101,10 +101,10 @@ it("ignores a superseded window response", async () => {
 
   render(<OverviewPage />);
   await waitFor(() => expect(mocks.getPortfolioSeries).toHaveBeenCalledWith("ITD"));
-  await user.selectOptions(
-    screen.getByLabelText("Portfolio chart window"),
-    "1Y",
+  await user.click(
+    screen.getByRole("combobox", { name: "Portfolio chart window" }),
   );
+  await user.click(screen.getByRole("option", { name: "1Y" }));
 
   oneYear.resolve(series("2025-01-01"));
   expect(await screen.findByText("2025-01-01")).toBeInTheDocument();

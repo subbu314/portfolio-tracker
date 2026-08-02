@@ -1,4 +1,5 @@
 import { formatInr, formatPct, formatSignedInr } from "@/lib/format";
+import { Card } from "@/components/ui/card";
 
 type Props = {
   totalValue: number;
@@ -14,22 +15,26 @@ export function ValueHero({
   gainPct,
 }: Props) {
   return (
-    <section className="value-hero">
+    <Card className="value-hero p-5">
       <div>
         <p className="eyebrow">Total portfolio value</p>
-        <p className="hero-value">{formatInr(totalValue)}</p>
+        <p className="hero-value font-mono tabular-nums">
+          {formatInr(totalValue)}
+        </p>
         <p className="muted">Invested cost {formatInr(investedCost)}</p>
       </div>
       <div className="hero-return">
         <p className="eyebrow">Absolute return</p>
-        <p className="metric-value">{formatSignedInr(gainInr)}</p>
+        <p className="metric-value font-mono tabular-nums">
+          {formatSignedInr(gainInr)}
+        </p>
         <p
-          className="metric-percent"
+          className="metric-percent font-mono tabular-nums"
           data-negative={gainPct !== null && gainPct < 0}
         >
           {formatPct(gainPct)}
         </p>
       </div>
-    </section>
+    </Card>
   );
 }
