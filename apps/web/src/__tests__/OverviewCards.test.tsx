@@ -22,7 +22,9 @@ describe("ValueHero", () => {
     render(
       <ValueHero totalValue={0} investedCost={0} gainInr={0} gainPct={null} />,
     );
-    expect(screen.getAllByText("N/A").length).toBeGreaterThan(0);
+    const unavailableGain = screen.getAllByText("N/A")[0];
+    expect(unavailableGain).toHaveClass("text-muted-foreground");
+    expect(unavailableGain).not.toHaveClass("metric-percent");
   });
 });
 
@@ -71,7 +73,9 @@ describe("MetricCard", () => {
         defaultMetric="xirr"
       />,
     );
-    expect(screen.getByText("N/A")).toBeInTheDocument();
+    const unavailableMetric = screen.getByText("N/A");
+    expect(unavailableMetric).toHaveClass("text-muted-foreground");
+    expect(unavailableMetric).not.toHaveClass("metric-value");
     expect(
       screen.queryByText(/you beat category benchmarks/i),
     ).not.toBeInTheDocument();

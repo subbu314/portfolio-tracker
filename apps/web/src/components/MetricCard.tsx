@@ -37,6 +37,7 @@ export function MetricCard({
     mode === "return"
       ? formatPct(portfolioReturn)
       : formatPp(excessPp);
+  const isUnavailable = value === "N/A";
   const outperformanceCopy =
     excessPp === null
       ? null
@@ -57,7 +58,15 @@ export function MetricCard({
           onWindowChange={setWindow}
         />
       </div>
-      <p className="metric-value font-mono tabular-nums">{value}</p>
+      <p
+        className={
+          isUnavailable
+            ? "font-mono tabular-nums text-muted-foreground"
+            : "metric-value font-mono tabular-nums"
+        }
+      >
+        {value}
+      </p>
       {mode === "outperformance" ? (
         <>
           {outperformanceCopy ? <p className="muted">{outperformanceCopy}</p> : null}

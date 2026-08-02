@@ -1,4 +1,4 @@
-# Task 5 Report: Holding absolute return series
+# Task 5 Report: Restyle shared controls, StatusBanner, and charts
 
 ## Status
 
@@ -6,40 +6,46 @@ DONE
 
 ## Implementation
 
-- Added `get_holding_series(session, instrument_id, as_of, window)`.
-- Added holding and mapped-index absolute return points using last close on or before each candidate day.
-- Candidate dates use sorted unique price dates plus both `start` and `as_of`, matching portfolio-series forward-fill behavior.
-- Added unavailable, incomplete, unknown-instrument, and invalid-window handling.
-- Added `HoldingSeriesResponse` and `GET /portfolio/holdings/{instrument_id}/series`.
-- Exported service through `portfolio_tracker.modules.portfolio`.
-- Regenerated `apps/web/openapi.json` and `apps/web/src/lib/api-types.ts`; handwritten `api.ts` unchanged.
+- Migrated `WindowSelect` and metric controls from native selects to shadcn/Radix Select controls.
+- Restyled `StatusBanner` with Alert and Button primitives while preserving `deriveStatusBanner` props and CTA behavior.
+- Wrapped `ValueHero` and `MetricCard` in Card primitives; financial values use monospace tabular numerals and retain negative-value data attributes.
+- Replaced chart loading copy with Skeleton, kept null series values as null, added muted empty/unavailable panels, and tokenized allocation colors.
+- Added Radix/jsdom pointer-capture and scrolling test shims.
 
 ## TDD Evidence
 
-- RED: four scoped tests failed because service, route, and OpenAPI schema were absent.
-- GREEN: holding calculation, HTTP route, and OpenAPI tests passed after implementation.
-- Candidate-date mutation check: replacing sorted `{start, as_of}` candidates with older as-of-only behavior caused both forward-fill cases to fail with first point `2024-06-01` instead of `2023-06-02`; restored implementation passed.
+- RED: Radix click-pattern tests failed against native selects because option clicks did not invoke callbacks.
+- GREEN: focused shared-control and overview tests passed after Select migration and required jsdom shims.
 
 ## Validation
 
-- `npm run generate:api` — PASS.
-- `npm run check:api` — PASS.
-- `cd apps/api && uv run pytest -q` — PASS: 145 passed, 1 warning.
+- `cd apps/web && npm test` — PASS: API 146 passed, OpenAPI check passed, web 74 passed across 20 files.
+- `cd apps/web && npm run lint` — PASS.
 - `git diff --check` — PASS.
-- IDE diagnostics found only pre-existing cognitive-complexity warning on `get_portfolio_series`.
+- IDE diagnostics for modified files — clean.
 
 ## Self-review
 
-- Formula matches requirement: `price(day) / price(base_day) - 1`; benchmark uses same base-day rule.
-- Unknown instrument returns `None` in service and HTTP 404 in router.
-- Response model forbids undeclared top-level fields and reuses `SeriesPoint`.
-- No unrelated source changes included.
+- All former `user.selectOptions` calls now exercise combobox/option interaction.
+- Accessible labels preserve contextual window and metric names, including `Portfolio chart window`.
+- Chart mapping retains `null` data points; no unavailable metric is converted to zero.
+- No metric formulas or API contracts changed.
 
 ## Concerns
 
-- Existing Starlette/httpx deprecation warning remains in test output.
-- Existing Sonar cognitive-complexity warning remains on portfolio-series function outside Task 5 scope.
+- Existing npm configuration warnings and Starlette/httpx deprecation warning remain in test output.
 
 ## Commit
 
-- `feat(api): add holding absolute return series for detail charts`
+- `feat(web): restyle shared controls, banners, and charts`
+
+## Review Fixes
+
+- Rendered unavailable MetricCard values as muted `N/A` text without the primary `metric-value` class.
+- Rendered a null ValueHero gain percentage as muted `N/A` text without the positive `metric-percent` class.
+- Added monospace tabular numerals to ValueHero invested-cost INR value.
+- Added focused assertions that unavailable values use `text-muted-foreground` and do not retain their primary styling classes.
+
+## Review Fix Validation
+
+- `npm --prefix apps/web run test -- OverviewCards.test.tsx` — PASS: 1 file, 7 tests passed.

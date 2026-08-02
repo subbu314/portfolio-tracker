@@ -14,6 +14,9 @@ export function ValueHero({
   gainInr,
   gainPct,
 }: Props) {
+  const gainPctValue = formatPct(gainPct);
+  const isGainPctUnavailable = gainPctValue === "N/A";
+
   return (
     <Card className="value-hero p-5">
       <div>
@@ -21,7 +24,10 @@ export function ValueHero({
         <p className="hero-value font-mono tabular-nums">
           {formatInr(totalValue)}
         </p>
-        <p className="muted">Invested cost {formatInr(investedCost)}</p>
+        <p className="muted">
+          Invested cost{" "}
+          <span className="font-mono tabular-nums">{formatInr(investedCost)}</span>
+        </p>
       </div>
       <div className="hero-return">
         <p className="eyebrow">Absolute return</p>
@@ -29,10 +35,14 @@ export function ValueHero({
           {formatSignedInr(gainInr)}
         </p>
         <p
-          className="metric-percent font-mono tabular-nums"
+          className={
+            isGainPctUnavailable
+              ? "font-mono tabular-nums text-muted-foreground"
+              : "metric-percent font-mono tabular-nums"
+          }
           data-negative={gainPct !== null && gainPct < 0}
         >
-          {formatPct(gainPct)}
+          {gainPctValue}
         </p>
       </div>
     </Card>
