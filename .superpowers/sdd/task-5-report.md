@@ -1,4 +1,4 @@
-# Task 5 Report: Kill `_benchmark_cagr` leak
+# Task 5 Report: Holding absolute return series
 
 ## Status
 
@@ -6,73 +6,40 @@ DONE
 
 ## Implementation
 
-- Added `HoldingPublic` and `HoldingComputed` typed dictionaries in
-  `apps/api/src/portfolio_tracker/modules/portfolio_types.py`.
-- Added internal computed holding assembly with public fields isolated under
-  `HoldingComputed.public`.
-- Changed `get_holdings` to return only `HoldingPublic` rows.
-- Changed overview benchmark blending to consume
-  `HoldingComputed.benchmark_cagr`.
-- Removed `_benchmark_cagr` cleanup from portfolio router and
-  `get_performance`; private key is no longer created on public rows.
-- Preserved one holding computation in `get_performance`.
+- Added `get_holding_series(session, instrument_id, as_of, window)`.
+- Added holding and mapped-index absolute return points using last close on or before each candidate day.
+- Candidate dates use sorted unique price dates plus both `start` and `as_of`, matching portfolio-series forward-fill behavior.
+- Added unavailable, incomplete, unknown-instrument, and invalid-window handling.
+- Added `HoldingSeriesResponse` and `GET /portfolio/holdings/{instrument_id}/series`.
+- Exported service through `portfolio_tracker.modules.portfolio`.
+- Regenerated `apps/web/openapi.json` and `apps/web/src/lib/api-types.ts`; handwritten `api.ts` unchanged.
 
 ## TDD Evidence
 
-1. Added `test_holdings_rows_never_contain_private_benchmark_cagr_key`.
-2. RED: focused test failed because module-level holding contained
-   `_benchmark_cagr`.
-3. GREEN: focused leak, single-call, and HTTP tests passed: 3 passed.
+- RED: four scoped tests failed because service, route, and OpenAPI schema were absent.
+- GREEN: holding calculation, HTTP route, and OpenAPI tests passed after implementation.
+- Candidate-date mutation check: replacing sorted `{start, as_of}` candidates with older as-of-only behavior caused both forward-fill cases to fail with first point `2024-06-01` instead of `2023-06-02`; restored implementation passed.
 
-## Verification
+## Validation
 
-- Required targeted command:
-  `uv run pytest tests/test_portfolio.py tests/test_api_integration.py -q`
-  — 18 passed.
-- Full API suite:
-  `uv run pytest -q`
-  — 111 passed.
-- IDE lint diagnostics: no errors.
-- `git show --check`: no whitespace errors.
-
-One pre-existing Starlette/httpx deprecation warning remains in test output.
+- `npm run generate:api` — PASS.
+- `npm run check:api` — PASS.
+- `cd apps/api && uv run pytest -q` — PASS: 145 passed, 1 warning.
+- `git diff --check` — PASS.
+- IDE diagnostics found only pre-existing cognitive-complexity warning on `get_portfolio_series`.
 
 ## Self-review
 
-- Public holding rows contain neither `_benchmark_cagr` nor
-  `benchmark_cagr`.
-- `windows` remains part of each public holding row.
-- Benchmark CAGR remains available only through typed internal computed rows.
-- Router and performance code no longer perform boundary cleanup.
-- No Task 7 package split or unrelated refactor was introduced.
-- Existing untracked plan documents were left untouched.
-
-## Commit
-
-`58d27e9 refactor: stop leaking private benchmark_cagr on holding rows`
+- Formula matches requirement: `price(day) / price(base_day) - 1`; benchmark uses same base-day rule.
+- Unknown instrument returns `None` in service and HTTP 404 in router.
+- Response model forbids undeclared top-level fields and reuses `SeriesPoint`.
+- No unrelated source changes included.
 
 ## Concerns
 
-None task-related.
+- Existing Starlette/httpx deprecation warning remains in test output.
+- Existing Sonar cognitive-complexity warning remains on portfolio-series function outside Task 5 scope.
 
-## Critical Review Fix
+## Commit
 
-- Removed public-field reconstruction of `benchmark_cagr`.
-- Added one internal `HoldingComputed` path shared by overview and performance
-  assembly; public `get_holdings` still returns only `HoldingPublic`.
-- Updated the single-computation regression to cover
-  `_get_holdings_computed`.
-- Covering tests:
-  `test_holdings_rows_never_contain_private_benchmark_cagr_key` and
-  `test_overview_itd_cagr_excess_uses_internal_benchmark_cagr` in
-  `apps/api/tests/test_portfolio.py`.
-- RED: numerical regression failed with `364.0854444662689` instead of
-  `3.640854444662689`.
-- Focused regressions: 3 passed, 1 pre-existing warning.
-- Required command:
-  `cd apps/api && uv run pytest tests/test_portfolio.py tests/test_api_integration.py -q`
-  — 19 passed, 1 pre-existing warning.
-- Full suite:
-  `cd apps/api && uv run pytest -q`
-  — 112 passed, 1 pre-existing warning.
-- IDE lint diagnostics: no errors.
+- `feat(api): add holding absolute return series for detail charts`

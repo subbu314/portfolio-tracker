@@ -830,6 +830,77 @@
         "title": "HoldingResponse",
         "type": "object"
       },
+      "HoldingSeriesResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "as_of": {
+            "title": "As Of",
+            "type": "string"
+          },
+          "available": {
+            "title": "Available",
+            "type": "boolean"
+          },
+          "benchmark": {
+            "title": "Benchmark",
+            "type": "string"
+          },
+          "incomplete": {
+            "title": "Incomplete",
+            "type": "boolean"
+          },
+          "instrument_id": {
+            "title": "Instrument Id",
+            "type": "integer"
+          },
+          "metric": {
+            "const": "absolute",
+            "title": "Metric",
+            "type": "string"
+          },
+          "points": {
+            "items": {
+              "$ref": "#/components/schemas/SeriesPoint"
+            },
+            "title": "Points",
+            "type": "array"
+          },
+          "start": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Start"
+          },
+          "window": {
+            "enum": [
+              "ITD",
+              "1Y",
+              "3Y",
+              "5Y"
+            ],
+            "title": "Window",
+            "type": "string"
+          }
+        },
+        "required": [
+          "instrument_id",
+          "window",
+          "metric",
+          "benchmark",
+          "as_of",
+          "start",
+          "available",
+          "incomplete",
+          "points"
+        ],
+        "title": "HoldingSeriesResponse",
+        "type": "object"
+      },
       "HoldingTransactionsResponse": {
         "additionalProperties": false,
         "properties": {
@@ -2036,6 +2107,70 @@
           }
         },
         "summary": "Holding Detail",
+        "tags": [
+          "portfolio"
+        ]
+      }
+    },
+    "/portfolio/holdings/{instrument_id}/series": {
+      "get": {
+        "operationId": "holding_series_portfolio_holdings__instrument_id__series_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "instrument_id",
+            "required": true,
+            "schema": {
+              "title": "Instrument Id",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "window",
+            "required": false,
+            "schema": {
+              "default": "ITD",
+              "enum": [
+                "ITD",
+                "1Y",
+                "3Y",
+                "5Y"
+              ],
+              "title": "Window",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HoldingSeriesResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "description": "Invalid window"
+          },
+          "404": {
+            "description": "Instrument not found"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Holding Series",
         "tags": [
           "portfolio"
         ]

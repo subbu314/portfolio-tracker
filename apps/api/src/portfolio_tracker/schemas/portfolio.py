@@ -118,6 +118,20 @@ class PortfolioSeriesResponse(BaseModel):
     points: list[SeriesPoint]
 
 
+class HoldingSeriesResponse(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    instrument_id: int
+    window: WindowKey
+    metric: Literal["absolute"]
+    benchmark: str
+    as_of: str
+    start: str | None
+    available: bool
+    incomplete: bool
+    points: list[SeriesPoint]
+
+
 class ReconcileDiff(BaseModel):
     model_config = ConfigDict(extra="forbid")
 

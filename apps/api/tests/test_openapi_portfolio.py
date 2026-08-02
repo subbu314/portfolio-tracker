@@ -57,3 +57,9 @@ def test_openapi_includes_portfolio_series():
     assert "/portfolio/series" in schema["paths"]
     assert "PortfolioSeriesResponse" in schema["components"]["schemas"]
     assert "SeriesPoint" in schema["components"]["schemas"]
+
+
+def test_openapi_includes_holding_series():
+    schema = TestClient(create_app()).get("/openapi.json").json()
+    assert "/portfolio/holdings/{instrument_id}/series" in schema["paths"]
+    assert "HoldingSeriesResponse" in schema["components"]["schemas"]

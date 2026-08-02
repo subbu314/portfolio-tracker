@@ -173,3 +173,121 @@ def get_portfolio_series(session: Session, as_of: str, window: str) -> dict:
         "incomplete": incomplete,
         "points": points,
     }
+
+
+def _empty_holding_series(
+    instrument_id: int,
+    window: str,
+    as_of: str,
+    benchmark: str,
+    *,
+    start: str | None = None,
+    incomplete: bool = False,
+) -> dict:
+    return {
+        "instrument_id": instrument_id,
+        "window": window,
+        "metric": "absolute",
+        "benchmark": benchmark,
+        "as_of": as_of,
+        "start": start,
+        "available": False,
+        "incomplete": incomplete,
+        "points": [],
+    }
+
+
+def get_holding_series(
+    session: Session,
+    instrument_id: int,
+    as_of: str,
+    window: str,
+) -> dict | None:
+    if window not in VALID_WINDOWS:
+        raise ValueError(f"Unknown window: {window}")
+    instrument = session.get(Instrument, instrument_id)
+    if instrument is None:
+        return None
+
+    benchmark = benchmarks.ensure_benchmark_map(session, instrument).benchmark_index
+    transactions = (
+        session.query(Transaction)
+        .filter(
+            Transaction.instrument_id == instrument_id,
+            Transaction.trade_date <= as_of,
+        )
+        .order_by(Transaction.trade_date.asc())
+        .all()
+    )
+    if not transactions:
+        return _empty_holding_series(instrument_id, window, as_of, benchmark)
+
+    start = metrics.window_start(as_of, window, transactions[0].trade_date)
+    if start is None:
+        return _empty_holding_series(instrument_id, window, as_of, benchmark)
+
+    symbol = _instrument_price_symbol(instrument)
+    candidate_dates = _price_dates(session, {symbol}, start, as_of)
+    candidate_dates = sorted({*candidate_dates, start, as_of})
+    base_day = next(
+        (
+            day
+            for day in candidate_dates
+            if (_latest_price(session, symbol, day) or 0) > 0
+        ),
+        None,
+    )
+    if base_day is None:
+        return _empty_holding_series(
+            instrument_id,
+            window,
+            as_of,
+            benchmark,
+            start=start,
+            incomplete=True,
+        )
+
+    base_price = _latest_price(session, symbol, base_day)
+    base_benchmark = _benchmark_price(
+        session, benchmark, base_day, as_of=as_of
+    )
+    incomplete = base_benchmark is None or base_benchmark <= 0
+    points: list[dict] = []
+    for day in (date for date in candidate_dates if date >= base_day):
+        price = _latest_price(session, symbol, day)
+        benchmark_level = _benchmark_price(
+            session, benchmark, day, as_of=as_of
+        )
+        holding_return = (
+            price / base_price - 1.0 if price is not None and base_price else None
+        )
+        benchmark_return = (
+            benchmark_level / base_benchmark - 1.0
+            if benchmark_level is not None
+            and base_benchmark is not None
+            and base_benchmark > 0
+            else None
+        )
+        incomplete = (
+            incomplete or holding_return is None or benchmark_return is None
+        )
+        points.append(
+            {
+                "date": day,
+                "portfolio_return": None,
+                "benchmark_return": benchmark_return,
+                "holding_return": holding_return,
+            }
+        )
+
+    return {
+        "instrument_id": instrument_id,
+        "window": window,
+        "metric": "absolute",
+        "benchmark": benchmark,
+        "as_of": as_of,
+        "start": start,
+        "available": True,
+        "incomplete": incomplete,
+        "points": points,
+    }

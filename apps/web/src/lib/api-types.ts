@@ -158,6 +158,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/portfolio/holdings/{instrument_id}/series": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Holding Series */
+        get: operations["holding_series_portfolio_holdings__instrument_id__series_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/portfolio/holdings/{instrument_id}/transactions": {
         parameters: {
             query?: never;
@@ -560,6 +577,33 @@ export interface components {
             xirr: number | null;
             /** Xirr Excess Pp */
             xirr_excess_pp: number | null;
+        };
+        /** HoldingSeriesResponse */
+        HoldingSeriesResponse: {
+            /** As Of */
+            as_of: string;
+            /** Available */
+            available: boolean;
+            /** Benchmark */
+            benchmark: string;
+            /** Incomplete */
+            incomplete: boolean;
+            /** Instrument Id */
+            instrument_id: number;
+            /**
+             * Metric
+             * @constant
+             */
+            metric: "absolute";
+            /** Points */
+            points: components["schemas"]["SeriesPoint"][];
+            /** Start */
+            start: string | null;
+            /**
+             * Window
+             * @enum {string}
+             */
+            window: "ITD" | "1Y" | "3Y" | "5Y";
         };
         /** HoldingTransactionsResponse */
         HoldingTransactionsResponse: {
@@ -1065,6 +1109,53 @@ export interface operations {
                 };
             };
             /** @description Holding not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    holding_series_portfolio_holdings__instrument_id__series_get: {
+        parameters: {
+            query?: {
+                window?: "ITD" | "1Y" | "3Y" | "5Y";
+            };
+            header?: never;
+            path: {
+                instrument_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HoldingSeriesResponse"];
+                };
+            };
+            /** @description Invalid window */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Instrument not found */
             404: {
                 headers: {
                     [name: string]: unknown;

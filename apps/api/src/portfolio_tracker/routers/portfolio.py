@@ -9,6 +9,7 @@ from portfolio_tracker.modules import portfolio, reconcile
 from portfolio_tracker.schemas.portfolio import (
     AlertsResponse,
     HoldingResponse,
+    HoldingSeriesResponse,
     HoldingsResponse,
     HoldingTransactionsResponse,
     OverviewResponse,
@@ -48,6 +49,36 @@ def portfolio_series(
         )
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+
+@router.get(
+    "/holdings/{instrument_id}/series",
+    response_model=HoldingSeriesResponse,
+    responses={
+        400: {"description": "Invalid window"},
+        404: {"description": "Instrument not found"},
+    },
+)
+def holding_series(
+    instrument_id: int,
+    session: Annotated[Session, Depends(get_db)],
+    window: Annotated[
+        str,
+        Query(json_schema_extra={"enum": ["ITD", "1Y", "3Y", "5Y"]}),
+    ] = "ITD",
+) -> dict:
+    try:
+        result = portfolio.get_holding_series(
+            session,
+            instrument_id,
+            as_of=date.today().isoformat(),
+            window=window,
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    if result is None:
+        raise HTTPException(status_code=404, detail="Instrument not found")
+    return result
 
 
 @router.get(
