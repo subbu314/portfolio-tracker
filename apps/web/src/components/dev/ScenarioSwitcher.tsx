@@ -8,7 +8,6 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { mocksEnabled } from "@/lib/mocks-enabled";
-import { loadFixture } from "@/mocks/load-fixture";
 import {
   getActiveScenario,
   SCENARIO_IDS,
@@ -24,14 +23,17 @@ export function ScenarioSwitcher() {
 
   const activeScenario = getActiveScenario();
 
-  function onPickScenario(id: ScenarioId) {
+  async function onPickScenario(id: ScenarioId) {
     setActiveScenario(id);
     if (id === "import_errors") {
+      const { loadFixture } = await import("@/mocks/load-fixture");
       const report = loadFixture(id, "import-report");
       sessionStorage.setItem(
         "portfolio-tracker:last-import",
         JSON.stringify(report),
       );
+    } else {
+      sessionStorage.removeItem("portfolio-tracker:last-import");
     }
     window.location.reload();
   }

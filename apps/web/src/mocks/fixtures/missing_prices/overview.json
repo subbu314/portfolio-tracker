@@ -3,8 +3,8 @@
   "absolute": {
     "current_value": 0,
     "invested_cost": 77500,
-    "gain_inr": null,
-    "gain_pct": null
+    "gain_inr": -77500,
+    "gain_pct": -1
   },
   "xirr": null,
   "cagr": null,

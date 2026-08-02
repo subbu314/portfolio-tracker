@@ -153,6 +153,12 @@ it.each([
     ).toBe(true);
     expect(o.incomplete).toBe(true);
     expect(o.total_value === 0 || o.total_value === null).toBe(true);
+    expect(o.absolute).toMatchObject({
+      current_value: 0,
+      invested_cost: 77500,
+      gain_inr: -77500,
+      gain_pct: -1,
+    });
     expect(o.allocation).toEqual([]);
     expect(
       seriesByWindow.every(
