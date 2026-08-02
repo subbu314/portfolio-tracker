@@ -6,25 +6,36 @@ const useMocks = process.env.NEXT_PUBLIC_USE_MOCKS === "true";
 
 export function MockProvider({ children }: { children: ReactNode }) {
   const [isReady, setIsReady] = useState(!useMocks);
+  const [startupError, setStartupError] = useState(false);
 
   useEffect(() => {
     if (!useMocks) return;
 
     let cancelled = false;
 
-    void import("@/mocks/browser").then(async ({ worker }) => {
-      await worker.start({
-        onUnhandledRequest: "bypass",
-        serviceWorker: { url: "/mockServiceWorker.js" },
+    void startWorker()
+      .then(() => {
+        if (!cancelled) setIsReady(true);
+      })
+      .catch(() => {
+        if (!cancelled) setStartupError(true);
       });
-
-      if (!cancelled) setIsReady(true);
-    });
 
     return () => {
       cancelled = true;
     };
   }, []);
+
+  if (startupError) {
+    return (
+      <>
+        <div role="alert" className="p-4 text-sm text-destructive">
+          Mock API could not start. Continuing without mocks.
+        </div>
+        {children}
+      </>
+    );
+  }
 
   if (!isReady) {
     return (
@@ -35,4 +46,12 @@ export function MockProvider({ children }: { children: ReactNode }) {
   }
 
   return children;
+}
+
+async function startWorker(): Promise<void> {
+  const { worker } = await import("@/mocks/browser");
+  await worker.start({
+    onUnhandledRequest: "bypass",
+    serviceWorker: { url: "/mockServiceWorker.js" },
+  });
 }
