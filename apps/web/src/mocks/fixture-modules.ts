@@ -36,6 +36,7 @@ import happySeries3Y from "./fixtures/happy/series-3Y.json";
 import happySeries5Y from "./fixtures/happy/series-5Y.json";
 import happySeriesItd from "./fixtures/happy/series-ITD.json";
 import happySyncResult from "./fixtures/happy/sync-result.json";
+import importErrorsImportReport from "./fixtures/import_errors/import-report.json";
 import importErrorsImportResult from "./fixtures/import_errors/import-result.json";
 import loggedOutAuthStatus from "./fixtures/logged_out/auth-status.json";
 import missingPricesHolding1 from "./fixtures/missing_prices/holding-1.json";
@@ -88,6 +89,7 @@ export const fixtureModules: Record<string, unknown> = {
   "./fixtures/happy/series-5Y.json": happySeries5Y,
   "./fixtures/happy/series-ITD.json": happySeriesItd,
   "./fixtures/happy/sync-result.json": happySyncResult,
+  "./fixtures/import_errors/import-report.json": importErrorsImportReport,
   "./fixtures/import_errors/import-result.json": importErrorsImportResult,
   "./fixtures/logged_out/auth-status.json": loggedOutAuthStatus,
   "./fixtures/missing_prices/holding-1.json": missingPricesHolding1,

@@ -22,9 +22,18 @@ export const handlers = [
   http.get(`${API}/portfolio/holdings`, () =>
     HttpResponse.json(loadFixture(scenario(), "holdings")),
   ),
-  http.get(`${API}/portfolio/holdings/:id`, ({ params }) =>
-    HttpResponse.json(loadFixture(scenario(), `holding-${params.id}`)),
-  ),
+  http.get(`${API}/portfolio/holdings/:id`, ({ params }) => {
+    try {
+      return HttpResponse.json(
+        loadFixture(scenario(), `holding-${params.id}`),
+      );
+    } catch {
+      return HttpResponse.json(
+        { detail: "Holding not found" },
+        { status: 404 },
+      );
+    }
+  }),
   http.get(`${API}/portfolio/holdings/:id/transactions`, ({ params }) =>
     HttpResponse.json(
       loadFixture(scenario(), `holding-${params.id}-transactions`),
@@ -61,12 +70,23 @@ export const handlers = [
   http.post(`${API}/auth/logout`, () =>
     HttpResponse.json({ connected: false }),
   ),
-  http.post(`${API}/sync`, () =>
-    HttpResponse.json(loadFixture(scenario(), "sync-result")),
-  ),
-  http.post(`${API}/import/csv`, () =>
-    HttpResponse.json(loadFixture(scenario(), "import-result")),
-  ),
+  http.post(`${API}/sync`, () => {
+    if (scenario() === "logged_out") {
+      return HttpResponse.json(
+        { detail: "Not authenticated" },
+        { status: 401 },
+      );
+    }
+    return HttpResponse.json(loadFixture(scenario(), "sync-result"));
+  }),
+  http.post(`${API}/import/csv`, () => {
+    if (scenario() === "import_errors") {
+      return HttpResponse.json(loadFixture(scenario(), "import-result"), {
+        status: 400,
+      });
+    }
+    return HttpResponse.json(loadFixture(scenario(), "import-result"));
+  }),
   http.get(`${API}/settings/benchmarks`, () =>
     HttpResponse.json(loadFixture(scenario(), "benchmarks")),
   ),

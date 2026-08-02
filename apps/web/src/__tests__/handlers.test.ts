@@ -36,6 +36,31 @@ it("returns fixed sync success JSON", async () => {
   expect(sync).toHaveProperty("last_sync_at");
 });
 
+it("returns 404 for unknown holding id", async () => {
+  localStorage.setItem(STORAGE_KEY, "happy");
+  const response = await fetch(`${API}/portfolio/holdings/999`);
+
+  expect(response.status).toBe(404);
+  expect(await response.json()).toEqual({ detail: "Holding not found" });
+});
+
+it("sync returns 401 when logged_out", async () => {
+  localStorage.setItem(STORAGE_KEY, "logged_out");
+  const response = await fetch(`${API}/sync`, { method: "POST" });
+
+  expect(response.status).toBe(401);
+});
+
+it("import returns 400 for import_errors scenario", async () => {
+  localStorage.setItem(STORAGE_KEY, "import_errors");
+  const response = await fetch(`${API}/import/csv`, {
+    method: "POST",
+    body: new FormData(),
+  });
+
+  expect(response.status).toBe(400);
+});
+
 it.each([
   ["empty", async () => {
     localStorage.setItem(STORAGE_KEY, "empty");
@@ -74,15 +99,6 @@ it.each([
     expect(a.gap?.suggested_from).toBeTruthy();
     expect(a.gap?.message).toBeTruthy();
     expect(a.gap?.suggested_to).toBeTruthy();
-  }],
-  ["import_errors", async () => {
-    localStorage.setItem(STORAGE_KEY, "import_errors");
-    const r = await fetch(`${API}/import/csv`, {
-      method: "POST",
-      body: new FormData(),
-    }).then((x) => x.json());
-    expect(r.flagged_rows.length).toBeGreaterThan(0);
-    expect(r.existing).toBeGreaterThan(0);
   }],
   ["unknown_category", async () => {
     localStorage.setItem(STORAGE_KEY, "unknown_category");

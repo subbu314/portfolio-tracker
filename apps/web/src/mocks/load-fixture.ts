@@ -24,10 +24,13 @@ function fixtureKey(scenario: string, name: string): string {
 
 export function loadFixture<T>(scenario: ScenarioId, name: string): T {
   const base = fixtureModules[fixtureKey("happy", name)];
+  const overlay = fixtureModules[fixtureKey(scenario, name)];
+  if (base === undefined && overlay !== undefined) {
+    return structuredClone(overlay) as T;
+  }
   if (base === undefined) throw new Error(`Missing happy fixture: ${name}.json`);
   if (scenario === "happy") return structuredClone(base) as T;
 
-  const overlay = fixtureModules[fixtureKey(scenario, name)];
   return overlay === undefined
     ? (structuredClone(base) as T)
     : deepMerge(structuredClone(base) as T, overlay);

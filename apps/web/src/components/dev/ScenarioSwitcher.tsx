@@ -7,6 +7,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { loadFixture } from "@/mocks/load-fixture";
 import {
   getActiveScenario,
   SCENARIO_IDS,
@@ -24,6 +25,13 @@ export function ScenarioSwitcher() {
 
   function onPickScenario(id: ScenarioId) {
     setActiveScenario(id);
+    if (id === "import_errors") {
+      const report = loadFixture(id, "import-report");
+      sessionStorage.setItem(
+        "portfolio-tracker:last-import",
+        JSON.stringify(report),
+      );
+    }
     window.location.reload();
   }
 
