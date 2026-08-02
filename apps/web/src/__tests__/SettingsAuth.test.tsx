@@ -1,4 +1,5 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { SettingsAuthPanel } from "@/components/SettingsAuthPanel";
 import { SettingsPage } from "@/components/SettingsPage";
 
@@ -70,5 +71,32 @@ describe("SettingsPage", () => {
       /api_key|api_secret|\.env/i,
     );
     expect(screen.queryByLabelText(/api_secret/i)).not.toBeInTheDocument();
+  });
+
+  it("reloads benchmarks after sync refresh", async () => {
+    const user = userEvent.setup();
+    mocks.getAuthStatus.mockResolvedValue({
+      connected: true,
+      credentials_configured: true,
+      last_sync_at: "2026-08-02T09:00:00+05:30",
+    });
+    mocks.getBenchmarkSettings
+      .mockResolvedValueOnce({ items: [] })
+      .mockResolvedValueOnce({
+        items: [
+          {
+            instrument_id: 1,
+            symbol: "RELIANCE",
+            benchmark_index: "Nifty 500",
+          },
+        ],
+      });
+    mocks.postSync.mockResolvedValue({});
+    render(<SettingsPage />);
+    await screen.findByRole("button", { name: /^refresh holdings$/i });
+
+    await user.click(screen.getByRole("button", { name: /^refresh holdings$/i }));
+
+    await waitFor(() => expect(mocks.getBenchmarkSettings).toHaveBeenCalledTimes(2));
   });
 });

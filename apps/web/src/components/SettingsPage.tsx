@@ -57,7 +57,7 @@ export function SettingsPage() {
   function onRefresh() {
     return runAction(async () => {
       await api.postSync();
-      setAuth(await api.getAuthStatus());
+      await loadSettings();
     });
   }
 
