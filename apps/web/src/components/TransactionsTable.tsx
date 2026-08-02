@@ -13,7 +13,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import type { HoldingTransactions } from "@/lib/api";
-import { formatInr } from "@/lib/format";
+import { formatInr, formatPrice } from "@/lib/format";
 
 type Transaction = HoldingTransactions["transactions"][number];
 
@@ -76,7 +76,7 @@ export function TransactionsTable({ rows }: Props) {
                   <TableCell>{row.trade_date}</TableCell>
                   <TableCell>{row.side}</TableCell>
                   <TableCell>{row.quantity}</TableCell>
-                  <FormattedTableCell value={formatInr(row.price)} />
+                  <FormattedTableCell value={formatPrice(row.price)} />
                   <FormattedTableCell value={formatInr(row.amount)} />
                   <TableCell>{formatSource(row.source)}</TableCell>
                 </TableRow>

@@ -14,7 +14,7 @@ import {
   type HoldingSeries,
   type HoldingTransactions,
 } from "@/lib/api";
-import { formatInr, formatPct, formatPp } from "@/lib/format";
+import { formatPct, formatPp, formatPrice } from "@/lib/format";
 import { getWindowMetrics, type WindowKey } from "@/lib/windows";
 
 type Props = {
@@ -129,7 +129,7 @@ export function HoldingDetailPage({ instrumentId }: Props) {
         <h1>{holding.symbol}</h1>
         <p className="muted">
           {holding.instrument_type} · Qty {holding.qty} · Avg{" "}
-          {formatInr(holding.avg_price)} · {priceLabel} {formatInr(holding.ltp)}
+          {formatPrice(holding.avg_price)} · {priceLabel} {formatPrice(holding.ltp)}
         </p>
         <p>
           Mapped benchmark: {holding.benchmark}.{" "}

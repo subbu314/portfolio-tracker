@@ -16,7 +16,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import type { Holding } from "@/lib/api";
-import { formatInr, formatPct, formatPp } from "@/lib/format";
+import { formatInr, formatPct, formatPp, formatPrice } from "@/lib/format";
 import { getWindowMetrics, type WindowKey } from "@/lib/windows";
 
 type Props = {
@@ -85,8 +85,8 @@ export function HoldingsTable({ title, variant, rows, windowKey }: Props) {
                       <TableCell>{row.mf_category ?? "—"}</TableCell>
                     )}
                     <TableCell>{row.qty}</TableCell>
-                    <FormattedTableCell value={formatInr(row.avg_price)} />
-                    <FormattedTableCell value={formatInr(row.ltp)} />
+                    <FormattedTableCell value={formatPrice(row.avg_price)} />
+                    <FormattedTableCell value={formatPrice(row.ltp)} />
                     <FormattedTableCell value={formatInr(row.value)} />
                     <FormattedTableCell value={formatPct(metrics?.absolute_pct)} />
                     <FormattedTableCell value={formatPct(metrics?.xirr)} />
