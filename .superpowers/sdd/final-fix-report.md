@@ -1,61 +1,53 @@
-# Final Fix Report: UI API Gaps
+# Final Portfolio Tracker UI Fix Report
 
 ## Status
 
-Complete. Left locked `MV(t) / MV(base) - 1` formula unchanged.
+Complete. All Important findings and requested cheap Minor findings were addressed.
 
-## What Changed
+## Changes
 
-- Portfolio series now skips incomplete base days until every held instrument has a usable forward-filled price. Days with missing held-instrument prices produce `portfolio_return: null` and set `incomplete: true`; no partial market value is used.
-- Added regression coverage for two holdings where one price history starts late. Base moves to first fully priced day, so no fabricated `+100%` return occurs.
-- Batch-loaded portfolio prices, benchmark maps, and benchmark levels, then forward-filled each series in memory. Portfolio series now uses bounded bulk queries instead of price and benchmark lookups for every holding/day. Daily source-price points remain unchanged.
-- Removed unused `MF_CATEGORY_CHOICES`.
+1. Added `vitest/globals` to web TypeScript compiler types; test globals now type-check.
+2. Removed committed scratch reports `.superpowers/sdd/task-4-report.md` and `.superpowers/sdd/task-8-report.md`.
+3. Corrected outperformance copy:
+   - Missing excess displays `N/A` without benchmark-beating copy.
+   - Negative excess uses “You trail category benchmarks by …” with absolute magnitude.
+   - Positive and zero excess retain benchmark-beating copy.
+4. Added unique metric/window control IDs and accessible labels for return, outperformance, overview chart, and holding detail controls.
+5. Isolated chart request errors from core page request errors on Overview and Holding Detail. Chart failures now render inside chart panels without replacing page content.
+6. Replaced Holdings row-only navigation with a keyboard-accessible symbol link. Added table spacing, borders, header styling, hover treatment, and numeric alignment.
+7. Added explicit chart loading state so pending requests do not show “not enough history.”
+8. Added negative return color state using `--negative`.
+9. Expanded `formatSignedInr` coverage for null, zero, and negative values.
 
-## Tests
+## Regression Coverage
 
-- `cd apps/api && uv run pytest -q tests/test_portfolio_series.py` — 10 passed, 1 existing Starlette deprecation warning.
-- `cd apps/api && uv run pytest -q` — 146 passed, 1 existing Starlette deprecation warning.
-- IDE diagnostics: no errors in changed portfolio series or tests. Existing Sonar warning in `benchmarks.py` reports repeated `"Nifty 500"` literals; unchanged except for removal of unused constant.
-
-## Commits
-
-- `2bdf9c0 fix(api): prevent partial-price portfolio return spikes`
-
-## Remaining Concerns
-
-- Series output dates remain source price dates plus window boundaries, as before; no synthetic calendar dates were added.
-- Query reduction is structural rather than benchmarked: portfolio prices and benchmark levels are each read once per series, then forward-filled in memory.
-# Final whole-branch review fixes
-
-## Result
-
-- Restored `TOKEN_UPDATED_KEY` to `kite_token_updated_at`.
-- Confirmed token exchange and clearing use `TOKEN_UPDATED_KEY`; added regression coverage for its persisted name.
-- Flattened active frontend plan's `Performance` type and Task 15 window accessors.
-- Preserved Lean UI constraints block unchanged.
-- Narrowed public `get_overview` by removing its computed-holdings keyword argument; `get_performance` continues through `_get_overview_from_computed`.
+- Outperformance null and negative copy.
+- Return-series loading state.
+- Unique control IDs and labels.
+- Overview chart error isolation and stale-response handling.
+- Holding-detail chart error isolation.
+- Holdings symbol link destination.
+- Signed INR null, zero, positive, and negative formatting.
 
 ## Verification
 
-- Targeted API tests: 32 passed, 1 dependency deprecation warning.
-- Full API suite: 118 passed, 1 dependency deprecation warning.
-- Edited Python files: no linter errors.
+- `cd apps/web && npx tsc --noEmit`
+  - Exit: 0
+  - Output: no TypeScript diagnostics; npm configuration deprecation warnings only.
+- `cd apps/web && npm test`
+  - Exit: 0
+  - Result: 17 test files passed; 69 tests passed.
+- `cd apps/web && npm run build`
+  - Exit: 0
+  - Result: Next.js 15.5.22 production build compiled, type-checked, and generated all 10 static pages successfully.
+- IDE diagnostics: no linter errors in changed web source, tests, or tsconfig.
+- `git diff --check`: exit 0.
 
 ## Commit
 
-`fix: restore kite token key; align Performance docs with flat payload`
+- `8519210 fix(web): address final UI review findings`
 
-## OpenAPI review-fix follow-up
+## Deferred
 
-### Changes
-
-- Root `check:api` now runs only the web API type-drift check; live-app-to-OpenAPI validation remains in pytest.
-- Web API drift check creates and removes `apps/web/.api-types.check.ts`, outside `src/`.
-- Removed unused `WindowMetrics` import from portfolio schemas.
-
-### Verification
-
-- `cd apps/api && uv run pytest tests/test_openapi_export.py tests/test_schemas_common.py tests/test_openapi_portfolio.py -q`: 7 passed, 1 Starlette deprecation warning.
-- `cd apps/web && npm run check:api`: passed; generated and removed `.api-types.check.ts`.
-- `cd apps/web && npm test`: passed; root test script ran 127 API tests and 20 web tests. Warnings: Starlette deprecation and Vitest ESM configuration notice.
-- `npm run check:api && git diff --exit-code -- apps/web/openapi.json`: passed; `apps/web/openapi.json` remained unchanged.
+- GapCallout redesign and unrelated refactors were intentionally excluded.
+- Existing unrelated edits to task 5/7/9 reports and untracked planning documents were preserved and not committed.
