@@ -39,13 +39,20 @@ it("returns fixed sync success JSON", async () => {
 it.each([
   ["empty", async () => {
     localStorage.setItem(STORAGE_KEY, "empty");
-    const h = await fetch(`${API}/portfolio/holdings`).then((r) => r.json());
+    const [h, o, s] = await Promise.all([
+      fetch(`${API}/portfolio/holdings`).then((r) => r.json()),
+      fetch(`${API}/portfolio/overview`).then((r) => r.json()),
+      fetch(`${API}/portfolio/series?window=ITD`).then((r) => r.json()),
+    ]);
     expect(h.holdings).toEqual([]);
+    expect(o.total_value).toBe(0);
+    expect(s.available).toBe(false);
   }],
   ["logged_out", async () => {
     localStorage.setItem(STORAGE_KEY, "logged_out");
     const a = await fetch(`${API}/auth/status`).then((r) => r.json());
     expect(a.connected).toBe(false);
+    expect(a.last_sync_at).toBeNull();
   }],
   ["stale", async () => {
     localStorage.setItem(STORAGE_KEY, "stale");
@@ -56,6 +63,8 @@ it.each([
     localStorage.setItem(STORAGE_KEY, "gap");
     const a = await fetch(`${API}/portfolio/alerts`).then((r) => r.json());
     expect(a.gap?.suggested_from).toBeTruthy();
+    expect(a.gap?.message).toBeTruthy();
+    expect(a.gap?.suggested_to).toBeTruthy();
   }],
   ["import_errors", async () => {
     localStorage.setItem(STORAGE_KEY, "import_errors");
@@ -64,12 +73,21 @@ it.each([
       body: new FormData(),
     }).then((x) => x.json());
     expect(r.flagged_rows.length).toBeGreaterThan(0);
+    expect(r.existing).toBeGreaterThan(0);
   }],
   ["unknown_category", async () => {
     localStorage.setItem(STORAGE_KEY, "unknown_category");
-    const b = await fetch(`${API}/settings/benchmarks`).then((r) => r.json());
+    const [b, h] = await Promise.all([
+      fetch(`${API}/settings/benchmarks`).then((r) => r.json()),
+      fetch(`${API}/portfolio/holdings`).then((r) => r.json()),
+    ]);
     expect(
       b.items.some((i: { needs_category: boolean }) => i.needs_category),
+    ).toBe(true);
+    expect(
+      h.holdings.some(
+        (x: { needs_category: boolean }) => x.needs_category === true,
+      ),
     ).toBe(true);
   }],
   ["missing_prices", async () => {
@@ -78,11 +96,16 @@ it.each([
     expect(
       h.holdings.some((x: { ltp: number | null }) => x.ltp === null),
     ).toBe(true);
+    expect(
+      h.holdings.some((x: { value: number | null }) => x.value === null),
+    ).toBe(true);
   }],
   ["negative", async () => {
     localStorage.setItem(STORAGE_KEY, "negative");
     const o = await fetch(`${API}/portfolio/overview`).then((r) => r.json());
     expect(o.absolute.gain_inr).toBeLessThan(0);
+    expect(o.absolute.gain_pct).toBeLessThan(0);
+    expect(o.absolute_excess_pp).toBeLessThan(0);
   }],
 ] as const)("%s scenario fixture", async (_name, fn) => {
   await fn();
