@@ -3,6 +3,15 @@ import { formatInr } from "@/lib/format";
 
 type Transaction = HoldingTransactions["transactions"][number];
 
+const SOURCE_LABELS: Record<string, string> = {
+  csv: "CSV",
+  api: "API",
+};
+
+function formatSource(source: string): string {
+  return SOURCE_LABELS[source] ?? source;
+}
+
 type Props = {
   rows: Transaction[];
 };
@@ -30,7 +39,7 @@ export function TransactionsTable({ rows }: Props) {
               <td>{row.quantity}</td>
               <td>{formatInr(row.price)}</td>
               <td>{formatInr(row.amount)}</td>
-              <td style={{ textTransform: "uppercase" }}>{row.source}</td>
+              <td>{formatSource(row.source)}</td>
             </tr>
           ))}
         </tbody>

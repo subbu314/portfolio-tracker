@@ -21,7 +21,7 @@ describe("TransactionsTable", () => {
     );
     expect(screen.getByText("2024-01-10")).toBeInTheDocument();
     expect(screen.getByText("buy")).toBeInTheDocument();
-    expect(screen.getByText("csv")).toBeInTheDocument();
+    expect(screen.getByText("CSV")).toBeInTheDocument();
     expect(screen.getByText(/10,000/)).toBeInTheDocument();
   });
 });
