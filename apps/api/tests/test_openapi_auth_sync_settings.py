@@ -18,3 +18,9 @@ def test_openapi_includes_auth_sync_settings_schemas():
         "CategoryUpdateResponse",
     ):
         assert name in components, name
+
+
+def test_openapi_includes_settings_catalogs():
+    schema = TestClient(create_app()).get("/openapi.json").json()
+    assert "/settings/catalogs" in schema["paths"]
+    assert "CatalogsResponse" in schema["components"]["schemas"]

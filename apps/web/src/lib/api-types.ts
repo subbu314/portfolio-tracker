@@ -243,6 +243,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/settings/catalogs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Catalogs */
+        get: operations["catalogs_settings_catalogs_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/settings/categories/{instrument_id}": {
         parameters: {
             query?: never;
@@ -373,6 +390,13 @@ export interface components {
             file?: string | null;
             /** Files */
             files?: string[] | null;
+        };
+        /** CatalogsResponse */
+        CatalogsResponse: {
+            /** Benchmark Indexes */
+            benchmark_indexes: string[];
+            /** Mf Categories */
+            mf_categories: string[];
         };
         /** CategoryBody */
         CategoryBody: {
@@ -1150,6 +1174,26 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    catalogs_settings_catalogs_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CatalogsResponse"];
                 };
             };
         };

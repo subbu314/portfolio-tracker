@@ -316,6 +316,31 @@
         "title": "Body_import_csv_endpoint_import_csv_post",
         "type": "object"
       },
+      "CatalogsResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "benchmark_indexes": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Benchmark Indexes",
+            "type": "array"
+          },
+          "mf_categories": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Mf Categories",
+            "type": "array"
+          }
+        },
+        "required": [
+          "mf_categories",
+          "benchmark_indexes"
+        ],
+        "title": "CatalogsResponse",
+        "type": "object"
+      },
       "CategoryBody": {
         "properties": {
           "category": {
@@ -2069,6 +2094,27 @@
           }
         },
         "summary": "Put Benchmark",
+        "tags": [
+          "settings"
+        ]
+      }
+    },
+    "/settings/catalogs": {
+      "get": {
+        "operationId": "catalogs_settings_catalogs_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CatalogsResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Catalogs",
         "tags": [
           "settings"
         ]

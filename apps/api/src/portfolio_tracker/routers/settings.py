@@ -6,15 +6,26 @@ from sqlalchemy.orm import Session
 from portfolio_tracker.db.models import Instrument
 from portfolio_tracker.db.session import get_db
 from portfolio_tracker.modules import benchmarks
+from portfolio_tracker.modules.benchmarks import DEFAULT_BY_CATEGORY
+from portfolio_tracker.modules.index_tickers import INDEX_TICKERS
 from portfolio_tracker.schemas.settings import (
     BenchmarkBody,
     BenchmarkListResponse,
     BenchmarkUpdateResponse,
+    CatalogsResponse,
     CategoryBody,
     CategoryUpdateResponse,
 )
 
 router = APIRouter(prefix="/settings", tags=["settings"])
+
+
+@router.get("/catalogs", response_model=CatalogsResponse)
+def catalogs() -> dict:
+    return {
+        "mf_categories": list(DEFAULT_BY_CATEGORY.keys()),
+        "benchmark_indexes": list(INDEX_TICKERS.keys()),
+    }
 
 
 @router.get("/benchmarks", response_model=BenchmarkListResponse)

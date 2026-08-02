@@ -34,3 +34,10 @@ class BenchmarkUpdateResponse(BaseModel):
 class CategoryUpdateResponse(BaseModel):
     instrument_id: int
     mf_category: str | None
+
+
+class CatalogsResponse(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    mf_categories: list[str]
+    benchmark_indexes: list[str]
