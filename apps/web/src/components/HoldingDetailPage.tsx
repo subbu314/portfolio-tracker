@@ -7,7 +7,7 @@ import { PageAlert } from "@/components/PageAlert";
 import { SeriesChartPanel } from "@/components/SeriesChartPanel";
 import { TransactionsTable } from "@/components/TransactionsTable";
 import { WindowSelect } from "@/components/WindowSelect";
-import { Skeleton } from "@/components/ui/skeleton";
+import { PageSkeleton } from "@/components/PageSkeleton";
 import { useCancellableQuery } from "@/hooks/useCancellableQuery";
 import {
   api,
@@ -76,19 +76,7 @@ export function HoldingDetailPage({ instrumentId }: Props) {
   }
   if (error) return <PageAlert>{error}</PageAlert>;
   if (!holding || !transactions) {
-    return (
-      <div className="stack" data-testid="page-skeleton">
-        <Skeleton className="h-5 w-36" />
-        <Skeleton className="h-20 w-full" />
-        <div className="grid gap-5 md:grid-cols-4">
-          <Skeleton className="h-28 w-full" />
-          <Skeleton className="h-28 w-full" />
-          <Skeleton className="h-28 w-full" />
-          <Skeleton className="h-28 w-full" />
-        </div>
-        <Skeleton className="h-80 w-full" />
-      </div>
-    );
+    return <PageSkeleton variant="holding-detail" />;
   }
 
   const metrics = getWindowMetrics(holding.windows, window);

@@ -8,7 +8,7 @@ import { PageAlert } from "@/components/PageAlert";
 import { SeriesChartPanel } from "@/components/SeriesChartPanel";
 import { StatusBanner } from "@/components/StatusBanner";
 import { ValueHero } from "@/components/ValueHero";
-import { Skeleton } from "@/components/ui/skeleton";
+import { PageSkeleton } from "@/components/PageSkeleton";
 import { useBusyAction } from "@/hooks/useBusyAction";
 import { useCancellableQuery } from "@/hooks/useCancellableQuery";
 import { allocationByKind } from "@/lib/allocation";
@@ -76,17 +76,7 @@ export function OverviewPage() {
 
   if (pageError && !overview) return <PageAlert>{pageError}</PageAlert>;
   if (!overview || !auth || !alerts) {
-    return (
-      <div className="stack" data-testid="page-skeleton">
-        <Skeleton className="h-8 w-40" />
-        <Skeleton className="h-24 w-full" />
-        <div className="grid gap-5 md:grid-cols-2">
-          <Skeleton className="h-40 w-full" />
-          <Skeleton className="h-40 w-full" />
-        </div>
-        <Skeleton className="h-80 w-full" />
-      </div>
-    );
+    return <PageSkeleton variant="overview" />;
   }
 
   const banner = deriveStatusBanner({

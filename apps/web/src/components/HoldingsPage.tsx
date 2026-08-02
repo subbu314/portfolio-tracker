@@ -5,7 +5,7 @@ import { EmptyState } from "@/components/EmptyState";
 import { HoldingsTable } from "@/components/HoldingsTable";
 import { WindowSelect } from "@/components/WindowSelect";
 import { PageAlert } from "@/components/PageAlert";
-import { Skeleton } from "@/components/ui/skeleton";
+import { PageSkeleton } from "@/components/PageSkeleton";
 import { api, type Holding } from "@/lib/api";
 import type { WindowKey } from "@/lib/windows";
 
@@ -31,13 +31,7 @@ export function HoldingsPage() {
 
   if (error) return <PageAlert>{error}</PageAlert>;
   if (!rows) {
-    return (
-      <div className="stack" data-testid="page-skeleton">
-        <Skeleton className="h-8 w-32" />
-        <Skeleton className="h-10 w-28" />
-        <Skeleton className="h-80 w-full" />
-      </div>
-    );
+    return <PageSkeleton variant="holdings" />;
   }
 
   return (

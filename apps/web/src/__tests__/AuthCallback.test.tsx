@@ -1,6 +1,6 @@
 import { StrictMode } from "react";
 import { render, screen, waitFor } from "@testing-library/react";
-import AuthCallbackPage from "@/app/auth/callback/page";
+import AuthCallbackPage from "@/components/AuthCallbackPage";
 
 const mocks = vi.hoisted(() => ({
   postCallback: vi.fn(),

@@ -5,7 +5,7 @@ import { BenchmarkOverridesTable } from "@/components/BenchmarkOverridesTable";
 import { PageAlert } from "@/components/PageAlert";
 import { SettingsAuthPanel } from "@/components/SettingsAuthPanel";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Skeleton } from "@/components/ui/skeleton";
+import { PageSkeleton } from "@/components/PageSkeleton";
 import { useBusyAction } from "@/hooks/useBusyAction";
 import {
   api,
@@ -89,10 +89,7 @@ export function SettingsPage() {
           busy={busy}
         />
       ) : (
-        <div className="stack" data-testid="settings-auth-skeleton">
-          <Skeleton className="h-8 w-48" />
-          <Skeleton className="h-20 w-full" />
-        </div>
+        <PageSkeleton variant="settings-auth" />
       )}
       {benchmarks && catalogs ? (
         <BenchmarkOverridesTable
@@ -103,10 +100,7 @@ export function SettingsPage() {
           busy={busy}
         />
       ) : (
-        <Skeleton
-          className="h-64 w-full"
-          data-testid="settings-benchmarks-skeleton"
-        />
+        <PageSkeleton variant="settings-benchmarks" />
       )}
     </div>
   );
