@@ -48,4 +48,16 @@ describe("AppShell", () => {
     expect(screen.getByRole("link", { name: /settings/i })).toHaveAttribute("href", "/settings");
     expect(screen.getByRole("link", { name: /glossary/i })).toHaveAttribute("href", "/glossary");
   });
+
+  it("uses lucide icons instead of unicode placeholders", () => {
+    render(
+      <AppShell>
+        <p>child</p>
+      </AppShell>,
+    );
+
+    const overview = screen.getByRole("link", { name: /overview/i });
+    expect(overview.querySelector("svg")).not.toBeNull();
+    expect(overview.textContent).not.toMatch(/◉/);
+  });
 });
