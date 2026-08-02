@@ -157,6 +157,77 @@ def test_portfolio_series_uses_window_start_with_forward_filled_price(
     assert result["points"][0]["portfolio_return"] == 0.0
 
 
+def test_portfolio_series_skips_incomplete_base_day_to_avoid_return_spike():
+    Session = get_session_factory()
+    with Session() as session:
+        first = Instrument(
+            symbol="FIRST",
+            isin="FIRSTISIN",
+            instrument_type="equity",
+            exchange="NSE",
+            yahoo_symbol="FIRST.NS",
+        )
+        second = Instrument(
+            symbol="SECOND",
+            isin="SECONDISIN",
+            instrument_type="equity",
+            exchange="NSE",
+            yahoo_symbol="SECOND.NS",
+        )
+        session.add_all([first, second])
+        session.flush()
+        session.add_all(
+            [
+                Transaction(
+                    instrument_id=first.id,
+                    trade_date="2024-01-01",
+                    side="buy",
+                    quantity=1,
+                    price=100.0,
+                    fees=0,
+                    source="csv",
+                    dedupe_key="first-buy",
+                ),
+                Transaction(
+                    instrument_id=second.id,
+                    trade_date="2024-01-01",
+                    side="buy",
+                    quantity=1,
+                    price=100.0,
+                    fees=0,
+                    source="csv",
+                    dedupe_key="second-buy",
+                ),
+                Price(
+                    symbol="FIRST.NS",
+                    price_date="2024-01-01",
+                    close=100.0,
+                    source="yahoo",
+                ),
+                Price(
+                    symbol="FIRST.NS",
+                    price_date="2024-01-10",
+                    close=100.0,
+                    source="yahoo",
+                ),
+                Price(
+                    symbol="SECOND.NS",
+                    price_date="2024-01-10",
+                    close=100.0,
+                    source="yahoo",
+                ),
+            ]
+        )
+        session.commit()
+        result = portfolio.get_portfolio_series(
+            session, as_of="2024-01-10", window="ITD"
+        )
+
+    assert result["incomplete"] is True
+    assert [point["date"] for point in result["points"]] == ["2024-01-10"]
+    assert result["points"][0]["portfolio_return"] == 0.0
+
+
 def test_portfolio_series_http_and_unavailable_window():
     client = TestClient(create_app())
     Session = get_session_factory()

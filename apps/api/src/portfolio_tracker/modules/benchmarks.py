@@ -12,8 +12,6 @@ DEFAULT_BY_CATEGORY: dict[str, str] = {
     "Small Cap": "Nifty Smallcap 250",
 }
 
-MF_CATEGORY_CHOICES: list[str] = list(DEFAULT_BY_CATEGORY.keys())
-
 
 def default_benchmark_for(instrument: Instrument) -> str:
     if instrument.instrument_type == "mf":
