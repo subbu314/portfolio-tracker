@@ -9,6 +9,7 @@ import { SeriesChartPanel } from "@/components/SeriesChartPanel";
 import { StatusBanner } from "@/components/StatusBanner";
 import { ValueHero } from "@/components/ValueHero";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useBusyAction } from "@/hooks/useBusyAction";
 import { useCancellableQuery } from "@/hooks/useCancellableQuery";
 import { allocationByKind } from "@/lib/allocation";
 import {
@@ -30,8 +31,12 @@ export function OverviewPage() {
   const [chartMetric, setChartMetric] = useState<MetricKey>("absolute");
   const [chartWindow, setChartWindow] = useState<WindowKey>("ITD");
   const [pageError, setPageError] = useState<string | null>(null);
-  const [actionError, setActionError] = useState<string | null>(null);
-  const [refreshing, setRefreshing] = useState(false);
+  const {
+    busy: refreshing,
+    error: actionError,
+    setError: setActionError,
+    run: runAction,
+  } = useBusyAction("Sync failed");
   const {
     data: series,
     error: chartError,
@@ -63,17 +68,10 @@ export function OverviewPage() {
   }, []);
 
   async function onRefresh() {
-    setRefreshing(true);
-    try {
+    await runAction(async () => {
       await api.postSync();
       await loadCore();
-    } catch (syncError) {
-      setActionError(
-        syncError instanceof Error ? syncError.message : "Sync failed",
-      );
-    } finally {
-      setRefreshing(false);
-    }
+    });
   }
 
   if (pageError && !overview) return <PageAlert>{pageError}</PageAlert>;

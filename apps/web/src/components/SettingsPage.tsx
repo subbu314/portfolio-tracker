@@ -6,6 +6,7 @@ import { PageAlert } from "@/components/PageAlert";
 import { SettingsAuthPanel } from "@/components/SettingsAuthPanel";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useBusyAction } from "@/hooks/useBusyAction";
 import {
   api,
   type AuthStatus,
@@ -17,8 +18,7 @@ export function SettingsPage() {
   const [auth, setAuth] = useState<AuthStatus | null>(null);
   const [benchmarks, setBenchmarks] = useState<BenchmarkList | null>(null);
   const [catalogs, setCatalogs] = useState<Catalogs | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [busy, setBusy] = useState(false);
+  const { busy, error, setError, run } = useBusyAction();
 
   const loadSettings = useCallback(async () => {
     const [nextAuth, nextBenchmarks, nextCatalogs] = await Promise.all([
@@ -33,43 +33,31 @@ export function SettingsPage() {
 
   useEffect(() => {
     void loadSettings().catch((loadError: Error) => setError(loadError.message));
-  }, [loadSettings]);
-
-  async function runAction(action: () => Promise<void>) {
-    setBusy(true);
-    setError(null);
-    try {
-      await action();
-    } catch (actionError) {
-      setError(actionError instanceof Error ? actionError.message : "Action failed");
-    } finally {
-      setBusy(false);
-    }
-  }
+  }, [loadSettings, setError]);
 
   function onLogin() {
-    return runAction(async () => {
+    return run(async () => {
       const { login_url } = await api.getLoginUrl();
       window.location.href = login_url;
     });
   }
 
   function onRefresh() {
-    return runAction(async () => {
+    return run(async () => {
       await api.postSync();
       await loadSettings();
     });
   }
 
   function onCategoryChange(instrumentId: number, category: string) {
-    return runAction(async () => {
+    return run(async () => {
       await api.putCategory(instrumentId, category);
       setBenchmarks(await api.getBenchmarkSettings());
     });
   }
 
   function onBenchmarkChange(instrumentId: number, benchmark: string) {
-    return runAction(async () => {
+    return run(async () => {
       await api.putBenchmark(instrumentId, benchmark);
       setBenchmarks(await api.getBenchmarkSettings());
     });
