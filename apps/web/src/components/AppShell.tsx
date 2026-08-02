@@ -33,6 +33,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const [collapsed, setCollapsed] = useState(false);
 
   useEffect(() => {
+    if (typeof window.matchMedia !== "function") return;
     const mediaQuery = window.matchMedia("(max-width: 760px)");
     const applyViewportDefault = () => setCollapsed(mediaQuery.matches);
     applyViewportDefault();
