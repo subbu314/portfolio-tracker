@@ -63,8 +63,5 @@ it("keeps holding details visible when chart loading fails", async () => {
   expect(
     await screen.findByRole("heading", { name: "RELIANCE" }),
   ).toBeInTheDocument();
-  expect(await screen.findByText("Series unavailable")).toHaveAttribute(
-    "role",
-    "alert",
-  );
+  expect(await screen.findByRole("alert")).toHaveTextContent("Series unavailable");
 });

@@ -1,8 +1,11 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { EmptyState } from "@/components/EmptyState";
 import { HoldingsTable } from "@/components/HoldingsTable";
 import { WindowSelect } from "@/components/WindowSelect";
+import { PageAlert } from "@/components/PageAlert";
+import { Skeleton } from "@/components/ui/skeleton";
 import { api, type Holding } from "@/lib/api";
 import type { WindowKey } from "@/lib/windows";
 
@@ -26,8 +29,16 @@ export function HoldingsPage() {
     };
   }, [rows]);
 
-  if (error) return <p role="alert">{error}</p>;
-  if (!rows) return <p>Loading…</p>;
+  if (error) return <PageAlert>{error}</PageAlert>;
+  if (!rows) {
+    return (
+      <div className="stack" data-testid="page-skeleton">
+        <Skeleton className="h-8 w-32" />
+        <Skeleton className="h-10 w-28" />
+        <Skeleton className="h-80 w-full" />
+      </div>
+    );
+  }
 
   return (
     <div className="stack">
@@ -35,18 +46,28 @@ export function HoldingsPage() {
         <h1>Holdings</h1>
         <WindowSelect value={windowKey} onChange={setWindowKey} />
       </div>
-      <HoldingsTable
-        title="Stocks & ETFs"
-        variant="equity"
-        rows={equityEtfs}
-        windowKey={windowKey}
-      />
-      <HoldingsTable
-        title="Mutual funds"
-        variant="mf"
-        rows={mfs}
-        windowKey={windowKey}
-      />
+      {rows.length === 0 ? (
+        <EmptyState
+          title="No holdings yet"
+          description="Refresh after logging in with Zerodha."
+          action={{ label: "Open Settings", href: "/settings" }}
+        />
+      ) : (
+        <>
+          <HoldingsTable
+            title="Stocks & ETFs"
+            variant="equity"
+            rows={equityEtfs}
+            windowKey={windowKey}
+          />
+          <HoldingsTable
+            title="Mutual funds"
+            variant="mf"
+            rows={mfs}
+            windowKey={windowKey}
+          />
+        </>
+      )}
     </div>
   );
 }

@@ -4,9 +4,11 @@ import { useEffect, useState } from "react";
 import { AllocationChart } from "@/components/AllocationChart";
 import { MetricCard } from "@/components/MetricCard";
 import { MetricWindowSelects } from "@/components/MetricWindowSelects";
+import { PageAlert } from "@/components/PageAlert";
 import { ReturnSeriesChart } from "@/components/ReturnSeriesChart";
 import { StatusBanner } from "@/components/StatusBanner";
 import { ValueHero } from "@/components/ValueHero";
+import { Skeleton } from "@/components/ui/skeleton";
 import { allocationByKind } from "@/lib/allocation";
 import {
   api,
@@ -86,8 +88,20 @@ export function OverviewPage() {
     }
   }
 
-  if (error) return <p role="alert">{error}</p>;
-  if (!overview || !auth || !alerts) return <p>Loading…</p>;
+  if (error) return <PageAlert>{error}</PageAlert>;
+  if (!overview || !auth || !alerts) {
+    return (
+      <div className="stack" data-testid="page-skeleton">
+        <Skeleton className="h-8 w-40" />
+        <Skeleton className="h-24 w-full" />
+        <div className="grid gap-5 md:grid-cols-2">
+          <Skeleton className="h-40 w-full" />
+          <Skeleton className="h-40 w-full" />
+        </div>
+        <Skeleton className="h-80 w-full" />
+      </div>
+    );
+  }
 
   const banner = deriveStatusBanner({
     connected: auth.connected,
@@ -138,7 +152,7 @@ export function OverviewPage() {
           />
         </div>
         {chartError ? (
-          <p role="alert">{chartError}</p>
+          <PageAlert title="Chart unavailable">{chartError}</PageAlert>
         ) : (
           <ReturnSeriesChart
             title="Portfolio vs category benchmarks"

@@ -2,9 +2,12 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { PageAlert } from "@/components/PageAlert";
 import { ReturnSeriesChart } from "@/components/ReturnSeriesChart";
 import { TransactionsTable } from "@/components/TransactionsTable";
 import { WindowSelect } from "@/components/WindowSelect";
+import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   api,
   type Holding,
@@ -21,7 +24,7 @@ type Props = {
 function ReturnChip({ label, value }: { label: string; value: string }) {
   return (
     <div className="metric-card">
-      <p className="eyebrow">{label}</p>
+      <Badge variant="secondary">{label}</Badge>
       <p className="metric-value">{value}</p>
     </div>
   );
@@ -78,20 +81,40 @@ export function HoldingDetailPage({ instrumentId }: Props) {
   if (notFound) {
     return (
       <div className="stack">
-        <p role="alert">Holding not found</p>
-        <Link href="/holdings">← Back to Holdings</Link>
+        <PageAlert title="Holding not found">
+          This holding is unavailable.
+        </PageAlert>
+        <Link className="text-accent underline underline-offset-4" href="/holdings">
+          ← Back to Holdings
+        </Link>
       </div>
     );
   }
-  if (error) return <p role="alert">{error}</p>;
-  if (!holding || !transactions) return <p>Loading…</p>;
+  if (error) return <PageAlert>{error}</PageAlert>;
+  if (!holding || !transactions) {
+    return (
+      <div className="stack" data-testid="page-skeleton">
+        <Skeleton className="h-5 w-36" />
+        <Skeleton className="h-20 w-full" />
+        <div className="grid gap-5 md:grid-cols-4">
+          <Skeleton className="h-28 w-full" />
+          <Skeleton className="h-28 w-full" />
+          <Skeleton className="h-28 w-full" />
+          <Skeleton className="h-28 w-full" />
+        </div>
+        <Skeleton className="h-80 w-full" />
+      </div>
+    );
+  }
 
   const metrics = getWindowMetrics(holding.windows, window);
   const priceLabel = holding.instrument_type === "mf" ? "NAV" : "LTP";
 
   return (
     <div className="stack">
-      <Link href="/holdings">← Back to Holdings</Link>
+      <Link className="text-accent underline underline-offset-4" href="/holdings">
+        ← Back to Holdings
+      </Link>
       <header>
         <h1>{holding.symbol}</h1>
         <p className="muted">
@@ -123,7 +146,7 @@ export function HoldingDetailPage({ instrumentId }: Props) {
       <section className="panel">
         <h2>Holding vs mapped category benchmark</h2>
         {chartError ? (
-          <p role="alert">{chartError}</p>
+          <PageAlert title="Chart unavailable">{chartError}</PageAlert>
         ) : (
           <ReturnSeriesChart
             title="Holding vs mapped category benchmark"

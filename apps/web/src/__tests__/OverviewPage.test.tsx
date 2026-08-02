@@ -68,6 +68,16 @@ beforeEach(() => {
     last_sync_at: new Date().toISOString(),
   });
   mocks.getAlerts.mockResolvedValue({ gap: null });
+  mocks.getPortfolioSeries.mockResolvedValue({ available: false, points: [] });
+});
+
+it("shows skeleton while core data loads", () => {
+  mocks.getOverview.mockReturnValue(new Promise(() => {}));
+
+  render(<OverviewPage />);
+
+  expect(screen.getByTestId("page-skeleton")).toBeInTheDocument();
+  expect(screen.queryByText("Loading…")).not.toBeInTheDocument();
 });
 
 it("clears previous series while a new window loads", async () => {
@@ -122,8 +132,5 @@ it("keeps the overview visible when chart loading fails", async () => {
   render(<OverviewPage />);
 
   expect(await screen.findByRole("heading", { name: "Overview" })).toBeInTheDocument();
-  expect(await screen.findByText("Series unavailable")).toHaveAttribute(
-    "role",
-    "alert",
-  );
+  expect(await screen.findByRole("alert")).toHaveTextContent("Series unavailable");
 });

@@ -1,3 +1,17 @@
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import type { HoldingTransactions } from "@/lib/api";
 import { formatInr } from "@/lib/format";
 
@@ -18,32 +32,47 @@ type Props = {
 
 export function TransactionsTable({ rows }: Props) {
   return (
-    <section className="panel">
-      <h2>Transactions</h2>
-      <table>
-        <thead>
-          <tr>
-            <th>Date</th>
-            <th>Side</th>
-            <th>Qty</th>
-            <th>Price</th>
-            <th>Amount</th>
-            <th>Source</th>
-          </tr>
-        </thead>
-        <tbody>
-          {rows.map((row) => (
-            <tr key={row.id}>
-              <td>{row.trade_date}</td>
-              <td>{row.side}</td>
-              <td>{row.quantity}</td>
-              <td>{formatInr(row.price)}</td>
-              <td>{formatInr(row.amount)}</td>
-              <td>{formatSource(row.source)}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </section>
+    <Card>
+      <CardHeader className="p-5 pb-0">
+        <CardTitle>Transactions</CardTitle>
+      </CardHeader>
+      <CardContent className="p-5 pt-4">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Date</TableHead>
+              <TableHead>Side</TableHead>
+              <TableHead>Qty</TableHead>
+              <TableHead>Price</TableHead>
+              <TableHead>Amount</TableHead>
+              <TableHead>Source</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {rows.length === 0 ? (
+              <TableRow>
+                <TableCell
+                  className="py-8 text-center text-muted-foreground"
+                  colSpan={6}
+                >
+                  No rows
+                </TableCell>
+              </TableRow>
+            ) : (
+              rows.map((row) => (
+                <TableRow key={row.id}>
+                  <TableCell>{row.trade_date}</TableCell>
+                  <TableCell>{row.side}</TableCell>
+                  <TableCell>{row.quantity}</TableCell>
+                  <TableCell>{formatInr(row.price)}</TableCell>
+                  <TableCell>{formatInr(row.amount)}</TableCell>
+                  <TableCell>{formatSource(row.source)}</TableCell>
+                </TableRow>
+              ))
+            )}
+          </TableBody>
+        </Table>
+      </CardContent>
+    </Card>
   );
 }
