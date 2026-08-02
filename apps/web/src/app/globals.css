@@ -106,3 +106,80 @@ input {
   padding: 0.45rem 0.6rem;
   cursor: pointer;
 }
+
+.control-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  align-items: flex-end;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  font-size: 0.875rem;
+}
+
+.field span {
+  color: var(--muted);
+}
+
+.field select {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  color: var(--text);
+  border-radius: 8px;
+  padding: 0.45rem 0.65rem;
+  min-width: 7rem;
+}
+
+.status-banner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem 1rem;
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  margin-bottom: 1.25rem;
+  border: 1px solid var(--border);
+  background: var(--surface);
+}
+
+.status-banner p {
+  margin: 0;
+  flex: 1 1 12rem;
+}
+
+.status-banner[data-kind="outdated"],
+.status-banner[data-kind="gap"] {
+  border-color: color-mix(in srgb, var(--warn) 55%, var(--border));
+  background: color-mix(in srgb, var(--warn) 8%, var(--surface));
+}
+
+.status-banner[data-kind="login"] {
+  border-color: var(--border);
+  background: var(--surface-2);
+  color: var(--muted);
+}
+
+.status-banner button {
+  background: var(--accent);
+  border: none;
+  color: var(--text);
+  border-radius: 8px;
+  padding: 0.45rem 0.85rem;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.status-banner button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.status-banner a {
+  color: var(--accent);
+  text-decoration: underline;
+  white-space: nowrap;
+}
