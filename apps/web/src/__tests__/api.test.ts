@@ -18,14 +18,20 @@ function mockOk(json: unknown = {}) {
   return fetchMock;
 }
 
+function expectGetRequest(fetchMock: ReturnType<typeof mockOk>, path: string) {
+  expect(fetchMock).toHaveBeenCalledWith(
+    `${BASE}${path}`,
+    expect.objectContaining({ cache: "no-store" }),
+  );
+  const init = fetchMock.mock.calls[0][1] as RequestInit;
+  expect(init.method ?? "GET").toBe("GET");
+}
+
 describe("api client request mapping", () => {
   it("getHealth GETs /health", async () => {
     const fetchMock = mockOk({ status: "ok" });
     await api.getHealth();
-    expect(fetchMock).toHaveBeenCalledWith(
-      `${BASE}/health`,
-      expect.objectContaining({ cache: "no-store" }),
-    );
+    expectGetRequest(fetchMock, "/health");
   });
 
   it("getOverview GETs /portfolio/overview", async () => {
@@ -49,20 +55,14 @@ describe("api client request mapping", () => {
       windows: { ITD: null, "1Y": null, "3Y": null, "5Y": null },
     });
     const result = await api.getOverview();
-    expect(fetchMock).toHaveBeenCalledWith(
-      `${BASE}/portfolio/overview`,
-      expect.objectContaining({ cache: "no-store" }),
-    );
+    expectGetRequest(fetchMock, "/portfolio/overview");
     expect(result.total_value).toBe(100);
   });
 
   it("getHoldings unwraps holdings array", async () => {
     const fetchMock = mockOk({ holdings: [{ symbol: "A" }] });
     const rows = await api.getHoldings();
-    expect(fetchMock).toHaveBeenCalledWith(
-      `${BASE}/portfolio/holdings`,
-      expect.objectContaining({ cache: "no-store" }),
-    );
+    expectGetRequest(fetchMock, "/portfolio/holdings");
     expect(rows).toEqual([{ symbol: "A" }]);
   });
 
@@ -75,10 +75,7 @@ describe("api client request mapping", () => {
   ] as const)("%s GETs %s", async (_name, call, path) => {
     const fetchMock = mockOk({});
     await call();
-    expect(fetchMock).toHaveBeenCalledWith(
-      `${BASE}${path}`,
-      expect.objectContaining({ cache: "no-store" }),
-    );
+    expectGetRequest(fetchMock, path);
   });
 
   it("postCallback POSTs JSON request_token", async () => {
