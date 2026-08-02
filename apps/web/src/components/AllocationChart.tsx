@@ -1,6 +1,7 @@
 "use client";
 
 import { Cell, Legend, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts";
+import { ChartEmpty } from "@/components/ChartEmpty";
 import type { AllocationSliceUi } from "@/lib/allocation";
 import { formatPct } from "@/lib/format";
 
@@ -14,11 +15,11 @@ type Props = {
 export function AllocationChart({ slices, holdingsCount }: Props) {
   if (slices.length === 0) {
     return (
-      <div className="rounded-lg border bg-surface-elevated p-4 text-muted-foreground">
+      <ChartEmpty>
         {holdingsCount > 0
           ? "Allocation unavailable — prices missing"
           : "No holdings yet"}
-      </div>
+      </ChartEmpty>
     );
   }
 

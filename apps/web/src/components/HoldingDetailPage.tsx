@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { MetricChip } from "@/components/MetricChip";
 import { PageAlert } from "@/components/PageAlert";
-import { ReturnSeriesChart } from "@/components/ReturnSeriesChart";
+import { SeriesChartPanel } from "@/components/SeriesChartPanel";
 import { TransactionsTable } from "@/components/TransactionsTable";
 import { WindowSelect } from "@/components/WindowSelect";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -15,6 +15,7 @@ import {
   type HoldingTransactions,
 } from "@/lib/api";
 import { formatPct, formatPp, formatPrice } from "@/lib/format";
+import { toHoldingChartPoints } from "@/lib/series";
 import { getWindowMetrics, type WindowKey } from "@/lib/windows";
 
 type Props = {
@@ -140,23 +141,16 @@ export function HoldingDetailPage({ instrumentId }: Props) {
       </section>
       <section className="panel">
         <h2>Holding vs mapped category benchmark</h2>
-        {chartError ? (
-          <PageAlert title="Chart unavailable">{chartError}</PageAlert>
-        ) : (
-          <ReturnSeriesChart
-            title="Holding vs mapped category benchmark"
-            available={series?.available ?? false}
-            loading={series === null}
-            metricSupportsSeries
-            points={(series?.points ?? []).map((point) => ({
-              date: point.date,
-              portfolio: point.holding_return ?? null,
-              benchmark: point.benchmark_return ?? null,
-            }))}
-            portfolioLabel={holding.symbol}
-            benchmarkLabel={holding.benchmark}
-          />
-        )}
+        <SeriesChartPanel
+          title="Holding vs mapped category benchmark"
+          chartError={chartError}
+          available={series?.available ?? false}
+          loading={series === null}
+          metricSupportsSeries
+          points={toHoldingChartPoints(series)}
+          portfolioLabel={holding.symbol}
+          benchmarkLabel={holding.benchmark}
+        />
       </section>
       <TransactionsTable rows={transactions.transactions} />
     </div>

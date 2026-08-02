@@ -5,7 +5,7 @@ import { AllocationChart } from "@/components/AllocationChart";
 import { MetricCard } from "@/components/MetricCard";
 import { MetricWindowSelects } from "@/components/MetricWindowSelects";
 import { PageAlert } from "@/components/PageAlert";
-import { ReturnSeriesChart } from "@/components/ReturnSeriesChart";
+import { SeriesChartPanel } from "@/components/SeriesChartPanel";
 import { StatusBanner } from "@/components/StatusBanner";
 import { ValueHero } from "@/components/ValueHero";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -18,6 +18,7 @@ import {
   type Overview,
   type PortfolioSeries,
 } from "@/lib/api";
+import { toPortfolioChartPoints } from "@/lib/series";
 import { deriveStatusBanner, todayIst } from "@/lib/status";
 import type { MetricKey, WindowKey } from "@/lib/windows";
 
@@ -158,23 +159,16 @@ export function OverviewPage() {
             onWindowChange={setChartWindow}
           />
         </div>
-        {chartError ? (
-          <PageAlert title="Chart unavailable">{chartError}</PageAlert>
-        ) : (
-          <ReturnSeriesChart
-            title="Portfolio vs category benchmarks"
-            available={series?.available ?? false}
-            loading={chartMetric === "absolute" && series === null}
-            metricSupportsSeries={chartMetric === "absolute"}
-            points={(series?.points ?? []).map((point) => ({
-              date: point.date,
-              portfolio: point.portfolio_return ?? null,
-              benchmark: point.benchmark_return ?? null,
-            }))}
-            portfolioLabel="Portfolio"
-            benchmarkLabel="Category benchmarks (market-weighted)"
-          />
-        )}
+        <SeriesChartPanel
+          title="Portfolio vs category benchmarks"
+          chartError={chartError}
+          available={series?.available ?? false}
+          loading={chartMetric === "absolute" && series === null}
+          metricSupportsSeries={chartMetric === "absolute"}
+          points={toPortfolioChartPoints(series)}
+          portfolioLabel="Portfolio"
+          benchmarkLabel="Category benchmarks (market-weighted)"
+        />
       </section>
       <section className="panel">
         <h2>Asset allocation</h2>
