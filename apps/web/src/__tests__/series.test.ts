@@ -3,6 +3,7 @@ import {
   toHoldingChartPoints,
   toPortfolioChartPoints,
 } from "@/lib/series";
+import type { HoldingSeries, PortfolioSeries } from "@/lib/api";
 
 describe("series mappers", () => {
   it("maps portfolio_return to portfolio", () => {
@@ -18,7 +19,7 @@ describe("series mappers", () => {
             benchmark_return: 0.05,
           },
         ],
-      }),
+      } as PortfolioSeries),
     ).toEqual([
       { date: "2024-01-01", portfolio: 0.1, benchmark: 0.05 },
     ]);
@@ -40,7 +41,7 @@ describe("series mappers", () => {
             benchmark_return: null,
           },
         ],
-      }),
+      } as HoldingSeries),
     ).toEqual([
       { date: "2024-01-01", portfolio: 0.2, benchmark: null },
     ]);

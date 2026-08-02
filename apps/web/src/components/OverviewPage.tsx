@@ -34,12 +34,12 @@ export function OverviewPage() {
   const {
     busy: refreshing,
     error: actionError,
-    setError: setActionError,
     run: runAction,
   } = useBusyAction("Sync failed");
   const {
     data: series,
     error: chartError,
+    loading: chartLoading,
   } = useCancellableQuery({
     key: [chartWindow],
     enabled: chartMetric === "absolute",
@@ -58,7 +58,6 @@ export function OverviewPage() {
     setHoldings(nextHoldings);
     setAuth(nextAuth);
     setAlerts(nextAlerts);
-    setActionError(null);
   }
 
   useEffect(() => {
@@ -132,7 +131,7 @@ export function OverviewPage() {
           title="Portfolio vs category benchmarks"
           chartError={chartError}
           available={series?.available ?? false}
-          loading={chartMetric === "absolute" && series === null}
+          loading={chartLoading}
           metricSupportsSeries={chartMetric === "absolute"}
           points={toPortfolioChartPoints(series)}
           portfolioLabel="Portfolio"

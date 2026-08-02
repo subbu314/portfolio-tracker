@@ -84,3 +84,32 @@ Exit code 0
 - npm emitted existing deprecation warnings for user configuration keys (`devdir`, `always-auth`, `email`); tests and build succeeded.
 - IDE diagnostics reported no errors in changed TypeScript files.
 - Commit: `fix(web): address final important review findings`.
+
+## Final whole-branch review fixes — 2026-08-02
+
+### Fixes
+
+- Replaced Vite-only `import.meta.glob` with a generated static fixture registry. `apps/web/scripts/generate-fixture-modules.mjs` recursively enumerates fixture JSON files and writes explicit Next.js-compatible imports keyed as `./fixtures/<scenario>/<name>.json`.
+- Kept fixture smoke coverage; generated keys resolve in `scenarios.test.ts`. Generator output is deterministic.
+- Cast fixture literals at the `series.test.ts` boundary to the generated `PortfolioSeries` and `HoldingSeries` contracts.
+- Consumed `useCancellableQuery`'s `loading` state in overview and holding-detail chart panels; removed the now-dead overview action-error reset.
+- Narrowed persisted import-report loading to `SingleImportResult | null` and removed its redundant caller-side type guard.
+
+### Validation
+
+```text
+npm --prefix apps/web test
+Test Files  34 passed (34)
+Tests       170 passed (170)
+Exit code   0
+
+npm --prefix apps/web run build
+Next.js 15.5.22
+Compiled successfully
+Linting and checking validity of types completed
+Exit code   0
+
+node apps/web/scripts/generate-fixture-modules.mjs
+fixture-modules.ts checksum unchanged across consecutive runs
+Exit code   0
+```

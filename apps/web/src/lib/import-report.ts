@@ -1,5 +1,8 @@
 import type { ImportResult } from "@/lib/api";
-import { isSingleImportResult } from "@/lib/import-types";
+import {
+  isSingleImportResult,
+  type SingleImportResult,
+} from "@/lib/import-types";
 
 const KEY = "portfolio-tracker:last-import";
 
@@ -8,7 +11,7 @@ export function saveImportReport(report: ImportResult): void {
   sessionStorage.setItem(KEY, JSON.stringify(report));
 }
 
-export function loadImportReport(): ImportResult | null {
+export function loadImportReport(): SingleImportResult | null {
   if (typeof sessionStorage === "undefined") return null;
   const raw = sessionStorage.getItem(KEY);
   if (!raw) return null;

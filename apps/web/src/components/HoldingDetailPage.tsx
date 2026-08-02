@@ -32,6 +32,7 @@ export function HoldingDetailPage({ instrumentId }: Props) {
   const {
     data: series,
     error: chartError,
+    loading: chartLoading,
   } = useCancellableQuery({
     key: [instrumentId, window],
     queryFn: () => api.getHoldingSeries(instrumentId, window),
@@ -121,7 +122,7 @@ export function HoldingDetailPage({ instrumentId }: Props) {
           title="Holding vs mapped category benchmark"
           chartError={chartError}
           available={series?.available ?? false}
-          loading={series === null}
+          loading={chartLoading}
           metricSupportsSeries
           points={toHoldingChartPoints(series)}
           portfolioLabel={holding.symbol}

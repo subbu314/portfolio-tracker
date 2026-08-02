@@ -31,7 +31,7 @@ export function ImportPage() {
 
   useEffect(() => {
     const stored = loadImportReport();
-    if (stored && isSingleImportResult(stored)) setReport(stored);
+    if (stored) setReport(stored);
     void api
       .getAlerts()
       .then(setAlerts)
