@@ -58,4 +58,16 @@ describe("allocationByKind", () => {
       allocationByKind([h({ instrument_type: "equity", value: null })]),
     ).toEqual([]);
   });
+
+  it("buckets unknown instrument types as Other", () => {
+    const slices = allocationByKind([
+      h({ instrument_type: "bond" as Holding["instrument_type"], value: 40 }),
+      h({ instrument_type: "equity", value: 60 }),
+    ]);
+
+    expect(slices).toEqual([
+      { label: "Equity", weight: 0.6 },
+      { label: "Other", weight: 0.4 },
+    ]);
+  });
 });
