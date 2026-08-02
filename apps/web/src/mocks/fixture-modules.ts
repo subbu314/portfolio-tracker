@@ -44,6 +44,7 @@ import missingPricesHolding2 from "./fixtures/missing_prices/holding-2.json";
 import missingPricesHolding3 from "./fixtures/missing_prices/holding-3.json";
 import missingPricesHoldings from "./fixtures/missing_prices/holdings.json";
 import missingPricesOverview from "./fixtures/missing_prices/overview.json";
+import missingPricesSeriesItd from "./fixtures/missing_prices/series-ITD.json";
 import negativeOverview from "./fixtures/negative/overview.json";
 import staleAuthStatus from "./fixtures/stale/auth-status.json";
 import unknownCategoryBenchmarks from "./fixtures/unknown_category/benchmarks.json";
@@ -97,6 +98,7 @@ export const fixtureModules: Record<string, unknown> = {
   "./fixtures/missing_prices/holding-3.json": missingPricesHolding3,
   "./fixtures/missing_prices/holdings.json": missingPricesHoldings,
   "./fixtures/missing_prices/overview.json": missingPricesOverview,
+  "./fixtures/missing_prices/series-ITD.json": missingPricesSeriesItd,
   "./fixtures/negative/overview.json": negativeOverview,
   "./fixtures/stale/auth-status.json": staleAuthStatus,
   "./fixtures/unknown_category/benchmarks.json": unknownCategoryBenchmarks,

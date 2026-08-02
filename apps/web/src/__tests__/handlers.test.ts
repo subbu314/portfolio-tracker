@@ -1,6 +1,7 @@
 import { setupServer } from "msw/node";
-import { afterAll, afterEach, beforeAll, expect, it } from "vitest";
+import { afterAll, afterEach, beforeAll, expect, it, vi } from "vitest";
 import { handlers } from "@/mocks/handlers";
+import { loadFixture } from "@/mocks/load-fixture";
 import { STORAGE_KEY } from "@/mocks/scenarios";
 
 const server = setupServer(...handlers);
@@ -87,6 +88,7 @@ it.each([
     const a = await fetch(`${API}/auth/status`).then((r) => r.json());
     expect(a.connected).toBe(false);
     expect(a.last_sync_at).toBeNull();
+    expect(a.last_trade_append_at).toBeNull();
   }],
   ["stale", async () => {
     localStorage.setItem(STORAGE_KEY, "stale");
@@ -132,10 +134,11 @@ it.each([
   }],
   ["missing_prices", async () => {
     localStorage.setItem(STORAGE_KEY, "missing_prices");
-    const [h, o, detail] = await Promise.all([
+    const [h, o, detail, series] = await Promise.all([
       fetch(`${API}/portfolio/holdings`).then((r) => r.json()),
       fetch(`${API}/portfolio/overview`).then((r) => r.json()),
       fetch(`${API}/portfolio/holdings/1`).then((r) => r.json()),
+      fetch(`${API}/portfolio/series?window=ITD`).then((r) => r.json()),
     ]);
     expect(h.holdings.every((x: { ltp: number | null }) => x.ltp === null)).toBe(
       true,
@@ -147,6 +150,9 @@ it.each([
       ),
     ).toBe(true);
     expect(o.incomplete).toBe(true);
+    expect(o.total_value === 0 || o.total_value === null).toBe(true);
+    expect(o.allocation).toEqual([]);
+    expect(series.available).toBe(false);
     expect(o.windows.ITD).toMatchObject({
       absolute_pct: null,
       absolute_inr: null,
@@ -192,4 +198,13 @@ it.each([
   }],
 ] as const)("%s scenario fixture", async (_name, fn) => {
   await fn();
+});
+
+it("warns when scenario overlay is missing", () => {
+  const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+
+  loadFixture("gap", "overview");
+
+  expect(warn).toHaveBeenCalled();
+  warn.mockRestore();
 });

@@ -1,5 +1,9 @@
 {
+  "total_value": 0,
   "absolute": {
+    "current_value": 0,
+    "invested_cost": 77500,
+    "gain_inr": null,
     "gain_pct": null
   },
   "xirr": null,
@@ -30,5 +34,6 @@
       "cagr_excess_pp": null
     }
   },
+  "allocation": [],
   "incomplete": true
 }

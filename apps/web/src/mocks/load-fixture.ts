@@ -31,7 +31,14 @@ export function loadFixture<T>(scenario: ScenarioId, name: string): T {
   if (base === undefined) throw new Error(`Missing happy fixture: ${name}.json`);
   if (scenario === "happy") return structuredClone(base) as T;
 
-  return overlay === undefined
-    ? (structuredClone(base) as T)
-    : deepMerge(structuredClone(base) as T, overlay);
+  if (overlay === undefined) {
+    if (process.env.NODE_ENV !== "production") {
+      console.warn(
+        `[mocks] missing overlay fixtures/${scenario}/${name}.json; using happy`,
+      );
+    }
+    return structuredClone(base) as T;
+  }
+
+  return deepMerge(structuredClone(base) as T, overlay);
 }
