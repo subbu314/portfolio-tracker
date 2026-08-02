@@ -12,45 +12,21 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { api, type Alerts, type ImportResult } from "@/lib/api";
+import { api, type Alerts } from "@/lib/api";
+import { parseImportError } from "@/lib/api-errors";
 import { loadImportReport, saveImportReport } from "@/lib/import-report";
-
-type SingleImportResult = Extract<
-  ImportResult,
-  { format: "console_tradebook" }
->;
-
-type ImportError = {
-  message: string;
-  rows: string[];
-};
-
-function isSingleImportResult(
-  result: ImportResult,
-): result is SingleImportResult {
-  return "format" in result;
-}
-
-function parseImportError(error: unknown): ImportError {
-  const fallback = error instanceof Error ? error.message : "Import failed";
-  try {
-    const body = JSON.parse(fallback) as {
-      detail?: { message?: string; errors?: string[] };
-    };
-    return {
-      message: body.detail?.message ?? fallback,
-      rows: body.detail?.errors ?? [],
-    };
-  } catch {
-    return { message: fallback, rows: [] };
-  }
-}
+import {
+  isSingleImportResult,
+  type SingleImportResult,
+} from "@/lib/import-types";
 
 export function ImportPage() {
   const [alerts, setAlerts] = useState<Alerts | null>(null);
   const [report, setReport] = useState<SingleImportResult | null>(null);
   const [alertsError, setAlertsError] = useState<string | null>(null);
-  const [uploadError, setUploadError] = useState<ImportError | null>(null);
+  const [uploadError, setUploadError] = useState<
+    ReturnType<typeof parseImportError> | null
+  >(null);
   const [uploading, setUploading] = useState(false);
 
   useEffect(() => {

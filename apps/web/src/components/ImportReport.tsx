@@ -1,11 +1,6 @@
-import type { ImportResult } from "@/lib/api";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-
-type SingleImportResult = Extract<
-  ImportResult,
-  { format: "console_tradebook" }
->;
+import type { SingleImportResult } from "@/lib/import-types";
 
 type Props = {
   report: SingleImportResult;
