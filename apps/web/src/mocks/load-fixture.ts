@@ -1,4 +1,5 @@
 import type { ScenarioId } from "./scenarios";
+import { fixtureModules } from "./fixture-modules";
 
 function deepMerge<T>(base: T, overlay: unknown): T {
   if (overlay === undefined) return base;
@@ -17,27 +18,17 @@ function deepMerge<T>(base: T, overlay: unknown): T {
   return merged as T;
 }
 
-const happyModules = import.meta.glob("./fixtures/happy/*.json", {
-  eager: true,
-  import: "default",
-}) as Record<string, unknown>;
-
-const overlayModules = import.meta.glob("./fixtures/*/*.json", {
-  eager: true,
-  import: "default",
-}) as Record<string, unknown>;
-
 function fixtureKey(scenario: string, name: string): string {
   return `./fixtures/${scenario}/${name}.json`;
 }
 
 export function loadFixture<T>(scenario: ScenarioId, name: string): T {
-  const base = happyModules[fixtureKey("happy", name)];
+  const base = fixtureModules[fixtureKey("happy", name)];
   if (base === undefined) throw new Error(`Missing happy fixture: ${name}.json`);
   if (scenario === "happy") return structuredClone(base) as T;
 
-  const overlay = overlayModules[fixtureKey(scenario, name)];
+  const overlay = fixtureModules[fixtureKey(scenario, name)];
   return overlay === undefined
     ? (structuredClone(base) as T)
-    : deepMerge(structuredClone(base), overlay);
+    : deepMerge(structuredClone(base) as T, overlay);
 }
