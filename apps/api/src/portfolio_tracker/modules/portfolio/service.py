@@ -157,6 +157,44 @@ def get_holdings(
     ]
 
 
+def get_holding(
+    session: Session,
+    instrument_id: int,
+    as_of: str,
+) -> dict | None:
+    if session.get(Instrument, instrument_id) is None:
+        return None
+    for row in get_holdings(session, as_of):
+        if row["instrument_id"] == instrument_id:
+            return row
+    # Instrument exists but filtered out (no qty/txs) — still 404 for UI drilldown
+    return None
+
+
+def list_transactions(session: Session, instrument_id: int) -> list[dict] | None:
+    if session.get(Instrument, instrument_id) is None:
+        return None
+    rows = (
+        session.query(Transaction)
+        .filter(Transaction.instrument_id == instrument_id)
+        .order_by(Transaction.trade_date.asc(), Transaction.id.asc())
+        .all()
+    )
+    return [
+        {
+            "id": tx.id,
+            "trade_date": tx.trade_date,
+            "side": tx.side,
+            "quantity": tx.quantity,
+            "price": tx.price,
+            "fees": tx.fees,
+            "amount": tx.quantity * tx.price,
+            "source": tx.source,
+        }
+        for tx in rows
+    ]
+
+
 def _append_weighted_benchmarks(
     computed: HoldingComputed,
     total_value: float,

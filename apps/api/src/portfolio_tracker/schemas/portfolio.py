@@ -38,6 +38,26 @@ class HoldingsResponse(BaseModel):
     holdings: list[HoldingResponse]
 
 
+class TransactionRowResponse(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    id: int
+    trade_date: str
+    side: str
+    quantity: float
+    price: float
+    fees: float
+    amount: float
+    source: str
+
+
+class HoldingTransactionsResponse(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    instrument_id: int
+    transactions: list[TransactionRowResponse]
+
+
 class OverviewResponse(BaseModel):
     model_config = ConfigDict(extra="forbid")
 

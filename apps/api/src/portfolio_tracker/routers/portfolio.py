@@ -1,14 +1,16 @@
 from datetime import date
 from typing import Annotated
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from portfolio_tracker.db.session import get_db
 from portfolio_tracker.modules import portfolio, reconcile
 from portfolio_tracker.schemas.portfolio import (
     AlertsResponse,
+    HoldingResponse,
     HoldingsResponse,
+    HoldingTransactionsResponse,
     OverviewResponse,
     PerformanceResponse,
 )
@@ -25,6 +27,38 @@ def overview(session: Annotated[Session, Depends(get_db)]) -> dict:
 def holdings(session: Annotated[Session, Depends(get_db)]) -> dict:
     rows = portfolio.get_holdings(session, as_of=date.today().isoformat())
     return {"holdings": rows}
+
+
+@router.get(
+    "/holdings/{instrument_id}",
+    response_model=HoldingResponse,
+    responses={404: {"description": "Holding not found"}},
+)
+def holding_detail(
+    instrument_id: int,
+    session: Annotated[Session, Depends(get_db)],
+) -> dict:
+    row = portfolio.get_holding(
+        session, instrument_id, as_of=date.today().isoformat()
+    )
+    if row is None:
+        raise HTTPException(status_code=404, detail="Holding not found")
+    return row
+
+
+@router.get(
+    "/holdings/{instrument_id}/transactions",
+    response_model=HoldingTransactionsResponse,
+    responses={404: {"description": "Instrument not found"}},
+)
+def holding_transactions(
+    instrument_id: int,
+    session: Annotated[Session, Depends(get_db)],
+) -> dict:
+    rows = portfolio.list_transactions(session, instrument_id)
+    if rows is None:
+        raise HTTPException(status_code=404, detail="Instrument not found")
+    return {"instrument_id": instrument_id, "transactions": rows}
 
 
 @router.get("/alerts", response_model=AlertsResponse)

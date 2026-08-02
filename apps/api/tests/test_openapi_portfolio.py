@@ -41,3 +41,12 @@ def test_openapi_windows_map_has_fixed_properties():
         "windows"
     ]
     assert overview_windows.get("$ref") == "#/components/schemas/WindowsMap"
+
+
+def test_openapi_includes_holding_detail_paths():
+    schema = TestClient(create_app()).get("/openapi.json").json()
+    assert "/portfolio/holdings/{instrument_id}" in schema["paths"]
+    assert "/portfolio/holdings/{instrument_id}/transactions" in schema["paths"]
+    components = schema["components"]["schemas"]
+    assert "HoldingTransactionsResponse" in components
+    assert "TransactionRowResponse" in components
