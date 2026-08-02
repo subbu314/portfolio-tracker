@@ -1,6 +1,8 @@
 import type { paths } from "./api-types";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://127.0.0.1:8000";
+const API_URL = (
+  process.env.NEXT_PUBLIC_API_URL ?? "http://127.0.0.1:8000"
+).replace(/\/$/, "");
 
 type AppJson<P extends keyof paths, M extends keyof paths[P]> =
   paths[P][M] extends { responses: { 200: { content: { "application/json": infer R } } } }

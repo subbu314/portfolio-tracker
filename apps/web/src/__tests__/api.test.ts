@@ -249,4 +249,15 @@ describe("api client request mapping", () => {
       message: "Not authenticated",
     });
   });
+
+  it("strips trailing slash from API base URL", async () => {
+    vi.stubEnv("NEXT_PUBLIC_API_URL", "http://127.0.0.1:8000/");
+    vi.resetModules();
+    const { api: reloaded } = await import("@/lib/api");
+    const fetchMock = mockOk({ status: "ok" });
+
+    await reloaded.getHealth();
+
+    expect(fetchMock.mock.calls[0][0]).toBe(`${BASE}/health`);
+  });
 });
