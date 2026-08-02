@@ -29,7 +29,8 @@ export function OverviewPage() {
   const [series, setSeries] = useState<PortfolioSeries | null>(null);
   const [chartMetric, setChartMetric] = useState<MetricKey>("absolute");
   const [chartWindow, setChartWindow] = useState<WindowKey>("ITD");
-  const [error, setError] = useState<string | null>(null);
+  const [pageError, setPageError] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
   const [chartError, setChartError] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
 
@@ -45,10 +46,13 @@ export function OverviewPage() {
     setHoldings(nextHoldings);
     setAuth(nextAuth);
     setAlerts(nextAlerts);
+    setActionError(null);
   }
 
   useEffect(() => {
-    void loadCore().catch((loadError: Error) => setError(loadError.message));
+    void loadCore().catch((loadError: Error) =>
+      setPageError(loadError.message),
+    );
   }, []);
 
   useEffect(() => {
@@ -82,13 +86,15 @@ export function OverviewPage() {
       await api.postSync();
       await loadCore();
     } catch (syncError) {
-      setError(syncError instanceof Error ? syncError.message : "Sync failed");
+      setActionError(
+        syncError instanceof Error ? syncError.message : "Sync failed",
+      );
     } finally {
       setRefreshing(false);
     }
   }
 
-  if (error) return <PageAlert>{error}</PageAlert>;
+  if (pageError && !overview) return <PageAlert>{pageError}</PageAlert>;
   if (!overview || !auth || !alerts) {
     return (
       <div className="stack" data-testid="page-skeleton">
@@ -114,6 +120,7 @@ export function OverviewPage() {
   return (
     <div className="stack">
       <h1>Overview</h1>
+      {actionError ? <PageAlert>{actionError}</PageAlert> : null}
       <StatusBanner
         model={banner}
         onRefresh={onRefresh}

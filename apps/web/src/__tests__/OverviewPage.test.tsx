@@ -33,7 +33,6 @@ vi.mock("@/components/AllocationChart", () => ({
   AllocationChart: () => null,
 }));
 vi.mock("@/components/MetricCard", () => ({ MetricCard: () => null }));
-vi.mock("@/components/StatusBanner", () => ({ StatusBanner: () => null }));
 vi.mock("@/components/ValueHero", () => ({ ValueHero: () => null }));
 vi.mock("@/components/ReturnSeriesChart", () => ({
   ReturnSeriesChart: ({
@@ -65,7 +64,7 @@ beforeEach(() => {
   mocks.getHoldings.mockResolvedValue([]);
   mocks.getAuthStatus.mockResolvedValue({
     connected: true,
-    last_sync_at: new Date().toISOString(),
+    last_sync_at: "2026-08-01T09:00:00+05:30",
   });
   mocks.getAlerts.mockResolvedValue({ gap: null });
   mocks.getPortfolioSeries.mockResolvedValue({ available: false, points: [] });
@@ -133,4 +132,16 @@ it("keeps the overview visible when chart loading fails", async () => {
 
   expect(await screen.findByRole("heading", { name: "Overview" })).toBeInTheDocument();
   expect(await screen.findByRole("alert")).toHaveTextContent("Series unavailable");
+});
+
+it("keeps overview visible when refresh sync fails", async () => {
+  const user = userEvent.setup();
+  mocks.postSync.mockRejectedValue(new Error("Not authenticated"));
+  render(<OverviewPage />);
+  expect(await screen.findByRole("heading", { name: "Overview" })).toBeInTheDocument();
+
+  await user.click(screen.getByRole("button", { name: /Refresh holdings/i }));
+
+  expect(await screen.findByText(/Not authenticated/i)).toBeInTheDocument();
+  expect(screen.getByRole("heading", { name: "Overview" })).toBeInTheDocument();
 });
