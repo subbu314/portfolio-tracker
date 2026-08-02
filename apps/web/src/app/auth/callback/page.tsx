@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useEffect, useState } from "react";
+import { Suspense, useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { api } from "@/lib/api";
 
@@ -8,6 +8,7 @@ function CallbackContent() {
   const params = useSearchParams();
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
+  const exchangedTokenRef = useRef<string | null>(null);
 
   useEffect(() => {
     const token = params.get("request_token");
@@ -15,6 +16,9 @@ function CallbackContent() {
       setError("Missing request_token");
       return;
     }
+    if (exchangedTokenRef.current === token) return;
+    exchangedTokenRef.current = token;
+
     void api
       .postCallback(token)
       .then(() => router.replace("/settings"))
