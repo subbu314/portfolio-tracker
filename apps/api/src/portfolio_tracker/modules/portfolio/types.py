@@ -20,6 +20,7 @@ class HoldingPublic(TypedDict):
     cagr_excess_pp: float | None
     incomplete: bool
     needs_category: bool
+    mf_category: str | None
     windows: dict
 
 

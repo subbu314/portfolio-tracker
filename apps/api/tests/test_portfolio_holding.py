@@ -158,3 +158,54 @@ def test_transactions_same_trade_date_ordered_by_id():
     assert rows[0]["source"] == "csv"
     assert rows[1]["side"] == "sell"
     assert rows[1]["source"] == "api"
+
+
+def test_holding_includes_mf_category():
+    client = TestClient(create_app())
+    Session = get_session_factory()
+    with Session() as session:
+        fund = Instrument(
+            symbol="PARAGPARIKH",
+            isin="INF879O01027",
+            instrument_type="mf",
+            mf_category="Flexi Cap",
+            needs_category=0,
+        )
+        session.add(fund)
+        session.flush()
+        session.add_all(
+            [
+                Transaction(
+                    instrument_id=fund.id,
+                    trade_date="2024-01-10",
+                    side="buy",
+                    quantity=10,
+                    price=100.0,
+                    fees=0.0,
+                    source="csv",
+                    dedupe_key="mf1",
+                ),
+                Price(
+                    symbol="INF879O01027",
+                    price_date="2024-06-01",
+                    close=120.0,
+                    source="amfi",
+                ),
+                BenchmarkMap(
+                    instrument_id=fund.id,
+                    benchmark_index="Nifty 500",
+                    source="default",
+                ),
+                BenchmarkPrice(
+                    index_symbol="Nifty 500",
+                    price_date="2024-06-01",
+                    close=12000.0,
+                ),
+            ]
+        )
+        session.commit()
+        fund_id = fund.id
+
+    body = client.get(f"/portfolio/holdings/{fund_id}").json()
+    assert body["mf_category"] == "Flexi Cap"
+    assert body["instrument_type"] == "mf"

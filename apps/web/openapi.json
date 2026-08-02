@@ -720,6 +720,17 @@
             ],
             "title": "Ltp"
           },
+          "mf_category": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mf Category"
+          },
           "needs_category": {
             "title": "Needs Category",
             "type": "boolean"
@@ -788,6 +799,7 @@
           "cagr_excess_pp",
           "incomplete",
           "needs_category",
+          "mf_category",
           "windows"
         ],
         "title": "HoldingResponse",

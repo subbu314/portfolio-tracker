@@ -29,6 +29,7 @@ class HoldingResponse(BaseModel):
     cagr_excess_pp: float | None
     incomplete: bool
     needs_category: bool
+    mf_category: str | None
     windows: WindowsMap
 
 

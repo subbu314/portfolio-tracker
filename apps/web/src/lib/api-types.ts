@@ -504,6 +504,8 @@ export interface components {
             instrument_type: string;
             /** Ltp */
             ltp: number | null;
+            /** Mf Category */
+            mf_category: string | null;
             /** Needs Category */
             needs_category: boolean;
             /** Qty */

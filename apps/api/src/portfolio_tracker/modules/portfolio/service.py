@@ -118,6 +118,7 @@ def _get_holdings_computed(
             "cagr_excess_pp": bundle["cagr_excess_pp"],
             "incomplete": ltp is None or bundle["benchmark_return"] is None,
             "needs_category": bool(instrument.needs_category),
+            "mf_category": instrument.mf_category,
         }
         first_date = transactions[0].trade_date if transactions else as_of
         windows = _build_instrument_windows(
