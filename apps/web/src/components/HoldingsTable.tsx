@@ -83,7 +83,27 @@ export function HoldingsTable({ title, variant, rows, windowKey }: Props) {
                     className="cursor-pointer"
                     tabIndex={0}
                     aria-label={`Open ${row.symbol}`}
-                    onClick={() => router.push(`/holdings/${row.instrument_id}`)}
+                    onClick={(event) => {
+                      const target = event.target;
+                      const isInteractiveTarget =
+                        target instanceof Element &&
+                        target.closest(
+                          'a, button, input, select, textarea, summary, [role="button"], [role="link"], [contenteditable="true"]',
+                        );
+
+                      if (
+                        isInteractiveTarget ||
+                        event.metaKey ||
+                        event.ctrlKey ||
+                        event.altKey ||
+                        event.shiftKey ||
+                        event.button !== 0
+                      ) {
+                        return;
+                      }
+
+                      router.push(`/holdings/${row.instrument_id}`);
+                    }}
                     onKeyDown={(event) => {
                       if (event.key === "Enter" || event.key === " ") {
                         event.preventDefault();

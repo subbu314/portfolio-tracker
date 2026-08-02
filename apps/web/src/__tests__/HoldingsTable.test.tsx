@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { HoldingsTable } from "@/components/HoldingsTable";
 import type { Holding } from "@/lib/api";
@@ -98,5 +98,88 @@ describe("HoldingsTable", () => {
 
     await user.click(screen.getByRole("row", { name: /RELIANCE/i }));
     expect(mocks.push).toHaveBeenCalledWith("/holdings/1");
+  });
+
+  it.each(["Enter", " "])(
+    "navigates to holding detail when the row receives %j",
+    (key) => {
+      const rows: Holding[] = [
+        {
+          ...base,
+          instrument_id: 1,
+          symbol: "RELIANCE",
+          instrument_type: "equity",
+        },
+      ];
+      render(
+        <HoldingsTable
+          title="Stocks & ETFs"
+          variant="equity"
+          rows={rows}
+          windowKey="ITD"
+        />,
+      );
+
+      fireEvent.keyDown(screen.getByRole("row", { name: /RELIANCE/i }), {
+        key,
+      });
+      expect(mocks.push).toHaveBeenCalledWith("/holdings/1");
+    },
+  );
+
+  it("lets the symbol link handle its own navigation", () => {
+    const rows: Holding[] = [
+      {
+        ...base,
+        instrument_id: 1,
+        symbol: "RELIANCE",
+        instrument_type: "equity",
+      },
+    ];
+    render(
+      <HoldingsTable
+        title="Stocks & ETFs"
+        variant="equity"
+        rows={rows}
+        windowKey="ITD"
+      />,
+    );
+
+    const link = screen.getByRole("link", { name: "RELIANCE" });
+    link.addEventListener("click", (event) => event.preventDefault());
+
+    fireEvent.click(link);
+    expect(mocks.push).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    { metaKey: true },
+    { ctrlKey: true },
+    { altKey: true },
+    { shiftKey: true },
+    { button: 1 },
+  ])("ignores modified and non-primary row clicks: %o", (clickInit) => {
+    const rows: Holding[] = [
+      {
+        ...base,
+        instrument_id: 1,
+        symbol: "RELIANCE",
+        instrument_type: "equity",
+      },
+    ];
+    render(
+      <HoldingsTable
+        title="Stocks & ETFs"
+        variant="equity"
+        rows={rows}
+        windowKey="ITD"
+      />,
+    );
+
+    fireEvent.click(
+      screen.getByRole("row", { name: /RELIANCE/i }),
+      clickInit,
+    );
+    expect(mocks.push).not.toHaveBeenCalled();
   });
 });
