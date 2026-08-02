@@ -183,3 +183,98 @@ input {
   text-decoration: underline;
   white-space: nowrap;
 }
+
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.stack > h1,
+.panel h2,
+.metric-card h2 {
+  margin: 0;
+}
+
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1.25rem;
+}
+
+.panel,
+.metric-card,
+.value-hero {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface);
+  padding: 1.25rem;
+}
+
+.panel-head,
+.value-hero {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+}
+
+.eyebrow,
+.muted,
+.metric-breakdown {
+  color: var(--muted);
+}
+
+.eyebrow {
+  margin: 0 0 0.5rem;
+  font-size: 0.875rem;
+}
+
+.hero-value,
+.metric-value,
+.metric-percent {
+  margin: 0;
+  font-variant-numeric: tabular-nums;
+}
+
+.hero-value {
+  font-size: clamp(2rem, 5vw, 3.25rem);
+  font-weight: 650;
+}
+
+.metric-value {
+  margin-top: 1.25rem;
+  font-size: 1.75rem;
+  font-weight: 600;
+}
+
+.metric-percent {
+  margin-top: 0.35rem;
+  color: var(--positive);
+  font-size: 1.25rem;
+}
+
+.hero-return {
+  text-align: right;
+}
+
+.chart-frame {
+  width: 100%;
+  height: 320px;
+  margin: 1rem 0 0;
+}
+
+@media (max-width: 760px) {
+  .card-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .panel-head,
+  .value-hero {
+    flex-direction: column;
+  }
+
+  .hero-return {
+    text-align: left;
+  }
+}

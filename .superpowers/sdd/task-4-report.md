@@ -1,3 +1,50 @@
+# Task 4 Report: Overview page
+
+## Status
+
+DONE
+
+## Implementation
+
+- Added portfolio value hero using `overview.total_value` and `overview.absolute`.
+- Added independent return and outperformance cards with local Metric and Window controls.
+- Added Absolute-only portfolio/category benchmark series chart with explicit unsupported and unavailable states.
+- Added holdings-derived allocation donut using `allocationByKind`.
+- Added client orchestration for overview, holdings, auth, alerts, series, and refresh APIs.
+- Replaced placeholder home page and added responsive overview styling.
+
+## TDD Evidence
+
+- RED: `OverviewCards.test.tsx` failed because `MetricCard` and `ValueHero` did not exist.
+- GREEN: focused suite passed all 4 tests after minimal component implementation.
+- Full web suite passed all 48 tests across 9 files.
+
+## Validation
+
+- `cd apps/web && npm test` — PASS: 48 passed.
+- `cd apps/web && npm run lint` — PASS.
+- `cd apps/web && npm run build` — PASS.
+- `git diff --check` — PASS.
+- IDE diagnostics — no errors.
+
+## Self-review
+
+- ValueHero remains independent of Window controls.
+- Cards read only `overview.windows[window]`; default Metric is XIRR.
+- Series API runs only for Absolute metric; XIRR/CAGR clear series and show required copy.
+- Allocation reads holdings by instrument type, not `overview.allocation`.
+- No `getPerformance` call or API schema changes introduced.
+- Null metrics format as `N/A`, never numeric zero.
+- Existing unrelated working-tree changes remain untouched.
+
+## Concerns
+
+- Technical Standards MCP was unavailable during implementation; repository patterns and supplied standards were applied.
+- Existing npm configuration and Starlette/httpx deprecation warnings remain outside Task 4 scope.
+
+## Commit
+
+- `feat(web): ship Overview with returns, chart, and allocation`
 # Task 4 Report: Portfolio absolute return series
 
 ## Status
