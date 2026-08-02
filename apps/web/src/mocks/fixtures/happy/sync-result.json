@@ -1,0 +1,10 @@
+{
+  "holdings_count": 3,
+  "trades_appended": 0,
+  "last_sync_at": "2026-08-02T10:00:00+05:30",
+  "prices": {
+    "updated": 3,
+    "failed": [],
+    "incomplete": false
+  }
+}

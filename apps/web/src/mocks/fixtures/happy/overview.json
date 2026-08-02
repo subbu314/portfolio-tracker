@@ -1,0 +1,54 @@
+{
+  "total_value": 90500,
+  "absolute": {
+    "current_value": 90500,
+    "invested_cost": 77500,
+    "gain_inr": 13000,
+    "gain_pct": 0.16774193548387098
+  },
+  "xirr": 0.15,
+  "cagr": 0.11,
+  "benchmark_return": 0.09,
+  "absolute_excess_pp": 3.0,
+  "xirr_excess_pp": 2.5,
+  "cagr_excess_pp": 1.5,
+  "windows": {
+    "ITD": {
+      "absolute_pct": 0.12,
+      "absolute_inr": 12000,
+      "xirr": 0.15,
+      "cagr": 0.11,
+      "benchmark_return": 0.09,
+      "absolute_excess_pp": 3.0,
+      "xirr_excess_pp": 2.5,
+      "cagr_excess_pp": 1.5
+    },
+    "1Y": {
+      "absolute_pct": 0.08,
+      "xirr": 0.09,
+      "cagr": 0.08,
+      "absolute_excess_pp": 1.2,
+      "xirr_excess_pp": 1.0,
+      "cagr_excess_pp": 0.8,
+      "benchmark_return": 0.07
+    },
+    "3Y": null,
+    "5Y": null
+  },
+  "allocation": [
+    {
+      "symbol": "RELIANCE",
+      "weight": 0.48066298342541436
+    },
+    {
+      "symbol": "NIFTYBEES",
+      "weight": 0.2430939226519337
+    },
+    {
+      "symbol": "PARAG_PARIKH_FLEXI_CAP",
+      "weight": 0.27624309392265195
+    }
+  ],
+  "as_of": "2026-08-02",
+  "incomplete": false
+}

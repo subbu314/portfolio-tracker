@@ -1,0 +1,15 @@
+{
+  "mf_categories": [
+    "Flexi Cap",
+    "Large Cap",
+    "Mid Cap",
+    "Small Cap"
+  ],
+  "benchmark_indexes": [
+    "Nifty 500",
+    "Nifty 100",
+    "Nifty Midcap 150",
+    "Nifty Smallcap 250",
+    "Nifty 50"
+  ]
+}

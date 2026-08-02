@@ -41,8 +41,14 @@
     "eslint": "^9",
     "eslint-config-next": "15.5.22",
     "jsdom": "^30.0.1",
+    "msw": "^2.15.0",
     "openapi-typescript": "^7.13.0",
     "typescript": "^5",
     "vitest": "^4.1.10"
+  },
+  "msw": {
+    "workerDirectory": [
+      "public"
+    ]
   }
 }

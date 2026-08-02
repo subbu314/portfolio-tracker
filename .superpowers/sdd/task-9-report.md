@@ -1,65 +1,35 @@
-# Task 9 Report: Kite sync
+# Task 9 Report: Happy fixtures and MSW handlers
 
 ## Status
 
-Implemented Kite Personal holdings sync, same-day trade append, auth invalidation,
-price refresh orchestration, and `POST /sync`.
+Complete.
 
-## Changes
+## Implementation
 
-- Added equity, ETF, and mutual-fund holdings snapshot upserts.
-- Added IST same-day trade filtering with stable API dedupe keys.
-- Added idempotent re-sync behavior and sync timestamp settings.
-- Added Kite auth-error invalidation, committed token removal, and secret-safe errors.
-- Added sync router with reconnect response and Yahoo/AMFI price refresh.
-- Registered sync router in application.
+- Added happy-path OpenAPI-shaped fixtures for overview, holdings, performance, alerts, auth, charts, transactions, settings, import, sync, health, and login.
+- Added MSW handlers for every method in `api`, including both CSV import variants through the shared `/import/csv` handler.
+- Added browser worker setup and generated `public/mockServiceWorker.js`.
 
 ## TDD evidence
 
-- Core sync test first failed because `kite_sync` did not exist, then passed after implementation.
-- Auth invalidation test failed with unhandled `TokenException`, then passed after guarded Kite calls.
-- Endpoint test failed with HTTP 404, then passed after router implementation and registration.
+1. Added handler integration tests before handlers existed.
+2. Verified RED: the test failed because `@/mocks/handlers` could not resolve.
+3. Implemented handlers and fixtures.
+4. Verified GREEN: handler test passed (2 tests).
 
-## Validation
+## Verification
 
-- `cd apps/api && uv run pytest -q`: 79 passed.
-- IDE diagnostics: no errors in changed files.
+- `npm --prefix apps/web test -- src/__tests__/handlers.test.ts`: 2 passed.
+- `npm --prefix apps/web test`: 23 files, 85 tests passed.
+- `npm --prefix apps/web run lint`: 0 errors; generated MSW worker has one existing unused-disable warning.
 - `git diff --check`: passed.
-- Existing Starlette `TestClient` deprecation warning remains.
 
 ## Self-review
 
-- Confirmed no Kite market-data calls; pricing remains Yahoo/AMFI.
-- Confirmed API errors never return upstream token-bearing text.
-- Confirmed duplicate trades skip and holdings update in place.
-- Confirmed non-auth Kite failures propagate without clearing valid credentials.
-
-## Stale snapshot cleanup (2026-08-01)
-
-### Finding
-
-Sync only upserted Kite holdings; sold/exited positions kept stale `HoldingsSnapshot`
-rows and stayed visible in portfolio assembly.
-
-### Fix
-
-- Track synced instrument IDs during equity/MF upserts.
-- After upserts, `_remove_stale_holdings` deletes snapshots whose `instrument_id`
-  is not in the returned Kite set (handles prior `as_of` dates; empty Kite response
-  clears all snapshots).
-- `invalidate_on_kite_error` unchanged in `_fetch_kite_data`.
-
-### Regression test
-
-- `test_sync_removes_stale_snapshot_for_sold_symbol`: pre-seeded SOLD snapshot
-  removed after sync returning only RELIANCE.
-
-### Validation
-
-- `uv run pytest tests/test_kite_sync.py -v`: 6 passed.
-- `uv run pytest -q`: full suite run after fix.
+- Verified handlers cover all `api.*` paths from `src/lib/api.ts`.
+- Fixtures provide three positive-return holdings: RELIANCE, NIFTYBEES, and a categorized mutual fund.
+- Chart fixtures expose at least three points when available; unavailable windows retain required response fields.
 
 ## Concerns
 
-- Technical Standards MCP was unavailable during implementation, so no additional
-  company-standard corpus could be loaded.
+- Technical Standards MCP was unavailable during implementation.
