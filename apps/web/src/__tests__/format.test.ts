@@ -1,10 +1,13 @@
 import { describe, expect, it } from "vitest";
 import {
+  UNAVAILABLE,
   formatInr,
   formatPct,
   formatPp,
   formatPrice,
   formatSignedInr,
+  isUnavailable,
+  unavailableClassName,
 } from "@/lib/format";
 
 describe("format", () => {
@@ -36,5 +39,26 @@ describe("format", () => {
     expect(formatPct(Number.NaN)).toBe("N/A");
     expect(formatPp(Number.NEGATIVE_INFINITY)).toBe("N/A");
     expect(formatPrice(Number.NaN)).toBe("N/A");
+  });
+});
+
+describe("unavailable helpers", () => {
+  it("exposes the shared N/A sentinel", () => {
+    expect(UNAVAILABLE).toBe("N/A");
+    expect(formatPct(null)).toBe(UNAVAILABLE);
+  });
+
+  it("detects unavailable display strings", () => {
+    expect(isUnavailable("N/A")).toBe(true);
+    expect(isUnavailable("12.00%")).toBe(false);
+  });
+
+  it("picks muted class for N/A and available class otherwise", () => {
+    expect(unavailableClassName("N/A", "metric-value")).toBe(
+      "font-mono tabular-nums text-muted-foreground",
+    );
+    expect(
+      unavailableClassName("12.00%", "metric-value font-mono tabular-nums"),
+    ).toBe("metric-value font-mono tabular-nums");
   });
 });
