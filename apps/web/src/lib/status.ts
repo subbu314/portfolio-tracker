@@ -17,6 +17,8 @@ export type StatusInput = {
 
 function syncDay(iso: string | null): string | null {
   if (!iso) return null;
+  const parsed = new Date(iso);
+  if (Number.isNaN(parsed.getTime())) return null;
   // Prefer calendar day in IST for "refreshed today"
   try {
     return new Intl.DateTimeFormat("en-CA", {
@@ -24,9 +26,9 @@ function syncDay(iso: string | null): string | null {
       year: "numeric",
       month: "2-digit",
       day: "2-digit",
-    }).format(new Date(iso));
+    }).format(parsed);
   } catch {
-    return iso.slice(0, 10);
+    return null;
   }
 }
 

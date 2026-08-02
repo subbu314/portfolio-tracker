@@ -64,6 +64,18 @@ describe("deriveStatusBanner", () => {
     expect(banner?.ctaAction).toBe("refresh");
   });
 
+  it("treats unparseable lastSyncAt as stale", () => {
+    const banner = deriveStatusBanner({
+      connected: true,
+      lastSyncAt: "not-a-date",
+      incomplete: false,
+      gap: null,
+      today: "2026-08-02",
+    });
+
+    expect(banner?.kind).toBe("outdated");
+  });
+
   it("returns null when healthy", () => {
     expect(
       deriveStatusBanner({
