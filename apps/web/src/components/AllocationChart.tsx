@@ -8,13 +8,16 @@ const COLORS = ["var(--accent)", "var(--positive)", "var(--warn)"];
 
 type Props = {
   slices: AllocationSliceUi[];
+  holdingsCount: number;
 };
 
-export function AllocationChart({ slices }: Props) {
+export function AllocationChart({ slices, holdingsCount }: Props) {
   if (slices.length === 0) {
     return (
       <div className="rounded-lg border bg-surface-elevated p-4 text-muted-foreground">
-        No holdings yet
+        {holdingsCount > 0
+          ? "Allocation unavailable — prices missing"
+          : "No holdings yet"}
       </div>
     );
   }

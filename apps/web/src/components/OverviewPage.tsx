@@ -178,7 +178,10 @@ export function OverviewPage() {
       </section>
       <section className="panel">
         <h2>Asset allocation</h2>
-        <AllocationChart slices={allocationByKind(holdings)} />
+        <AllocationChart
+          slices={allocationByKind(holdings)}
+          holdingsCount={holdings.length}
+        />
       </section>
     </div>
   );
