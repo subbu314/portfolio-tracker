@@ -1,68 +1,119 @@
-# Task 4 Report: CSV import
+# Task 4 Report: Import Response Schemas
 
 ## Status
 
-DONE_WITH_CONCERNS
+DONE
 
-Implemented idempotent Zerodha Console equity and Mutual Funds tradebook CSV imports, all-or-nothing parsing, segment reporting, unexpected-segment flagging, ETF classification, and multipart API import.
+## Implementation
 
-## TDD evidence
+- Added strict Pydantic response models for single-file import, batch import, successful files, rejected files, and structured bad-request details.
+- Added `ImportCsvResponse` union without changing existing CSV import JSON fields.
+- Wired `POST /import/csv` to the response union.
+- Documented HTTP 400 responses with `ImportBadDetail` while retaining dictionary `HTTPException.detail` payloads.
 
-1. Added Console equity and MF fixtures plus importer and route tests.
-2. RED: `uv run pytest tests/test_csv_import.py -v` failed during collection because `portfolio_tracker.modules.csv_import` did not exist.
-3. Added importer, public instrument helper, API route, and router registration.
-4. GREEN: focused suite passed all 9 tests.
-5. Regression: complete API suite passed all 21 tests.
+## TDD Evidence
 
-## Implemented contracts
+### RED
 
-- Detects Console tradebooks using normalized required headers.
-- Parses equity, ETF, MF, and unexpected segments without hard-filtering rows.
-- Returns format, new/existing counts, segment counts, flagged rows, and date range.
-- Validates all rows before database writes and reports row-specific parse errors.
-- Deduplicates reimports with `Transaction.dedupe_key`.
-- Exposes `get_or_create_instrument(...)` for later sync work.
-- Registers `POST /import/csv` with UTF-8 BOM support and structured 400 responses.
+Created `tests/test_openapi_import.py` before production changes and ran:
 
-## Verification
+```text
+uv run pytest tests/test_openapi_import.py -v
+```
 
-- `uv run pytest tests/test_csv_import.py -v`: 9 passed.
-- `uv run pytest -v`: 21 passed, 1 third-party Starlette deprecation warning.
-- `git diff --check`: passed.
-- IDE diagnostics: no errors or warnings in changed files.
+Result: `1 failed, 1 warning`; `ImportResultResponse` was absent from OpenAPI components.
 
-## Self-review
+### GREEN and Regression
 
-- Compared implementation against each binding constraint and brief interface.
-- Confirmed malformed files create no instruments or transactions.
-- Confirmed unexpected segments remain importable and are both counted and flagged.
-- Confirmed repeated imports do not duplicate transactions.
-- Confirmed no credentials, manual transaction path, or unrelated changes were added.
+```text
+uv run pytest tests/test_openapi_import.py tests/test_csv_import.py tests/test_api_integration.py -v
+```
 
-## Concerns
+Result: `25 passed, 1 warning`.
 
-- No real Zerodha Console exports were available. Fixtures and normalization use plan-provided headers; production exports may require additional header aliases.
-- Test suite emits a third-party `StarletteDeprecationWarning` from FastAPI TestClient integration.
+```text
+uv run pytest -q
+```
+
+Result: `123 passed, 1 warning`.
+
+Warning is existing Starlette TestClient deprecation for `httpx`.
+
+## Self-Review
+
+- Schema fields and literals match existing `TypedDict` contracts exactly.
+- OpenAPI includes all five required component schemas.
+- Focused route tests exercise both single-file and batch response validation.
+- Unrelated untracked plan documents remained untouched.
+- IDE diagnostics found no new errors; existing import endpoint cognitive-complexity warning remains outside task scope.
 
 ## Commit
 
-`d233893 feat: import Console equity and MF tradebook CSVs`
+`bb5c9ae feat(api): add CSV import OpenAPI response models`
 
-## Important findings remediation
+## Concerns
 
-- Replaced CSV row-number fallback in `dedupe_key` with normalized, position-independent exchange, fees, order execution time, and ISIN fields.
-- Retained `order_id` / `trade_id` as preferred transaction identifiers.
-- Added all-or-nothing validation requiring positive quantity and price and non-negative fees.
-- Preserved segment counts, unexpected-segment flagged rows, and import behavior for unexpected segments.
+None. Existing third-party deprecation and cognitive-complexity warnings are outside task scope.
 
-### TDD and verification
+## Fix
 
-- RED: `uv run pytest tests/test_csv_import.py -v` — 6 failed, 9 passed. Failures reproduced reordered overlapping-file duplication and acceptance of zero/negative trade values.
-- GREEN: `uv run pytest tests/test_csv_import.py -v` — 15 passed, 1 third-party Starlette deprecation warning.
-- Regression: `uv run pytest -v` — 27 passed, 1 third-party Starlette deprecation warning.
-- `git diff --check` — passed.
-- IDE diagnostics — no errors or warnings in changed Python files.
+### Changes
 
-### Remaining concern
+- Added strict `ImportBadErrorResponse` envelope with `detail: ImportBadDetail`.
+- Updated `POST /import/csv` HTTP 400 OpenAPI response to reference the envelope without changing runtime `HTTPException` behavior or JSON fields.
+- Extended OpenAPI regression coverage to require both schemas and verify the route's 400 response references `ImportBadErrorResponse`.
 
-- No real Zerodha Console exports were available to verify whether additional header aliases are needed.
+### Covering tests
+
+- `tests/test_openapi_import.py::test_openapi_includes_import_schemas` checks `ImportBadDetail` and `ImportBadErrorResponse` components and the exact 400 response `$ref`.
+- Existing CSV import and API integration tests cover unchanged runtime behavior.
+
+### Commands and output
+
+```text
+$ uv run pytest tests/test_openapi_import.py tests/test_csv_import.py tests/test_api_integration.py -v
+============================= test session starts ==============================
+platform darwin -- Python 3.14.6, pytest-9.1.1, pluggy-1.6.0
+collected 25 items
+
+tests/test_openapi_import.py::test_openapi_includes_import_schemas PASSED
+tests/test_csv_import.py::test_import_equity_tradebook_inserts_rows PASSED
+tests/test_csv_import.py::test_reimport_is_idempotent PASSED
+tests/test_csv_import.py::test_overlapping_reordered_imports_without_trade_ids_are_idempotent PASSED
+tests/test_csv_import.py::test_unknown_format_rejected PASSED
+tests/test_csv_import.py::test_headers_are_normalized_for_detection PASSED
+tests/test_csv_import.py::test_mf_tradebook_import PASSED
+tests/test_csv_import.py::test_unexpected_segment_is_imported_and_flagged PASSED
+tests/test_csv_import.py::test_parse_error_writes_nothing PASSED
+tests/test_csv_import.py::test_non_positive_trade_values_are_rejected_without_writes[quantity-0] PASSED
+tests/test_csv_import.py::test_non_positive_trade_values_are_rejected_without_writes[quantity--1] PASSED
+tests/test_csv_import.py::test_non_positive_trade_values_are_rejected_without_writes[price-0] PASSED
+tests/test_csv_import.py::test_non_positive_trade_values_are_rejected_without_writes[price--1] PASSED
+tests/test_csv_import.py::test_non_positive_trade_values_are_rejected_without_writes[fees--0.01] PASSED
+tests/test_csv_import.py::test_eq_symbol_with_etf_name_is_classified_as_etf PASSED
+tests/test_csv_import.py::test_csv_endpoint_imports_multipart_file PASSED
+tests/test_csv_import.py::test_financial_year_label_uses_indian_fy PASSED
+tests/test_csv_import.py::test_batch_import_accepts_multiple_files_and_skips_duplicates PASSED
+tests/test_csv_import.py::test_batch_import_rejects_bad_file_keeps_good_files PASSED
+tests/test_csv_import.py::test_import_route_multi_file_and_wrong_input_action PASSED
+tests/test_api_integration.py::test_message_response_removed PASSED
+tests/test_api_integration.py::test_import_then_overview PASSED
+tests/test_api_integration.py::test_settings_routes_manage_benchmark_and_category_overrides PASSED
+tests/test_api_integration.py::test_settings_reject_unknown_benchmark_name PASSED
+tests/test_api_integration.py::test_portfolio_performance_route_returns_contributors PASSED
+
+======================== 25 passed, 1 warning in 1.31s =========================
+```
+
+```text
+$ uv run pytest -q
+........................................................................ [ 58%]
+...................................................                      [100%]
+=============================== warnings summary ===============================
+.venv/lib/python3.14/site-packages/fastapi/testclient.py:1
+  /Users/subrahmanian@backbase.com/repos/personal/portfolio-tracker/apps/api/.venv/lib/python3.14/site-packages/fastapi/testclient.py:1: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.
+    from starlette.testclient import TestClient as TestClient  # noqa
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+123 passed, 1 warning in 2.88s
+```

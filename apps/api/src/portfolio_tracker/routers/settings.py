@@ -1,25 +1,23 @@
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException
-from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from portfolio_tracker.db.models import Instrument
 from portfolio_tracker.db.session import get_db
 from portfolio_tracker.modules import benchmarks
+from portfolio_tracker.schemas.settings import (
+    BenchmarkBody,
+    BenchmarkListResponse,
+    BenchmarkUpdateResponse,
+    CategoryBody,
+    CategoryUpdateResponse,
+)
 
 router = APIRouter(prefix="/settings", tags=["settings"])
 
 
-class BenchmarkBody(BaseModel):
-    benchmark_index: str
-
-
-class CategoryBody(BaseModel):
-    category: str
-
-
-@router.get("/benchmarks")
+@router.get("/benchmarks", response_model=BenchmarkListResponse)
 def list_benchmarks(
     session: Annotated[Session, Depends(get_db)],
 ) -> dict:
@@ -42,6 +40,7 @@ def list_benchmarks(
 
 @router.put(
     "/benchmarks/{instrument_id}",
+    response_model=BenchmarkUpdateResponse,
     responses={
         400: {"description": "Unknown benchmark index"},
         404: {"description": "Instrument not found"},
@@ -71,6 +70,7 @@ def put_benchmark(
 
 @router.put(
     "/categories/{instrument_id}",
+    response_model=CategoryUpdateResponse,
     responses={404: {"description": "Instrument not found"}},
 )
 def put_category(
