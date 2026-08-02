@@ -60,4 +60,14 @@ describe("AppShell", () => {
     expect(overview.querySelector("svg")).not.toBeNull();
     expect(overview.textContent).not.toMatch(/◉/);
   });
+
+  it("does not render scenario switcher when mocks are disabled", () => {
+    render(
+      <AppShell>
+        <p>child</p>
+      </AppShell>,
+    );
+
+    expect(screen.queryByRole("button", { name: /mock:/i })).not.toBeInTheDocument();
+  });
 });
