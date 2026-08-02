@@ -50,3 +50,10 @@ def test_openapi_includes_holding_detail_paths():
     components = schema["components"]["schemas"]
     assert "HoldingTransactionsResponse" in components
     assert "TransactionRowResponse" in components
+
+
+def test_openapi_includes_portfolio_series():
+    schema = TestClient(create_app()).get("/openapi.json").json()
+    assert "/portfolio/series" in schema["paths"]
+    assert "PortfolioSeriesResponse" in schema["components"]["schemas"]
+    assert "SeriesPoint" in schema["components"]["schemas"]

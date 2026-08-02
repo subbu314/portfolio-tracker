@@ -1,7 +1,7 @@
 from datetime import date
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
 from portfolio_tracker.db.session import get_db
@@ -13,6 +13,7 @@ from portfolio_tracker.schemas.portfolio import (
     HoldingTransactionsResponse,
     OverviewResponse,
     PerformanceResponse,
+    PortfolioSeriesResponse,
 )
 
 router = APIRouter(prefix="/portfolio", tags=["portfolio"])
@@ -27,6 +28,26 @@ def overview(session: Annotated[Session, Depends(get_db)]) -> dict:
 def holdings(session: Annotated[Session, Depends(get_db)]) -> dict:
     rows = portfolio.get_holdings(session, as_of=date.today().isoformat())
     return {"holdings": rows}
+
+
+@router.get(
+    "/series",
+    response_model=PortfolioSeriesResponse,
+    responses={400: {"description": "Invalid window"}},
+)
+def portfolio_series(
+    session: Annotated[Session, Depends(get_db)],
+    window: Annotated[
+        str,
+        Query(json_schema_extra={"enum": ["ITD", "1Y", "3Y", "5Y"]}),
+    ] = "ITD",
+) -> dict:
+    try:
+        return portfolio.get_portfolio_series(
+            session, as_of=date.today().isoformat(), window=window
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
 
 
 @router.get(

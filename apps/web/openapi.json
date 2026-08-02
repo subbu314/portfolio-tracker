@@ -1259,6 +1259,67 @@
         "title": "PerformanceResponse",
         "type": "object"
       },
+      "PortfolioSeriesResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "as_of": {
+            "title": "As Of",
+            "type": "string"
+          },
+          "available": {
+            "title": "Available",
+            "type": "boolean"
+          },
+          "incomplete": {
+            "title": "Incomplete",
+            "type": "boolean"
+          },
+          "metric": {
+            "const": "absolute",
+            "title": "Metric",
+            "type": "string"
+          },
+          "points": {
+            "items": {
+              "$ref": "#/components/schemas/SeriesPoint"
+            },
+            "title": "Points",
+            "type": "array"
+          },
+          "start": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Start"
+          },
+          "window": {
+            "enum": [
+              "ITD",
+              "1Y",
+              "3Y",
+              "5Y"
+            ],
+            "title": "Window",
+            "type": "string"
+          }
+        },
+        "required": [
+          "window",
+          "metric",
+          "as_of",
+          "start",
+          "available",
+          "incomplete",
+          "points"
+        ],
+        "title": "PortfolioSeriesResponse",
+        "type": "object"
+      },
       "PricesRefreshResponse": {
         "additionalProperties": false,
         "properties": {
@@ -1331,6 +1392,53 @@
           "request_token"
         ],
         "title": "RequestTokenBody",
+        "type": "object"
+      },
+      "SeriesPoint": {
+        "additionalProperties": false,
+        "properties": {
+          "benchmark_return": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Benchmark Return"
+          },
+          "date": {
+            "title": "Date",
+            "type": "string"
+          },
+          "holding_return": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Holding Return"
+          },
+          "portfolio_return": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Portfolio Return"
+          }
+        },
+        "required": [
+          "date"
+        ],
+        "title": "SeriesPoint",
         "type": "object"
       },
       "SyncResponse": {
@@ -2015,6 +2123,58 @@
           }
         },
         "summary": "Performance",
+        "tags": [
+          "portfolio"
+        ]
+      }
+    },
+    "/portfolio/series": {
+      "get": {
+        "operationId": "portfolio_series_portfolio_series_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "window",
+            "required": false,
+            "schema": {
+              "default": "ITD",
+              "enum": [
+                "ITD",
+                "1Y",
+                "3Y",
+                "5Y"
+              ],
+              "title": "Window",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PortfolioSeriesResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "description": "Invalid window"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Portfolio Series",
         "tags": [
           "portfolio"
         ]

@@ -209,6 +209,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/portfolio/series": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Portfolio Series */
+        get: operations["portfolio_series_portfolio_series_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/settings/benchmarks": {
         parameters: {
             query?: never;
@@ -659,6 +676,29 @@ export interface components {
             /** Xirr Excess Pp */
             xirr_excess_pp: number | null;
         };
+        /** PortfolioSeriesResponse */
+        PortfolioSeriesResponse: {
+            /** As Of */
+            as_of: string;
+            /** Available */
+            available: boolean;
+            /** Incomplete */
+            incomplete: boolean;
+            /**
+             * Metric
+             * @constant
+             */
+            metric: "absolute";
+            /** Points */
+            points: components["schemas"]["SeriesPoint"][];
+            /** Start */
+            start: string | null;
+            /**
+             * Window
+             * @enum {string}
+             */
+            window: "ITD" | "1Y" | "3Y" | "5Y";
+        };
         /** PricesRefreshResponse */
         PricesRefreshResponse: {
             /** Failed */
@@ -685,6 +725,17 @@ export interface components {
         RequestTokenBody: {
             /** Request Token */
             request_token: string;
+        };
+        /** SeriesPoint */
+        SeriesPoint: {
+            /** Benchmark Return */
+            benchmark_return?: number | null;
+            /** Date */
+            date: string;
+            /** Holding Return */
+            holding_return?: number | null;
+            /** Portfolio Return */
+            portfolio_return?: number | null;
         };
         /** SyncResponse */
         SyncResponse: {
@@ -1105,6 +1156,44 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PerformanceResponse"];
+                };
+            };
+        };
+    };
+    portfolio_series_portfolio_series_get: {
+        parameters: {
+            query?: {
+                window?: "ITD" | "1Y" | "3Y" | "5Y";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PortfolioSeriesResponse"];
+                };
+            };
+            /** @description Invalid window */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };

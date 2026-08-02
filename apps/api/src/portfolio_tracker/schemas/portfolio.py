@@ -1,3 +1,5 @@
+from typing import Literal
+
 from pydantic import BaseModel, ConfigDict
 
 from portfolio_tracker.schemas.common import (
@@ -93,6 +95,27 @@ class PerformanceResponse(OverviewResponse):
     holdings: list[HoldingResponse]
     windows_available: list[WindowKey]
     default_window: WindowKey
+
+
+class SeriesPoint(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    date: str
+    portfolio_return: float | None = None
+    benchmark_return: float | None = None
+    holding_return: float | None = None
+
+
+class PortfolioSeriesResponse(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    window: WindowKey
+    metric: Literal["absolute"]
+    as_of: str
+    start: str | None
+    available: bool
+    incomplete: bool
+    points: list[SeriesPoint]
 
 
 class ReconcileDiff(BaseModel):
