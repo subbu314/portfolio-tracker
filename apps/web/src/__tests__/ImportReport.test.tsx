@@ -73,6 +73,15 @@ describe("import report storage", () => {
 
     expect(loadImportReport()).toBeNull();
   });
+
+  it("returns null for batch-shaped stored JSON", () => {
+    sessionStorage.setItem(
+      "portfolio-tracker:last-import",
+      JSON.stringify({ results: [{ format: "console_tradebook" }] }),
+    );
+
+    expect(loadImportReport()).toBeNull();
+  });
 });
 
 describe("ImportPage", () => {
